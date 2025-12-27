@@ -63,15 +63,7 @@ router.post('/login', async (request, response) => {
     }
 
     try {
-        // TODO: Query database for user
-        // const user = await database.getUserByUsername(username);
-        // if (!user) {
-        //     return response.status(401).json({
-        //         success: false,
-        //         message: 'Invalid credentials'
-        //     });
-        // }
-        
+ 
         // TODO: Compare password with hash
         // const isPasswordValid = await bcrypt.compare(password, user.password_hash);
         // if (!isPasswordValid) {

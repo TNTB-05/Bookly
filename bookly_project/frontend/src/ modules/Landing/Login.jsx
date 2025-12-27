@@ -1,5 +1,6 @@
 import { useState, useRef } from "react"
 
+
 export default function Login(){
     const usernameRef = useRef(null);
     const passwordRef = useRef(null);
@@ -28,14 +29,15 @@ export default function Login(){
         const username = usernameRef.current.value;
         const password = passwordRef.current.value;
 
-        // Validate inputs
+        
         if (!validateInputs(username, password)) {
             setLoading(false);
             return;
         }
 
         try {
-            const response = await fetch('http://127.0.0.1:3000/auth/login', {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3000';
+            const response = await fetch(`${apiUrl}/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

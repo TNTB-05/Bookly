@@ -3,13 +3,14 @@ const express = require('express'); //?npm install express
 const session = require('express-session'); //?npm install express-session
 const cors = require('cors'); //?npm install cors
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, 'Secret.env') }); //?npm install dotenv
 
 //!Beállítások
 const app = express();
 const router = express.Router();
 
-const ip = '127.0.0.1';
-const port = 3000;
+const ip = process.env.IP_ADDRESS || '127.0.0.1';
+const port = process.env.PORT || 3000;
 
 app.use(express.json()); //?Middleware JSON
 app.use(cors()); //?CORS middleware
@@ -18,7 +19,7 @@ app.set('trust proxy', 1); //?Middleware Proxy
 //!Session beállítása:
 app.use(
     session({
-        secret: 'titkos_kulcs', //?Ezt generálni kell a későbbiekben
+        secret: process.env.SESSION_SECRET || 'default-secret-key',
         resave: false,
         saveUninitialized: true
     })
