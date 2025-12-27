@@ -1,2 +1,4 @@
 # node_modules mappák ignorálása mindenhol
 **/node_modules/
+-env fájlok ignorálása
+.env
