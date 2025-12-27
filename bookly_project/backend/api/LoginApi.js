@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const database = require('../sql/database.js');
 const fs = require('fs/promises');
+const path = require('path');
+const bcrypt = require('bcrypt'); //?npm install bcrypt
 
 
 //!Multer
@@ -40,6 +42,19 @@ router.get('/testsql', async (request, response) => {
             message: 'Ez a végpont nem működik.'
         });
     }
+});
+
+
+router.post('/auth/login', async (request, response) => {
+    const { username, password } = request.body;
+
+
+    response.status(200).json({
+        message: 'Login endpoint hit',
+        username: username,
+        password: password
+    });
+
 });
 
 module.exports = router;

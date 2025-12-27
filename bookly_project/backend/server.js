@@ -24,14 +24,15 @@ app.use(
 
 //!Routing
 //?Főoldal:
-router.get('/', (request, response) => {
-    response.sendFile(path.join(__dirname, '../frontend/html/index.html'));
+app.get('/', (request, response) => {
+    response.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
-
 //!API endpoints
 app.use('/', router);
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
+const loginApi = require('./api/LoginApi.js');
+app.use('/auth', loginApi);
 
 //!Szerver futtatása
 app.use(express.static(path.join(__dirname, '../frontend'))); //?frontend mappa tartalmának betöltése az oldal működéséhez
