@@ -1,6 +1,7 @@
 //!Module-ok importálása
 const express = require('express'); //?npm install express
 const session = require('express-session'); //?npm install express-session
+const cors = require('cors'); //?npm install cors
 const path = require('path');
 
 //!Beállítások
@@ -11,6 +12,7 @@ const ip = '127.0.0.1';
 const port = 3000;
 
 app.use(express.json()); //?Middleware JSON
+app.use(cors()); //?CORS middleware
 app.set('trust proxy', 1); //?Middleware Proxy
 
 //!Session beállítása:

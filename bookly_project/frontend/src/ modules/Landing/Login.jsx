@@ -1,44 +1,87 @@
-import { useState , useEffect, useRef } from "react"
-import bcrypt from 'bcryptjs';
+import { useState, useRef } from "react"
 
 export default function Login(){
     const usernameRef = useRef(null);
     const passwordRef = useRef(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(null);
 
-    async function handleLogin(a){
+    function validateInputs(username, password) {
+        if (!username || !password) {
+            setError('Please fill in all fields');
+            return false;
+        }
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters');
+            return false;
+        }
+        return true;
+    }
+
+    async function handleLogin(e){
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        setSuccess(null);
         
-        a.preventDefault();
         const username = usernameRef.current.value;
         const password = passwordRef.current.value;
 
-        const hashedPassword = bcrypt.hashSync(password, 10);
-        console.log(hashedPassword)
+        // Validate inputs
+        if (!validateInputs(username, password)) {
+            setLoading(false);
+            return;
+        }
 
-        fetch('/auth/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username, password }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Success:', data);
-        })
-        .catch((error) => {
+        try {
+            const response = await fetch('http://127.0.0.1:3000/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                setSuccess(data.message || 'Login successful!');
+                console.log('Login successful:', data);
+                
+                usernameRef.current.value = '';
+                passwordRef.current.value = '';
+                
+                // TODO: Save token and redirect
+                // if (data.token) {
+                //     localStorage.setItem('token', data.token);
+                //     window.location.href = '/dashboard';
+                // }
+            } else {
+                setError(data.message || 'Login failed');
+                console.error('Login failed:', data);
+            }
+        } catch (error) {
+            setError('Network error. Please check if the server is running.');
             console.error('Error:', error);
-        });
+        } finally {
+            setLoading(false);
+        }
     }
 
     return(
         <>
         <div>
-            <form>
+            <form onSubmit={handleLogin}>
                 <div>
                     <div><label htmlFor="email">Email:</label><input type="email" id="email" ref={usernameRef} /></div>
                     <div><label htmlFor="password">Password:</label><input type="password" id="password" ref={passwordRef} /></div>
                 </div>
-                <button type="submit" className="LoginButton" onClick={(a)=>handleLogin(a)}>Login</button>
+                {error && <div className="text-red-500">{error}</div>}
+                {success && <div className="text-green-500">{success}</div>}
+                <button type="submit" className="LoginButton" disabled={loading}>
+                    {loading ? 'Logging in...' : 'Login'}
+                </button>
             </form>
         </div>
         </>
