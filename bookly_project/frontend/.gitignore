@@ -17,3 +17,15 @@ dist-ssr
 .env.local
 .env.*.local
 
+# OS files
+.DS_Store
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
