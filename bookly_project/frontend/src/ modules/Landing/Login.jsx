@@ -2,14 +2,14 @@ import { useState, useRef } from "react"
 
 
 export default function Login(){
-    const usernameRef = useRef(null);
+    const emailRef = useRef(null);
     const passwordRef = useRef(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
 
-    function validateInputs(username, password) {
-        if (!username || !password) {
+    function validateInputs(email, password) {
+        if (!email || !password) {
             setError('Please fill in all fields');
             return false;
         }
@@ -25,12 +25,11 @@ export default function Login(){
         setLoading(true);
         setError(null);
         setSuccess(null);
-        
-        const username = usernameRef.current.value;
+
+        const email = emailRef.current.value;
         const password = passwordRef.current.value;
 
-        
-        if (!validateInputs(username, password)) {
+        if (!validateInputs(email, password)) {
             setLoading(false);
             return;
         }
@@ -42,7 +41,7 @@ export default function Login(){
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username, password }),
+                body: JSON.stringify({ email, password }),
             });
             
             const data = await response.json();
@@ -51,7 +50,7 @@ export default function Login(){
                 setSuccess(data.message || 'Login successful!');
                 console.log('Login successful:', data);
                 
-                usernameRef.current.value = '';
+                emailRef.current.value = '';
                 passwordRef.current.value = '';
                 
                 // TODO: Save token and redirect
@@ -76,7 +75,7 @@ export default function Login(){
         <div>
             <form onSubmit={handleLogin}>
                 <div>
-                    <div><label htmlFor="email">Email:</label><input type="email" id="email" ref={usernameRef} /></div>
+                    <div><label htmlFor="email">Email:</label><input type="email" id="email" ref={emailRef} /></div>
                     <div><label htmlFor="password">Password:</label><input type="password" id="password" ref={passwordRef} /></div>
                 </div>
                 {error && <div className="text-red-500">{error}</div>}

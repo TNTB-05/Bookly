@@ -4,6 +4,7 @@ const session = require('express-session'); //?npm install express-session
 const cors = require('cors'); //?npm install cors
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, 'Secret.env') }); //?npm install dotenv
+const jwt = require('jsonwebtoken'); //?npm install jsonwebtoken
 
 //!Beállítások
 const app = express();

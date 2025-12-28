@@ -3,6 +3,7 @@ const router = express.Router();
 const database = require('../sql/database.js');
 const fs = require('fs/promises');
 const bcrypt = require('bcryptjs'); //?npm install bcrypt
+const jwt = require('jsonwebtoken'); //?npm install jsonwebtoken
 
 
 //!Multer
@@ -44,14 +45,56 @@ router.get('/testsql', async (request, response) => {
 });
 
 
-router.post('/login', async (request, response) => {
-    const { username, password } = request.body;
+const Users = [{email:'test@test.com' ,password:'test123'}]
 
-    // Input validation
-    if (!username || !password) {
+router.post('/register', async (request, response) => {
+    const { email, password } = request.body;
+
+    if (!email || !password) {
         return response.status(400).json({
             success: false,
-            message: 'Username and password are required'
+            message: 'Email and password are required'
+        });
+    }
+
+    if (password.length < 6) {
+        return response.status(400).json({
+            success: false,
+            message: 'Password must be at least 6 characters'
+        });
+    }
+
+    try {
+        const existingUser = Users.find(u => u.email === email);
+        if (existingUser) {
+            return response.status(409).json({
+                success: false,
+                message: 'User already exists'
+            });
+        }
+
+        Users.push({ email, password });
+        response.status(201).json({
+            success: true,
+            message: 'User registered successfully'
+        });
+    } catch (error) {
+        console.error('Registration error:', error);
+        response.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+});
+
+router.post('/login', async (request, response) => {
+    const { email, password } = request.body;
+
+    // Input validation
+    if (!email || !password) {
+        return response.status(400).json({
+            success: false,
+            message: 'Email and password are required'
         });
     }
 
@@ -63,7 +106,23 @@ router.post('/login', async (request, response) => {
     }
 
     try {
- 
+
+        const user = Users.find(u => u.email === email);
+
+        if (!user) {
+            return response.status(401).json({
+                success: false,
+                message: 'nincs ilyen felhasználó'
+            });
+        }
+
+        if (user.password !== password) {
+            return response.status(401).json({
+                success: false,
+                message: 'hibás jelszó'
+            });
+        }
+
         // TODO: Compare password with hash
         // const isPasswordValid = await bcrypt.compare(password, user.password_hash);
         // if (!isPasswordValid) {

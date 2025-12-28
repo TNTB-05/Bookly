@@ -5,6 +5,8 @@ import Register from "./Register";
 
 export default function LandingHeader(){
     const [buttonClicked, setButtonClicked] = useState(null);
+
+
     function handleClick(button){
         setButtonClicked((a)=> button);
     }
@@ -15,6 +17,7 @@ export default function LandingHeader(){
             <button onClick={()=>(handleClick("Register"))}>Register</button>
         </div>}
 
+        {buttonClicked && <button onClick={()=>(handleClick(null))}>Back</button>}
         {buttonClicked === "Login" && <Login />}
         {buttonClicked === "Register" && <Register />}
         </>
