@@ -1,14 +1,17 @@
-import { useState } from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import Landing from './ modules/Landing/Landing'
+import Login from './ modules/Landing/Login'
+import Register from './ modules/Landing/Register'
 import './App.css'
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-
   return (
-    <>
-    {!isLoggedIn && <Landing status={isLoggedIn} />}
-    </>
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="*" element={<Navigate to="/" />} />
+    </Routes>
   )
 }
 
