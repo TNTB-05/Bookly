@@ -2,6 +2,7 @@
 const express = require('express'); //?npm install express
 const session = require('express-session'); //?npm install express-session
 const cors = require('cors'); //?npm install cors
+const cookieParser = require('cookie-parser'); //?npm install cookie-parser
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, 'Secret.env') }); //?npm install dotenv
 const jwt = require('jsonwebtoken'); //?npm install jsonwebtoken
@@ -14,7 +15,16 @@ const ip = process.env.IP_ADDRESS || '127.0.0.1';
 const port = process.env.PORT || 3000;
 
 app.use(express.json()); //?Middleware JSON
-app.use(cors()); //?CORS middleware
+app.use(cookieParser()); //?Cookie parser middleware
+
+// CORS configuration - Allow all for development
+app.use(cors({
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+})); //?CORS middleware
+
 app.set('trust proxy', 1); //?Middleware Proxy
 
 //!Session beállítása:
@@ -35,8 +45,9 @@ app.get('/', (request, response) => {
 app.use('/', router);
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
-const loginApi = require('./api/LoginApi.js');
+const loginApi = require('./api/auth/LoginApi.js');
 app.use('/auth', loginApi);
+
 
 //!Szerver futtatása
 app.use(express.static(path.join(__dirname, '../frontend'))); //?frontend mappa tartalmának betöltése az oldal működéséhez

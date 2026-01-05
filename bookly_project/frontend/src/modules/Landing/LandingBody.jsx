@@ -1,11 +1,8 @@
-import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import Login from "./Login";
-import Register from "./Register";
 
 
-export default function LandingHeader(){
-    const [showForm, setShowForm] = useState(null);
+
+export default function LandingBody(){
     const navigate = useNavigate();
 
     function handleLoginClick(){
