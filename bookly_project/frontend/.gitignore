@@ -12,11 +12,18 @@ dist
 dist-ssr
 *.local
 
+# Environment variables (keep secrets private)
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj

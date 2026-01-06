@@ -1,5 +1,12 @@
-node_modules/
-*.env
-Secret.env
+node_modules
+dist
+*.log
 .DS_Store
-uploads/
+.vscode
+.idea
+
+# Environment variables (keep secrets private)
+.env
+.env.local
+.env.*.local
+Secret.env
