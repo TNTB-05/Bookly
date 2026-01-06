@@ -9,10 +9,10 @@ import Dashboard from './modules/Dashboard/Dashboard'
 
 function App() {
   const[isAuthenticated,setIsAuthenticated]=useState(false);
-  const[authToken,setAuthToken]=useState(null);
+
   
   return (
-<AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, authToken, setAuthToken }}>
+<AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated}}>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />

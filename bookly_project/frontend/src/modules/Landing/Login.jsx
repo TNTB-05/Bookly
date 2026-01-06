@@ -10,7 +10,7 @@ export default function Login(){
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const navigate = useNavigate();
-    const { setIsAuthenticated, setAuthToken } = useAuth();
+    const { setIsAuthenticated } = useAuth();
 
     function validateInputs(email, password) {
         if (!email || !password) {
@@ -58,7 +58,6 @@ export default function Login(){
                 emailRef.current.value = '';
                 passwordRef.current.value = '';
                 localStorage.setItem('accessToken', data.accessToken);
-                setAuthToken(data.accessToken);
                 setIsAuthenticated(true);
                 
                 setTimeout(() => 

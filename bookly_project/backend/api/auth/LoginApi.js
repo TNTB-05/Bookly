@@ -24,21 +24,33 @@ const upload = multer({ storage });
 //!Refresh token store (in production, use database)
 const refreshTokenStore = new Map();
 
+// Clean up expired refresh tokens every hour
+setInterval(() => {
+    const now = Date.now();
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    
+    for (const [token, data] of refreshTokenStore.entries()) {
+        if (now - data.createdAt > sevenDays) {
+            refreshTokenStore.delete(token);
+        }
+    }
+}, 60 * 60 * 1000); // Run every hour
+
 //!Endpoints:
 
 const Users = [];
 
 // Helper function to generate tokens
-const generateTokens = (email) => {
+const generateTokens = (email, userId) => {
     const accessToken = jwt.sign(
-        { email },
+        { email, userId },
         process.env.JWT_SECRET,
         { expiresIn: '15m' } // Short-lived access token
     );
 
     const refreshToken = jwt.sign(
-        { email },
-        process.env.JWT_REFRESH_SECRET ,
+        { email, userId },
+        process.env.JWT_REFRESH_SECRET,
         { expiresIn: '7d' } // Long-lived refresh token
     );
 
@@ -72,7 +84,10 @@ router.post('/register', async (request, response) => {
             });
         }
 
-        Users.push({ email, hashedPassword });
+        const userId = Users.length + 1;
+        Users.push({ userId, email, hashedPassword });
+        
+
         response.status(201).json({
             success: true,
             message: 'User registered successfully'
@@ -108,7 +123,7 @@ router.post('/login', async (request, response) => {
         const user = Users.find(u => u.email === email);
 
         if (!user) {
-            return response.status(401).json({
+            return response.status(422).json({
                 success: false,
                 message: 'Invalid email or password'
             });
@@ -116,17 +131,17 @@ router.post('/login', async (request, response) => {
 
         const passwordMatch = await bcrypt.compare(password, user.hashedPassword);
         if (!passwordMatch) {
-            return response.status(401).json({
+            return response.status(422).json({
                 success: false,
                 message: 'Invalid email or password'
             });
         }
 
         // Generate both access and refresh tokens
-        const { accessToken, refreshToken } = generateTokens(email);
+        const { accessToken, refreshToken } = generateTokens(email, user.userId);
 
         // Store refresh token (in production, save to database)
-        refreshTokenStore.set(refreshToken, { email, createdAt: Date.now() });
+        refreshTokenStore.set(refreshToken, { email, userId: user.userId, createdAt: Date.now() });
 
         // Send refresh token as HTTP-only cookie
         response.cookie('refreshToken', refreshToken, {
@@ -169,15 +184,23 @@ router.post('/refresh', (request, response) => {
         });
     }
 
+    if (!process.env.JWT_REFRESH_SECRET) {
+        console.error('JWT_REFRESH_SECRET not configured');
+        return response.status(500).json({
+            success: false,
+            message: 'Server configuration error'
+        });
+    }
+
     try {
         const decoded = jwt.verify(
             refreshToken,
-            process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET
+            process.env.JWT_REFRESH_SECRET
         );
 
-        // Generate new access token
+        // Generate new access token with userId
         const newAccessToken = jwt.sign(
-            { email: decoded.email },
+            { email: decoded.email, userId: decoded.userId },
             process.env.JWT_SECRET,
             { expiresIn: '15m' }
         );
@@ -203,7 +226,18 @@ router.post('/refresh', (request, response) => {
 
 // Logout endpoint
 router.post('/logout', (request, response) => {
-    response.clearCookie('refreshToken');
+    const refreshToken = request.cookies.refreshToken;
+    
+    // Remove token from store
+    if (refreshToken) {
+        refreshTokenStore.delete(refreshToken);
+    }
+    
+    response.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+    });
     
     response.status(200).json({
         success: true,
