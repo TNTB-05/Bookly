@@ -31,6 +31,7 @@ export async function refreshAccessToken() {
         }
     } catch (error) {
         console.error('Token refresh error:', error);
+        localStorage.removeItem('accessToken');
         return null;
     }
 }
@@ -106,7 +107,7 @@ export async function authFetch(url, options={}){
                 
             }
             else{
-
+                onRefresh(null);
                 window.location.href='/login';
                 throw new Error('Session expired. Please log in again.');
             }

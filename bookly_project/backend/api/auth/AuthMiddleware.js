@@ -23,14 +23,16 @@ const AuthMiddleware = (req, res, next) => {
             if (err) {
                 const statusCode = err.name === 'TokenExpiredError' ? 401 : 403;
                 const message = err.name === 'TokenExpiredError' 
-                    ? 'Access token expired, please refresh'
+                    ? 'Token expired'
                     : 'Invalid token';
                 
                 return res.status(statusCode).json({ 
                     message,
-                    error: err.message
+                    error: err.message,
+                    tokenExpired: err.name === 'TokenExpiredError'
                 });
             }
+            
             req.user = user;
             next();
         });
