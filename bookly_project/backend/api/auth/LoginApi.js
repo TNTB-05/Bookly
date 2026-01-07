@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs'); //?npm install bcrypt
 const jwt = require('jsonwebtoken'); //?npm install jsonwebtoken
 
 
+
 //!Multer
 const multer = require('multer'); //?npm install multer
 const path = require('path');
@@ -42,6 +43,16 @@ const Users = [];
 
 // Helper function to generate tokens
 const generateTokens = (email, userId) => {
+    if (!process.env.JWT_SECRET) {
+        console.error('JWT_SECRET is not configured');
+        throw new Error('Server configuration error: JWT_SECRET missing');
+    }
+    
+    if (!process.env.JWT_REFRESH_SECRET) {
+        console.error('JWT_REFRESH_SECRET is not configured');
+        throw new Error('Server configuration error: JWT_REFRESH_SECRET missing');
+    }
+
     const accessToken = jwt.sign(
         { email, userId },
         process.env.JWT_SECRET,

@@ -10,7 +10,6 @@ const jwt = require('jsonwebtoken'); //?npm install jsonwebtoken
 //!Beállítások
 const app = express();
 const router = express.Router();
-
 const ip = process.env.IP_ADDRESS || '127.0.0.1';
 const port = process.env.PORT || 3000;
 

@@ -32,6 +32,7 @@ const AuthMiddleware = (req, res, next) => {
                     tokenExpired: err.name === 'TokenExpiredError'
                 });
             }
+            
             req.user = user;
             next();
         });

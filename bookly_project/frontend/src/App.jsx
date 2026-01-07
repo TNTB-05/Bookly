@@ -3,12 +3,48 @@ import Landing from './modules/Landing/Landing'
 import Login from './modules/Landing/Login'
 import Register from './modules/Landing/Register'
 import './App.css'
-import { useState,} from 'react'
+import { useState, useEffect } from 'react'
 import { AuthContext } from './modules/auth/auth'
 import Dashboard from './modules/Dashboard/Dashboard'
 
 function App() {
-  const[isAuthenticated,setIsAuthenticated]=useState(false);
+  const[isAuthenticated,setIsAuthenticated]=useState(!!localStorage.getItem('accessToken'));
+
+  // Listen for storage changes (works across tabs and when token is removed)
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'accessToken') {
+        setIsAuthenticated(!!e.newValue);
+      }
+    };
+
+    // Listen for storage events from other tabs
+    window.addEventListener('storage', handleStorageChange);
+
+    // Override localStorage.removeItem to detect same-tab removal
+    const originalRemoveItem = localStorage.removeItem.bind(localStorage);
+    localStorage.removeItem = (key) => {
+      originalRemoveItem(key);
+      if (key === 'accessToken') {
+        setIsAuthenticated(false);
+      }
+    };
+
+    // Override localStorage.setItem to detect same-tab setting
+    const originalSetItem = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = (key, value) => {
+      originalSetItem(key, value);
+      if (key === 'accessToken') {
+        setIsAuthenticated(!!value);
+      }
+    };
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      localStorage.removeItem = originalRemoveItem;
+      localStorage.setItem = originalSetItem;
+    };
+  }, []);
 
   
   return (
