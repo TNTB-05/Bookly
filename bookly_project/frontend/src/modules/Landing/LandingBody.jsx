@@ -15,7 +15,7 @@ export default function LandingBody(){
                     <p>Tedd egyszerűbbé a foglalást a bookly-val </p>
                     <button className="rounded-2xl bg-black text-white p-2" onClick={() => navigate('/login')}>Foglalás</button>
                 </span>
-                <span className="w-full lg:w-auto"><img src="" alt="section-1-alt" className="w-full max-w-md lg:max-w-lg xl:max-w-xl rounded-lg" /></span>
+                <span className="w-full lg:w-auto"><img src="sectionimage.jpg" alt="section-1-alt" className="w-full max-w-md lg:max-w-lg xl:max-w-xl rounded-lg" /></span>
             </section>
 
             <section className=" bg-light-blue mt-10 rounded-lg py-4">

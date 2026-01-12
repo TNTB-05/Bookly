@@ -7,7 +7,7 @@ export default function LandingHeader(){
       <div className="landing-header bg-inherit flex justify-between py-2 px-4 font-bold ">
 
             <span className="flex items-center gap-2">
-                <Logo className=" left-10 relative p-0 w-32 object-contain" />
+                <Logo className=" left-10 relative p-0 w-32 object-contain"  />
             </span>
             <span className='items-center gap-4 flex'>
                 <button>Elérhetőség</button>
