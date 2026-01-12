@@ -5,7 +5,7 @@ import Register from './modules/Landing/Register'
 import './App.css'
 import { useState, useEffect } from 'react'
 import { AuthContext } from './modules/auth/auth'
-import Dashboard from './modules/Dashboard/Dashboard'
+import Dashboard from './modules/costumer/Dashboard/Dashboard'
 
 function App() {
   const[isAuthenticated,setIsAuthenticated]=useState(!!localStorage.getItem('accessToken'));
