@@ -1,1 +1,13 @@
-@import "tailwindcss"
+@import "tailwindcss";
+
+@theme {
+        --color-light-blue: #E0F7FA;
+        --color-base-blue: #C9F5FA;
+        --color-accent-blue: #7DE1F4;
+        --color-dark-blue: #0A8CBA;
+        --color-light-gray: #F5F5F5;
+        --color-dark-gray: #2D2D2D;
+};
+
+@import "./typography.css";
+

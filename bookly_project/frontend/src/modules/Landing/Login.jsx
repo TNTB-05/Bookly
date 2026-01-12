@@ -57,6 +57,7 @@ export default function Login(){
                 
                 emailRef.current.value = '';
                 passwordRef.current.value = '';
+                
                 localStorage.setItem('accessToken', data.accessToken);
                 setIsAuthenticated(true);
                 
