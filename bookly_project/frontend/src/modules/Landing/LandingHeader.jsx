@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import{ createPortal} from 'react-dom';
 import Logo from '../Logo';
 import ContactModal from './ContactModal';
+import { useNavigate } from 'react-router-dom';
 
 export default function LandingHeader() {
+    const navigate = useNavigate();
     const [showContact, setShowContact] = useState(false);
 
     return (
@@ -13,13 +16,13 @@ export default function LandingHeader() {
                 </span>
                 <span className="items-center gap-4 flex">
                     <button onClick={() => setShowContact(true)}>Kapcsolat</button>
-                    <button>Szolgáltató vagyok</button>
+                    <button onClick={() => navigate('/provider-dashboard')}>Szolgáltató vagyok</button>
                     <button className="bg-white/40 backdrop-blur-md border-2 border-white/50 hover:bg-white/50 text-gray-900 rounded-xl px-4 py-1.5 transition-all duration-300 shadow-lg hover:shadow-xl hover:border-white/70">
                         Bejelentkezés
                     </button>
                 </span>
             </div>
-            {showContact && <ContactModal onClose={() => setShowContact(false)} />}
+            {showContact && createPortal(<ContactModal onClose={() => setShowContact(false)} />, document.body)}
         </>
     );
 }
