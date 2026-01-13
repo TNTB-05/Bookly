@@ -46,6 +46,8 @@ const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
 const loginApi = require('./api/auth/LoginApi.js');
 app.use('/auth', loginApi);
+const provLoginApi = require('./api/auth/provLoginApi.js');
+app.use('/auth/provider', provLoginApi);
 
 
 //!Szerver futtatása

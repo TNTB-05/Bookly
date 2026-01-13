@@ -2,7 +2,10 @@ import { Routes, Route, Navigate} from 'react-router-dom'
 import Landing from './modules/Landing/Landing'
 import Login from './modules/Landing/Login'
 import Register from './modules/Landing/Register'
-import './App.css'
+import ProvRegister from './modules/Provider/provRegister'
+import ProvLogin from './modules/Provider/provLogin'
+import ProvDash from './modules/Provider/provDash'
+import './App.css' 
 import { useState, useEffect } from 'react'
 import { AuthContext } from './modules/auth/auth'
 import Dashboard from './modules/costumer/Dashboard/Dashboard'
@@ -53,8 +56,12 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/provider/register" element={<ProvRegister />} />
+        <Route path="/provider/login" element={<ProvLogin />} />
         <Route path="/dashboard" element={isAuthenticated?<Dashboard />:<Navigate to="/login" />} />
+        <Route path="/ProvDash" element={isAuthenticated?<ProvDash />:<Navigate to="/provider/login" />} />
         <Route path="*" element={<Navigate to="/" />} />
+
       </Routes>
 </AuthContext.Provider>
   )

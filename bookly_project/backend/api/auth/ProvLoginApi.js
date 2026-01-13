@@ -41,7 +41,7 @@ setInterval(() => {
 
 const Users = [];
 
-// Helper function to generate tokens
+// Helper function to generate tokens  
 const generateTokens = (email, userId) => {
     if (!process.env.JWT_SECRET) {
         console.error('JWT_SECRET is not configured');
@@ -54,60 +54,68 @@ const generateTokens = (email, userId) => {
     }
 
     const accessToken = jwt.sign(
-        { email, userId , role: 'costumer'},
+        { email, userId , role: 'provider'},
         process.env.JWT_SECRET,
         { expiresIn: '15m' } // Short-lived access token
     );
 
     const refreshToken = jwt.sign(
-        { email, userId , role: 'costumer'},
+        { email, userId , role: 'provider'},
         process.env.JWT_REFRESH_SECRET,
         { expiresIn: '7d' } // Long-lived refresh token
     );
 
     return { accessToken, refreshToken };
-};
+};        
 
 router.post('/register', async (request, response) => {
-    const { email, password } = request.body;
+    const { companyName, email, password, phone } = request.body;
 
-    if (!email || !password) {
+    if (!companyName || !email || !password || !phone) {
         return response.status(400).json({
             success: false,
-            message: 'Email and password are required'
+            message: 'Minden mező kitöltése kötelező'
         });
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
         return response.status(400).json({
             success: false,
-            message: 'Password must be at least 6 characters'
+            message: 'A jelszónak legalább 8 karakter hosszúnak kell lennie'
         });
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
 
     try {
-        const existingUser = Users.find(u => u.email === email);
-        if (existingUser) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Check if provider already exists
+        const existingProvider = Users.find(u => u.email === email);
+        if (existingProvider) {
             return response.status(409).json({
                 success: false,
-                message: 'User already exists'
+                message: 'Ez az email cím már használatban van'
             });
         }
 
         const userId = Users.length + 1;
-        Users.push({ userId, email, hashedPassword });
-        
+        Users.push({ 
+            userId, 
+            companyName, 
+            email, 
+            hashedPassword, 
+            phone,
+            role: 'provider'
+        });
 
         response.status(201).json({
             success: true,
-            message: 'User registered successfully'
+            message: 'Sikeres regisztráció'
         });
     } catch (error) {
         console.error('Registration error:', error);
         response.status(500).json({
             success: false,
-            message: 'Server error'
+            message: 'Szerver hiba történt'
         });
     }
 });
@@ -115,28 +123,20 @@ router.post('/register', async (request, response) => {
 router.post('/login', async (request, response) => {
     const { email, password } = request.body;
 
-    // Input validation
     if (!email || !password) {
         return response.status(400).json({
             success: false,
-            message: 'Email and password are required'
-        });
-    }
-
-    if (password.length < 6) {
-        return response.status(400).json({
-            success: false,
-            message: 'Invalid credentials'
+            message: 'Email és jelszó megadása kötelező'
         });
     }
 
     try {
-        const user = Users.find(u => u.email === email);
+        const user = Users.find(u => u.email === email && u.role === 'provider');
 
         if (!user) {
             return response.status(422).json({
                 success: false,
-                message: 'Invalid email or password'
+                message: 'Hibás email vagy jelszó'
             });
         }
 
@@ -144,34 +144,35 @@ router.post('/login', async (request, response) => {
         if (!passwordMatch) {
             return response.status(422).json({
                 success: false,
-                message: 'Invalid email or password'
+                message: 'Hibás email vagy jelszó'
             });
         }
 
         // Generate both access and refresh tokens
         const { accessToken, refreshToken } = generateTokens(email, user.userId);
 
-        // Store refresh token (in production, save to database)
+        // Store refresh token
         refreshTokenStore.set(refreshToken, { email, userId: user.userId, createdAt: Date.now() });
 
         // Send refresh token as HTTP-only cookie
         response.cookie('refreshToken', refreshToken, {
-            httpOnly: true,      // Not accessible from JavaScript
-            secure: process.env.NODE_ENV === 'production', // Only HTTPS in production
-            sameSite: 'strict',  // CSRF protection
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
 
         response.status(200).json({
             success: true,
-            message: 'Login successful',
-            accessToken
+            message: 'Sikeres bejelentkezés',
+            accessToken,
+            companyName: user.companyName
         });
     } catch (error) {
         console.error('Login error:', error);
         response.status(500).json({
             success: false,
-            message: 'Server error'
+            message: 'Szerver hiba történt'
         });
     }
 });
@@ -209,9 +210,9 @@ router.post('/refresh', (request, response) => {
             process.env.JWT_REFRESH_SECRET
         );
 
-        // Generate new access token with userId
+        // Generate new access token with userId and role
         const newAccessToken = jwt.sign(
-            { email: decoded.email, userId: decoded.userId , role: decoded.role},
+            { email: decoded.email, userId: decoded.userId, role: decoded.role },
             process.env.JWT_SECRET,
             { expiresIn: '15m' }
         );
@@ -256,4 +257,10 @@ router.post('/logout', (request, response) => {
     });
 });
 
-module.exports = router;
+router.post('/provLogin', async (req, res) => {
+
+
+}
+);
+
+module.exports=router;
