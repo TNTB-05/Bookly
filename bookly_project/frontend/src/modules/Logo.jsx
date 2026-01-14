@@ -1,5 +1,5 @@
 
-import logo from '../pics/image_2025-11-05_190715297-removebg-preview.png';
+import logo from '../pics/logo.png';
 import {useNavigate} from 'react-router-dom';
 import { useAuth } from './auth/auth';
 
