@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import logo from '../../pics/image_2025-11-05_190715297-removebg-preview.png';
 import heroImage from '../../pics/ChatGPT Image Jan 12, 2026 at 04_16_37 PM.png'; 
 import Card from '../Landing/Card';
+import Slideshow from './Slideshow';
 
 export default function ProvLanding() {
     const navigate = useNavigate();
@@ -58,6 +59,9 @@ export default function ProvLanding() {
                     />
                 </div>
             </section>
+
+            {/* Slideshow Section */}
+            <Slideshow />
 
             {/* Services Section */}
             <section className="px-6 py-20 sm:px-12 lg:px-16 bg-light-blue backdrop-blur-sm rounded-t-[3rem] mt-8 shadow-inner border-t border-white/50">
