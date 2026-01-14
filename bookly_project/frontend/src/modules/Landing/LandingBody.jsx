@@ -5,6 +5,8 @@ import appointment from "../../pics/appointment.png";
 import services from "../../pics/services.png";
 import allinone from "../../pics/allinone.png";
 import calendar from "../../pics/calendar.png";
+import connectionservices from "../../pics/connectionservice.png";
+import collision from "../../pics/collision.png";
 
 export default function LandingBody(){
     const navigate = useNavigate();
@@ -37,9 +39,9 @@ export default function LandingBody(){
                     <button className="rounded-2xl bg-black text-white p-2">Csatlakozz!</button>
                </span>
             <span className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-3 xl:gap-4 2xl:gap-6 px-4 sm:px-6 lg:px-4 xl:px-8 2xl:px-10 py-8">
-                    <Card title="Átlátható időpontok" description="Rendszerünk segítségével egyszerűen és átláthatóan tudod kezelni ügyfeleid időpontjait" imageUrl={calendar} />
-                    <Card title="Kapcsolatbiztosítás" description="Felmerülő probléma esetén gyorsan el tudod érni az ügyfeleket" imageUrl="image2.jpg" />
-                    <Card title="Időpont-egyeztetés támogatás" description="Segít az átfedések és ütközések elkerülésében" imageUrl="image3.jpg" />
+                    <Card title="Átlátható időpontok" description="A Bookly-val egyszerűen és átláthatóan tudod kezelni ügyfeleid időpontjait" imageUrl={calendar} />
+                    <Card title="Kapcsolatbiztosítás" description="Felmerülő probléma esetén gyorsan el tudod érni az ügyfeleket" imageUrl={connectionservices} />
+                    <Card title="Időpont-egyeztetés támogatás" description="Segít az átfedések és ütközések elkerülésében" imageUrl={collision} />
             </span>
             </section>
         </div>
