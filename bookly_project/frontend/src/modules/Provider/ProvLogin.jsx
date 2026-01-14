@@ -79,6 +79,17 @@ export default function ProvLogin() {
             <div className="w-full max-w-md">
                 {/* Glass Card */}
                 <div className="bg-white/40 backdrop-blur-md rounded-2xl shadow-xl border-2 border-white/50 p-6 sm:p-8 lg:p-10">
+                    {/* Back Button */}
+                    <button
+                        onClick={() => navigate('/provider/landing')}
+                        className="mb-4 text-gray-700 hover:text-gray-900 flex items-center gap-2 transition-colors"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                        </svg>
+                        Vissza
+                    </button>
+                    
                     <h1 className="text-center mb-6 sm:mb-8 text-gray-900">
                         Szolgáltató Bejelentkezés
                     </h1>

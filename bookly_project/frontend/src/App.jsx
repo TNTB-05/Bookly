@@ -5,6 +5,7 @@ import Register from './modules/Landing/Register'
 import ProvRegister from './modules/Provider/provRegister'
 import ProvLogin from './modules/Provider/provLogin'
 import ProvDash from './modules/Provider/provDash'
+import Provlanding from './modules/Provider/ProvLanding'
 import './App.css' 
 import { useState, useEffect } from 'react'
 import { AuthContext } from './modules/auth/auth'
@@ -58,6 +59,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/provider/register" element={<ProvRegister />} />
         <Route path="/provider/login" element={<ProvLogin />} />
+        <Route path='/provider/landing' element={<Provlanding />} />
         <Route path="/dashboard" element={isAuthenticated?<Dashboard />:<Navigate to="/login" />} />
         <Route path="/ProvDash" element={isAuthenticated?<ProvDash />:<Navigate to="/provider/login" />} />
         <Route path="*" element={<Navigate to="/" />} />
