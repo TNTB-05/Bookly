@@ -1,10 +1,35 @@
 import { createContext, useContext } from "react";
-
+import { jwtDecode } from "jwt-decode"; // npm install jwt-decode
 
 export const AuthContext = createContext();
 
 export function useAuth() {
     return useContext(AuthContext);
+}
+
+// Helper to decode JWT and get user info
+export function getUserFromToken() {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return null;
+    
+    try {
+        const decoded = jwtDecode(token);
+        
+        // Check if token is expired
+        const currentTime = Date.now() / 1000;
+        if (decoded.exp < currentTime) {
+            return null;
+        }
+        
+        return {
+            email: decoded.email,
+            userId: decoded.userId,
+            role: decoded.role // 'provider' or 'costumer'
+        };
+    } catch (error) {
+        console.error('Error decoding token:', error);
+        return null;
+    }
 }
 
 // Helper to refresh access token

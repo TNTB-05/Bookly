@@ -8,17 +8,20 @@ import ProvDash from './modules/Provider/provDash'
 import Provlanding from './modules/Provider/ProvLanding'
 import './App.css' 
 import { useState, useEffect } from 'react'
-import { AuthContext } from './modules/auth/auth'
+import { AuthContext, getUserFromToken } from './modules/auth/auth'
 import Dashboard from './modules/costumer/Dashboard/Dashboard'
+import ProtectedRoute from './modules/auth/ProtectedRoute'
 
 function App() {
   const[isAuthenticated,setIsAuthenticated]=useState(!!localStorage.getItem('accessToken'));
+  const[user, setUser] = useState(getUserFromToken());
 
   // Listen for storage changes (works across tabs and when token is removed)
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === 'accessToken') {
         setIsAuthenticated(!!e.newValue);
+        setUser(e.newValue ? getUserFromToken() : null);
       }
     };
 
@@ -31,6 +34,7 @@ function App() {
       originalRemoveItem(key);
       if (key === 'accessToken') {
         setIsAuthenticated(false);
+        setUser(null);
       }
     };
 
@@ -40,6 +44,7 @@ function App() {
       originalSetItem(key, value);
       if (key === 'accessToken') {
         setIsAuthenticated(!!value);
+        setUser(getUserFromToken());
       }
     };
 
@@ -52,18 +57,38 @@ function App() {
 
   
   return (
-<AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated}}>
+<AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, user, setUser }}>
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/provider/register" element={<ProvRegister />} />
         <Route path="/provider/login" element={<ProvLogin />} />
         <Route path='/provider/landing' element={<Provlanding />} />
-        <Route path="/dashboard" element={isAuthenticated?<Dashboard />:<Navigate to="/login" />} />
-        <Route path="/ProvDash" element={isAuthenticated?<ProvDash />:<Navigate to="/provider/login" />} />
+        
+        {/* Protected Customer Routes */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute allowedRoles={['costumer']}>
+              <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Protected Provider Routes */}
+        <Route 
+          path="/ProvDash" 
+          element={
+            <ProtectedRoute allowedRoles={['provider']}>
+              <ProvDash />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" />} />
-
       </Routes>
 </AuthContext.Provider>
   )
