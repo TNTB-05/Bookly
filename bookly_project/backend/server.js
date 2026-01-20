@@ -47,6 +47,8 @@ const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
 const loginApi = require('./api/auth/LoginApi.js');
 app.use('/auth', loginApi);
+const userApi = require('./api/userApi.js');
+app.use('/api', userApi);
 
 
 //!Szerver futtatása

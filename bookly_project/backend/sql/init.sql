@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS employees (
   `email` VARCHAR(255) UNIQUE NOT NULL,
   `phone` VARCHAR(20) UNIQUE NOT NULL,
   `status` ENUM('active', 'inactive', 'deleted', 'banned') DEFAULT 'inactive',
-  `role` ENUM('user', 'employee', 'admin') DEFAULT 'employee',
+  `role` ENUM('user', 'employee', 'admin', 'manager') DEFAULT 'employee',
   `last_login` DATETIME,
   `password_hash` VARCHAR(255) NOT NULL,
   `access_token` TEXT,
