@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser'); //?npm install cookie-parser
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, 'Secret.env') }); //?npm install dotenv
 const jwt = require('jsonwebtoken'); //?npm install jsonwebtoken
+const { pool } = require('./sql/database.js'); //?Adatbázis kapcsolat importálása
 
 //!Beállítások
 const app = express();
@@ -54,6 +55,14 @@ app.use('/auth/provider', provLoginApi);
 app.use(express.static(path.join(__dirname, '../frontend'))); //?frontend mappa tartalmának betöltése az oldal működéséhez
 app.listen(port, ip, () => {
     console.log(`Szerver elérhetősége: http://${ip}:${port}`);
+});
+
+//!Adatbázis kapcsolat ellenőrzése
+pool.query('SELECT 1').then(() => {
+    console.log('✓ Database connected');
+}).catch(err => {
+    console.error('✗ Database connection failed:', err.message);
+    process.exit(1);
 });
 
 //?Szerver futtatása terminalból: npm run dev

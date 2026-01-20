@@ -1,7 +1,12 @@
 import { useNavigate } from "react-router-dom"
 
 import Card from "./Card";
-import heroImage from "../../pics/ChatGPT Image Jan 12, 2026 at 04_16_37 PM.png";
+import appointment from "../../pics/appointment.png";
+import services from "../../pics/services.png";
+import allinone from "../../pics/allinone.png";
+import calendar from "../../pics/calendar.png";
+import connectionservices from "../../pics/connectionservice.png";
+import collision from "../../pics/collision.png";
 
 export default function LandingBody(){
     const navigate = useNavigate();
@@ -21,9 +26,9 @@ export default function LandingBody(){
             <section className=" bg-light-blue mt-10 rounded-lg py-4">
                 <h1 className="text-center text-2xl sm:text-3xl md:text-4xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-bold mb-6 sm:mb-8 px-4">Miért használd a Bookly-t?</h1>
             <span className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-3 xl:gap-4 2xl:gap-6 px-4 sm:px-6 lg:px-4 xl:px-8 2xl:px-10 py-8">
-                    <Card title="Időpont foglalás" description="Egyszerű és gyors időpontfoglalás a kedvenc szolgáltatóidhoz." imageUrl={heroImage} />
-                    <Card title="Card 2" description="Description for card 2" imageUrl="image2.jpg" />
-                    <Card title="Card 3" description="Description for card 3" imageUrl="image3.jpg" />
+                    <Card title="Időpont foglalás" description="Egyszerű és gyors időpontfoglalás a kedvenc szolgáltatóidhoz." imageUrl={appointment} />
+                    <Card title="Széles Választék" description="Partnereink széles választékából tudsz böngészni kedvedre" imageUrl={services} />
+                    <Card title="Minden egy helyen" description="Nálunk minden szolgáltatás elérhető egy helyen" imageUrl={allinone} />
             </span>
             </section>
 
@@ -34,9 +39,9 @@ export default function LandingBody(){
                     <button onClick={() => navigate('/provider/landing')} className="rounded-2xl bg-black text-white p-2">Csatlakozz!</button>
                </span>
             <span className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-3 xl:gap-4 2xl:gap-6 px-4 sm:px-6 lg:px-4 xl:px-8 2xl:px-10 py-8">
-                    <Card title="Card 1" description="Description for card 1" imageUrl={heroImage} />
-                    <Card title="Card 2" description="Description for card 2" imageUrl="image2.jpg" />
-                    <Card title="Card 3" description="Description for card 3" imageUrl="image3.jpg" />
+                    <Card title="Átlátható időpontok" description="A Bookly-val egyszerűen és átláthatóan tudod kezelni ügyfeleid időpontjait" imageUrl={calendar} />
+                    <Card title="Kapcsolatbiztosítás" description="Felmerülő probléma esetén gyorsan el tudod érni az ügyfeleket" imageUrl={connectionservices} />
+                    <Card title="Időpont-egyeztetés támogatás" description="Segít az átfedések és ütközések elkerülésében" imageUrl={collision} />
             </span>
             </section>
         </div>
