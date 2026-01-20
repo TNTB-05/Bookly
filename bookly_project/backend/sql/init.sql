@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS providers (
   `access_token` TEXT,
   `refresh_token` TEXT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  --`rating` DECIMAL(2,1) DEFAULT 0.0
+  -- rating DECIMAL(2,1) DEFAULT 0.0 - consider adding later
 );
 
 CREATE TABLE IF NOT EXISTS services (
