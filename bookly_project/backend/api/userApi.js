@@ -14,8 +14,8 @@ router.get('/users', async (req, res) => {
 });
 
 //?Felhasználó lekérése ID alapján
-router.get('/users/?id', async (req, res) => {
-    const userId = req.query.id;
+router.get('/users/:id', async (req, res) => {
+    const userId = req.params.id;
     try {
         const user = await getUserById(userId);
         if (!user) {
