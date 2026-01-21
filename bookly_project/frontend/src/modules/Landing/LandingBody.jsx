@@ -36,7 +36,7 @@ export default function LandingBody(){
                <span className="flex flex-col justify-center items-center gap-4 p-6 sm:p-8 lg:p-10 bg-inherit rounded-lg">
                     <h1 className="text-center text-2xl sm:text-3xl md:text-4xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-bold mb-6 sm:mb-8 px-4">Vállakozó vagy?</h1>
                     <p className="text-center mb-6 sm:mb-8 px-4">Szeretnél egy egyszerű és átlátható rendszert a foglalások kezelésére?</p>
-                    <button className="rounded-2xl bg-black text-white p-2">Csatlakozz!</button>
+                    <button onClick={() => navigate('/provider/landing')} className="rounded-2xl bg-black text-white p-2">Csatlakozz!</button>
                </span>
             <span className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-3 xl:gap-4 2xl:gap-6 px-4 sm:px-6 lg:px-4 xl:px-8 2xl:px-10 py-8">
                     <Card title="Átlátható időpontok" description="A Bookly-val egyszerűen és átláthatóan tudod kezelni ügyfeleid időpontjait" imageUrl={calendar} />
@@ -48,3 +48,4 @@ export default function LandingBody(){
     )
 }
 
+    
