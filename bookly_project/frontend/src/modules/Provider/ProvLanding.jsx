@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import logo from '../../pics/image_2025-11-05_190715297-removebg-preview.png';
-import heroImage from '../../pics/ChatGPT Image Jan 12, 2026 at 04_16_37 PM.png'; 
+import logo from '../../pics/logo.png';
+import heroImage from '../../pics/appointment.png'; 
 import Card from '../Landing/Card';
 import Slideshow from './Slideshow';
 

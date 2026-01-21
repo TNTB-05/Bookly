@@ -1,12 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../../auth/auth';
-import {
-    getCurrentUser,
-    getUserAppointments,
-    getProviders,
-    getServices
-} from '../../../services/api';
+
 import Logo from '../../Logo';
 import NavItem from './NavItem';
 import './Dashboard.css';
@@ -27,6 +22,7 @@ export default function Dashboard() {
         loadData();
     }, []);
 
+    
     async function loadData() {
         try {
             const [userData, appointmentsData, providersData, servicesData] = await Promise.all([
