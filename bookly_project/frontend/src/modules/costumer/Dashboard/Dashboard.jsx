@@ -32,6 +32,7 @@ export default function Dashboard() {
         loadData();
     }, []);
 
+    
     async function loadData() {
         try {
             const [userData, appointmentsData, providersData, servicesData] = await Promise.all([
