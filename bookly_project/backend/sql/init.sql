@@ -1,10 +1,18 @@
 -- Create RefTokens table first (no dependencies)
+CREATE DATABASE IF NOT EXISTS bookly_db
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_hungarian_ci;
+
+USE bookly_db;
+
+ALTER DATABASE bookly_db CHARACTER SET utf8mb4 COLLATE utf8mb4_hungarian_ci;
+
 CREATE TABLE IF NOT EXISTS RefTokens(
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
   `user_id` INT,
   `refresh_token` TEXT NOT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 CREATE TABLE IF NOT EXISTS users (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -21,7 +29,8 @@ CREATE TABLE IF NOT EXISTS users (
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
   FOREIGN KEY (refresh_token_id) REFERENCES RefTokens(id)
-);
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
+
 
 -- Add foreign key constraint to RefTokens after users table is created
 ALTER TABLE RefTokens ADD FOREIGN KEY (user_id) REFERENCES users(id);
@@ -37,7 +46,7 @@ CREATE TABLE IF NOT EXISTS salons (
   `sharecode` VARCHAR(100) UNIQUE,
   `status` ENUM('open', 'closed', 'renovation') DEFAULT 'open',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 CREATE TABLE IF NOT EXISTS providers (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -55,7 +64,7 @@ CREATE TABLE IF NOT EXISTS providers (
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   -- rating DECIMAL(2,1) DEFAULT 0.0 - consider adding later
   FOREIGN KEY (salon_id) REFERENCES salons(id)
-);
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 CREATE TABLE IF NOT EXISTS services (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -67,7 +76,7 @@ CREATE TABLE IF NOT EXISTS services (
   `status` ENUM('available', 'unavailable') DEFAULT 'available',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (provider_id) REFERENCES providers(id)
-);
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 CREATE TABLE IF NOT EXISTS appointments (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -81,7 +90,7 @@ CREATE TABLE IF NOT EXISTS appointments (
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (provider_id) REFERENCES providers(id)
-);
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 CREATE TABLE IF NOT EXISTS ratings(
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -93,7 +102,7 @@ CREATE TABLE IF NOT EXISTS ratings(
   `active` BOOLEAN DEFAULT TRUE,
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (provider_id) REFERENCES providers(id)
-);
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 
 -- Optional: Insert sample data (seed)
