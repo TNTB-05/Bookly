@@ -1,14 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { logout } from '../../auth/auth';
-import {
-    getCurrentUser,
-    getUserAppointments,
-    getProviders,
-    getServices
-} from '../../../services/api';
-import Logo from '../../Logo';
-import NavItem from './NavItem';
+import DashboardNavbar from './DashboardNavbar';
 import './Dashboard.css';
 
 export default function Dashboard() {
@@ -18,9 +10,10 @@ export default function Dashboard() {
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [serviceFilter, setServiceFilter] = useState('all');
+    const [locationSearch, setLocationSearch] = useState('');
+    const [userLocation, setUserLocation] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -45,12 +38,6 @@ export default function Dashboard() {
         } finally {
             setLoading(false);
         }
-    }
-
-    async function handleLogout() {
-        await logout();
-        localStorage.removeItem('accessToken');
-        navigate('/');
     }
 
     function formatDate(dateString) {
@@ -92,219 +79,28 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-base-blue font-sans text-gray-900">
             {/* Navbar */}
-            <nav className="bg-white shadow-sm fixed w-full z-30 top-0 border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between h-16 relative">
-                        <div className="flex items-center">
-                            <div className="shrink-0 flex items-center">
-                                <Logo className="h-10 w-auto cursor-pointer" />
-                            </div>
-                        </div>
-
-                        <div className="hidden sm:flex sm:space-x-8 gap-10 h-full items-center absolute left-1/2 -translate-x-1/2">
-                            <NavItem
-                                tab="overview"
-                                label="Áttekintés"
-                                activeTab={activeTab}
-                                setActiveTab={setActiveTab}
-                                setIsMobileMenuOpen={setIsMobileMenuOpen}
-                            />
-                            <NavItem
-                                tab="appointments"
-                                label="Foglalásaim"
-                                activeTab={activeTab}
-                                setActiveTab={setActiveTab}
-                                setIsMobileMenuOpen={setIsMobileMenuOpen}
-                            />
-                            <NavItem
-                                tab="book"
-                                label="Új foglalás"
-                                activeTab={activeTab}
-                                setActiveTab={setActiveTab}
-                                setIsMobileMenuOpen={setIsMobileMenuOpen}
-                            />
-                            <NavItem
-                                tab="profile"
-                                label="Profil"
-                                activeTab={activeTab}
-                                setActiveTab={setActiveTab}
-                                setIsMobileMenuOpen={setIsMobileMenuOpen}
-                            />
-                        </div>
-
-                        {/* User Menu & Logout */}
-                        <div className="hidden sm:ml-6 sm:flex sm:items-center">
-                            <div className="flex items-center space-x-4">
-                                <div className="flex-col items-end hidden md:flex">
-                                    <span className="text-sm font-medium text-gray-900">
-                                        {user?.name}
-                                    </span>
-                                    <span className="text-xs text-gray-500">{user?.email}</span>
-                                </div>
-                                <div className="h-9 w-9 rounded-full bg-linear-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-sm">
-                                    {user?.name?.charAt(0)?.toUpperCase()}
-                                </div>
-                                <button
-                                    onClick={handleLogout}
-                                    className="p-2 ml-2 text-gray-400 hover:text-red-600 transition-colors rounded-full hover:bg-red-50"
-                                    title="Kijelentkezés"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="h-6 w-6"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                                        />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Mobile nézet gomb */}
-                        <div className="flex items-center sm:hidden">
-                            <button
-                                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
-                            >
-                                <span className="sr-only">Open main menu</span>
-                                <svg
-                                    className={`${isMobileMenuOpen ? 'hidden' : 'block'} h-6 w-6`}
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                </svg>
-                                <svg
-                                    className={`${isMobileMenuOpen ? 'block' : 'hidden'} h-6 w-6`}
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Mobile nézet */}
-                <div
-                    className={`${isMobileMenuOpen ? 'block' : 'hidden'} sm:hidden bg-white border-b border-gray-200`}
-                >
-                    <div className="pt-2 pb-3 space-y-1">
-                        <NavItem
-                            tab="overview"
-                            label="Áttekintés"
-                            icon="🏠"
-                            activeTab={activeTab}
-                            setActiveTab={setActiveTab}
-                            setIsMobileMenuOpen={setIsMobileMenuOpen}
-                        />
-                        <NavItem
-                            tab="appointments"
-                            label="Foglalásaim"
-                            icon="📅"
-                            activeTab={activeTab}
-                            setActiveTab={setActiveTab}
-                            setIsMobileMenuOpen={setIsMobileMenuOpen}
-                        />
-                        <NavItem
-                            tab="book"
-                            label="Új foglalás"
-                            icon="➕"
-                            activeTab={activeTab}
-                            setActiveTab={setActiveTab}
-                            setIsMobileMenuOpen={setIsMobileMenuOpen}
-                        />
-                        <NavItem
-                            tab="profile"
-                            label="Profil"
-                            icon="👤"
-                            activeTab={activeTab}
-                            setActiveTab={setActiveTab}
-                            setIsMobileMenuOpen={setIsMobileMenuOpen}
-                        />
-                    </div>
-                    <div className="pt-4 pb-4 border-t border-gray-200">
-                        <div className="flex items-center px-4">
-                            <div className="shrink-0">
-                                <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">
-                                    {user?.name?.charAt(0)?.toUpperCase()}
-                                </div>
-                            </div>
-                            <div className="ml-3">
-                                <div className="text-base font-medium text-gray-800">
-                                    {user?.name}
-                                </div>
-                                <div className="text-sm font-medium text-gray-500">
-                                    {user?.email}
-                                </div>
-                            </div>
-                            <button
-                                onClick={handleLogout}
-                                className="ml-auto shrink-0 p-1 text-gray-400 hover:text-red-600"
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-6 w-6"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
+            <DashboardNavbar activeTab={activeTab} setActiveTab={setActiveTab} user={user} />
             {/* Főoldal */}
-            <main className="pt-16 pb-12">
+            <main className="pt-16 pb-24 md:pb-12">
                 <div className="animate-fade-in">
                     {/* ÁTTEKINTÉS TAB - Hero + Kiemelt szolgáltatól + Szolgáltatások */}
                     {activeTab === 'overview' && (
                         <div>
                             {/* Hero Section */}
-                            <div className="bg-linear-to-r from-indigo-600 to-blue-500 text-white">
+                            <div>
                                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
                                     <div className="text-center">
-                                        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">
+                                        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 text-dark-blue">
                                             Találd meg a tökéletes szolgáltatót
                                         </h1>
-                                        <p className="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">
+                                        <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
                                             Foglalj időpontot a legjobb szakemberekhez egyszerűen és
                                             gyorsan
                                         </p>
                                         <div className="max-w-xl mx-auto">
-                                            <div className="flex items-center bg-white rounded-full shadow-lg overflow-hidden">
+                                            <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-full shadow-xl border border-white/50 overflow-hidden">
                                                 <div className="pl-4">
                                                     <svg
                                                         xmlns="http://www.w3.org/2000/svg"
@@ -326,9 +122,9 @@ export default function Dashboard() {
                                                     placeholder="Keress szolgáltatót, szolgáltatást..."
                                                     value={searchQuery}
                                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                                    className="flex-1 px-4 py-4 text-gray-900 placeholder-gray-500 focus:outline-none"
+                                                    className="flex-1 px-4 py-4 text-gray-900 placeholder-gray-500 focus:outline-none bg-transparent"
                                                 />
-                                                <button className="px-6 py-4 bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors">
+                                                <button className="px-6 py-4 bg-dark-blue text-white font-semibold hover:bg-blue-800 transition-colors rounded-r-full">
                                                     Keresés
                                                 </button>
                                             </div>
@@ -341,7 +137,7 @@ export default function Dashboard() {
                             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                                 <div className="flex items-center justify-between mb-8">
                                     <div>
-                                        <h2 className="text-2xl font-bold text-gray-900">
+                                        <h2 className="text-2xl font-bold text-dark-blue">
                                             Kiemelt szolgáltatók
                                         </h2>
                                         <p className="text-gray-600 mt-1">
@@ -350,7 +146,7 @@ export default function Dashboard() {
                                     </div>
                                     <button
                                         onClick={() => setActiveTab('book')}
-                                        className="text-indigo-600 font-medium hover:text-indigo-800 flex items-center"
+                                        className="text-dark-blue font-medium hover:text-blue-800 flex items-center transition-colors"
                                     >
                                         Összes megtekintése
                                         <svg
@@ -382,11 +178,11 @@ export default function Dashboard() {
                                         .map((provider) => (
                                             <div
                                                 key={provider.id}
-                                                className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 group"
+                                                className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
                                             >
-                                                <div className="h-24 bg-linear-to-r from-blue-500 to-indigo-600 relative">
+                                                <div className="h-24 bg-linear-to-r from-blue-500 to-dark-blue relative">
                                                     <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
-                                                        <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-indigo-600 shadow-md">
+                                                        <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-md">
                                                             {provider.name.charAt(0).toUpperCase()}
                                                         </div>
                                                     </div>
@@ -403,7 +199,7 @@ export default function Dashboard() {
                                                     </div>
                                                     <button
                                                         onClick={() => setActiveTab('book')}
-                                                        className="w-full py-2 bg-indigo-50 text-indigo-600 rounded-lg font-medium hover:bg-indigo-100 transition-colors"
+                                                        className="w-full py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors"
                                                     >
                                                         Megnézem
                                                     </button>
@@ -421,9 +217,9 @@ export default function Dashboard() {
                             </div>
 
                             {/* Szolgáltatások */}
-                            <div className="bg-gray-100">
+                            <div>
                                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+                                    <div className="flex flex-col mb-8 gap-6">
                                         <div>
                                             <h2 className="text-2xl font-bold text-gray-900">
                                                 Szolgáltatások
@@ -432,25 +228,142 @@ export default function Dashboard() {
                                                 Böngéssz szolgáltatásaink között
                                             </p>
                                         </div>
-                                        <div className="flex gap-2 flex-wrap">
-                                            {['all', 'hajvágás', 'manikűr', 'masszázs'].map(
-                                                (filter) => (
+
+                                        {/* Search by Location */}
+                                        <div className="bg-white/40 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/50">
+                                            <div className="flex flex-col sm:flex-row gap-4">
+                                                <div className="flex-1">
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        Keresés hely szerint
+                                                    </label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Írd be a várost vagy a címet..."
+                                                            value={locationSearch}
+                                                            onChange={(e) =>
+                                                                setLocationSearch(e.target.value)
+                                                            }
+                                                            className="w-full px-4 py-2.5 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent"
+                                                        />
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            className="h-5 w-5 text-gray-400 absolute left-3 top-3"
+                                                            fill="none"
+                                                            viewBox="0 0 24 24"
+                                                            stroke="currentColor"
+                                                        >
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                strokeWidth={2}
+                                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                                            />
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                strokeWidth={2}
+                                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                                            />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-end">
                                                     <button
-                                                        key={filter}
-                                                        onClick={() => setServiceFilter(filter)}
-                                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                                                            serviceFilter === filter
-                                                                ? 'bg-indigo-600 text-white'
-                                                                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
-                                                        }`}
+                                                        onClick={() => {
+                                                            if (navigator.geolocation) {
+                                                                navigator.geolocation.getCurrentPosition(
+                                                                    (position) => {
+                                                                        setUserLocation({
+                                                                            lat: position.coords
+                                                                                .latitude,
+                                                                            lng: position.coords
+                                                                                .longitude
+                                                                        });
+                                                                        setLocationSearch(
+                                                                            'Aktuális helyem'
+                                                                        );
+                                                                    },
+                                                                    (error) => {
+                                                                        console.error(
+                                                                            'Geolocation error:',
+                                                                            error
+                                                                        );
+                                                                        alert(
+                                                                            'Nem sikerült lekérni a helyadatokat'
+                                                                        );
+                                                                    }
+                                                                );
+                                                            }
+                                                        }}
+                                                        className="px-4 py-2.5 bg-white/50 text-gray-700 rounded-lg font-medium hover:bg-white/70 transition-colors flex items-center gap-2 whitespace-nowrap border border-white/50"
                                                     >
-                                                        {filter === 'all'
-                                                            ? 'Összes'
-                                                            : filter.charAt(0).toUpperCase() +
-                                                              filter.slice(1)}
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            className="h-5 w-5"
+                                                            fill="none"
+                                                            viewBox="0 0 24 24"
+                                                            stroke="currentColor"
+                                                        >
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                strokeWidth={2}
+                                                                d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                            />
+                                                        </svg>
+                                                        Jelenlegi helyzet
                                                     </button>
-                                                )
+                                                </div>
+                                            </div>
+                                            {userLocation && (
+                                                <p className="text-sm text-green-600 mt-3 flex items-center gap-1">
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        className="h-4 w-4"
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        stroke="currentColor"
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            strokeWidth={2}
+                                                            d="M5 13l4 4L19 7"
+                                                        />
+                                                    </svg>
+                                                    Helyadatok sikeresen lekérve (
+                                                    {userLocation.lat.toFixed(4)},{' '}
+                                                    {userLocation.lng.toFixed(4)})
+                                                </p>
                                             )}
+                                        </div>
+
+                                        {/* Filter by Service */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-3">
+                                                Szűrés szolgáltatás szerint
+                                            </label>
+                                            <div className="flex gap-2 flex-wrap">
+                                                {['all', 'hajvágás', 'manikűr', 'masszázs'].map(
+                                                    (filter) => (
+                                                        <button
+                                                            key={filter}
+                                                            onClick={() => setServiceFilter(filter)}
+                                                            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                                                                serviceFilter === filter
+                                                                    ? 'bg-dark-blue text-white shadow-lg'
+                                                                    : 'bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-white/70 border border-white/50'
+                                                            }`}
+                                                        >
+                                                            {filter === 'all'
+                                                                ? 'Összes'
+                                                                : filter.charAt(0).toUpperCase() +
+                                                                  filter.slice(1)}
+                                                        </button>
+                                                    )
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -464,7 +377,7 @@ export default function Dashboard() {
                                             .map((service) => (
                                                 <div
                                                     key={service.id}
-                                                    className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                                                    className="bg-white/40 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                                                 >
                                                     <div className="flex items-start justify-between">
                                                         <div className="flex-1">
@@ -494,14 +407,14 @@ export default function Dashboard() {
                                                             </div>
                                                         </div>
                                                         <div className="text-right ml-4">
-                                                            <p className="text-2xl font-bold text-indigo-600">
+                                                            <p className="text-2xl font-bold text-dark-blue">
                                                                 {service.price || 5000} Ft
                                                             </p>
                                                         </div>
                                                     </div>
                                                     <button
                                                         onClick={() => setActiveTab('book')}
-                                                        className="w-full py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors mt-2"
+                                                        className="w-full py-2.5 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors mt-2"
                                                     >
                                                         Foglalás
                                                     </button>
@@ -753,11 +666,11 @@ export default function Dashboard() {
                         </div>
                     )}
 
-                    {/* ÚJ FOGLALÁS TAB */}
+                    {/* Mentett helyek TAB */}
                     {activeTab === 'book' && (
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
-                            <h1 className="text-3xl font-bold text-gray-900">Új foglalás</h1>
-                            <p className="text-gray-600">Válassz szolgáltató partnereink közül.</p>
+                            <h1 className="text-3xl font-bold text-gray-900">Mentett helyek</h1>
+                            <p className="text-gray-600">Ezeken a helyeken már jártál korábban.</p>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {providers.map((provider) => (

@@ -1,18 +1,34 @@
-export default function NavItem({ tab, label, icon, activeTab, setActiveTab, setIsMobileMenuOpen }) {
+export default function NavItem({
+    tab,
+    label,
+    icon,
+    activeTab,
+    setActiveTab,
+    setIsMobileMenuOpen,
+    isMobile
+}) {
     return (
         <button
             onClick={() => {
                 setActiveTab(tab);
-                setIsMobileMenuOpen(false);
+                if (setIsMobileMenuOpen) setIsMobileMenuOpen(false);
             }}
             className={`${
-                activeTab === tab
-                    ? 'border-indigo-500 text-gray-900 bg-indigo-50'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 hover:bg-gray-50'
-            } block pl-3 pr-4 py-2 border-l-4 text-base font-medium w-full text-left sm:w-auto sm:border-l-0 sm:border-b-2 sm:p-0 sm:pb-1 sm:bg-transparent sm:m-0 transition-colors duration-200`}
+                isMobile
+                    ? `flex flex-col items-center gap-1 p-2 w-full justify-center rounded-xl transition-all duration-300 ${
+                          activeTab === tab
+                              ? 'bg-dark-blue text-white shadow-lg scale-105'
+                              : 'text-gray-700 hover:text-dark-blue'
+                      }`
+                    : `${
+                          activeTab === tab
+                              ? 'border-dark-blue text-dark-blue font-semibold'
+                              : 'border-transparent text-gray-600 hover:border-gray-300 hover:text-dark-blue'
+                      } border-b-2 pb-1 transition-colors duration-200`
+            }`}
         >
-            <span className="sm:hidden mr-2">{icon}</span>
-            {label}
+            {isMobile && <span className="text-lg">{icon}</span>}
+            <span className={isMobile ? 'text-[10px] font-medium' : ''}>{label}</span>
         </button>
     );
 }

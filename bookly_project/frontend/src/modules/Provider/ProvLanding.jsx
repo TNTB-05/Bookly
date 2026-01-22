@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import logo from '../../pics/image_2025-11-05_190715297-removebg-preview.png';
-import heroImage from '../../pics/ChatGPT Image Jan 12, 2026 at 04_16_37 PM.png'; 
+import logo from '../../pics/logo.png';
+import heroImage from '../../pics/appointment.png';
 import Card from '../Landing/Card';
 import Slideshow from './Slideshow';
 
@@ -12,21 +12,21 @@ export default function ProvLanding() {
             {/* Header */}
             <header className="flex justify-between items-center px-4 py-4 sm:px-6 lg:px-10 bg-inherit">
                 <div className="flex items-center">
-                    <img 
-                        src={logo} 
-                        alt="Bookly Logo" 
-                        className="h-16 w-auto object-contain cursor-pointer" 
+                    <img
+                        src={logo}
+                        alt="Bookly Logo"
+                        className="h-16 w-auto object-contain cursor-pointer"
                         onClick={() => navigate('/')}
                     />
                 </div>
                 <div className="flex items-center gap-4">
-                    <button 
+                    <button
                         onClick={() => navigate('/provider/login')}
                         className="px-4 py-2 text-dark-blue font-bold hover:text-blue-800 transition-colors"
                     >
                         Bejelentkezés
                     </button>
-                    <button 
+                    <button
                         onClick={() => navigate('/provider/register')}
                         className="px-5 py-2 bg-white/40 backdrop-blur-md border-2 border-white/60 text-dark-blue font-bold rounded-xl hover:bg-white/60 transition-all shadow-md hover:shadow-lg hover:scale-105"
                     >
@@ -42,9 +42,10 @@ export default function ProvLanding() {
                         Növelje vállalkozását a Bookly-val
                     </h1>
                     <p className="text-lg sm:text-xl text-gray-700 mb-8 max-w-lg">
-                        Professzionális időpontfoglaló rendszer szolgáltatóknak. Kezelje naptárát egy helyen, és szerezzen több ügyfelet erőfeszítés nélkül.
+                        Professzionális időpontfoglaló rendszer szolgáltatóknak. Kezelje naptárát
+                        egy helyen, és szerezzen több ügyfelet erőfeszítés nélkül.
                     </p>
-                    <button 
+                    <button
                         onClick={() => navigate('/provider/register')}
                         className="px-8 py-4 bg-dark-blue text-white font-bold rounded-2xl hover:bg-blue-800 transition-colors shadow-xl text-lg hover:scale-105 active:scale-95 duration-200"
                     >
@@ -52,9 +53,9 @@ export default function ProvLanding() {
                     </button>
                 </div>
                 <div className="w-full lg:w-1/2 flex justify-center lg:justify-end">
-                    <img 
-                        src={heroImage} 
-                        alt="Szolgáltatói felület" 
+                    <img
+                        src={heroImage}
+                        alt="Szolgáltatói felület"
                         className="w-full max-w-lg rounded-3xl shadow-2xl transform rotate-2 hover:rotate-0 transition-all duration-500"
                     />
                 </div>
@@ -72,22 +73,22 @@ export default function ProvLanding() {
                     <p className="text-center text-gray-600 mb-16 max-w-2xl mx-auto">
                         Minden eszköz, amire szüksége lehet vállalkozása digitális menedzseléséhez.
                     </p>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
-                        <Card 
-                            title="Digitális Naptár" 
+                        <Card
+                            title="Digitális Naptár"
                             description="24/7 online foglalási lehetőség ügyfelei számára, automatikus szinkronizációval."
-                            imageUrl={heroImage} 
+                            imageUrl={heroImage}
                         />
-                        <Card 
-                            title="Marketing Eszközök" 
+                        <Card
+                            title="Marketing Eszközök"
                             description="Érjen el új célközönséget, és promótálja szolgáltatásait kiemelt felületeinken."
-                            imageUrl={heroImage} 
+                            imageUrl={heroImage}
                         />
-                        <Card 
-                            title="Üzleti Elemzések" 
+                        <Card
+                            title="Üzleti Elemzések"
                             description="Részletes kimutatások a forgalomról és a népszerű szolgáltatásokról."
-                            imageUrl={heroImage} 
+                            imageUrl={heroImage}
                         />
                     </div>
                 </div>
@@ -98,13 +99,21 @@ export default function ProvLanding() {
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex flex-col items-center md:items-start">
                         <span className="text-2xl font-bold mb-2">Bookly</span>
-                        <p className="text-sm opacity-80">&copy; {new Date().getFullYear()} Minden jog fenntartva.</p>
+                        <p className="text-sm opacity-80">
+                            &copy; {new Date().getFullYear()} Minden jog fenntartva.
+                        </p>
                     </div>
-                    
+
                     <div className="flex gap-8 font-medium">
-                        <a href="#" className="hover:text-accent-blue transition-colors">Rólunk</a>
-                        <a href="#" className="hover:text-accent-blue transition-colors">Kapcsolat</a>
-                        <a href="#" className="hover:text-accent-blue transition-colors">Adatvédelem</a>
+                        <a href="#" className="hover:text-accent-blue transition-colors">
+                            Rólunk
+                        </a>
+                        <a href="#" className="hover:text-accent-blue transition-colors">
+                            Kapcsolat
+                        </a>
+                        <a href="#" className="hover:text-accent-blue transition-colors">
+                            Adatvédelem
+                        </a>
                     </div>
                 </div>
             </footer>
