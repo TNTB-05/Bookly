@@ -21,7 +21,7 @@ const getUsers=async () => {
 }
 
 const addUser=async (email, hashedPassword, role) => {
-    const query = 'INSERT INTO users (email, hashedPassword, role) VALUES (?, ?, ?)';
+    const query = 'INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)';
     const [result] = await pool.execute(query, [email, hashedPassword, role]);
     return result.insertId;
 };

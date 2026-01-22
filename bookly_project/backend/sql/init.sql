@@ -1,19 +1,30 @@
+-- Create RefTokens table first (no dependencies)
+CREATE TABLE IF NOT EXISTS RefTokens(
+  `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+  `user_id` INT,
+  `refresh_token` TEXT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS users (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
+  `name` VARCHAR(255),
   `email` VARCHAR(255) UNIQUE NOT NULL,
-  `phone` VARCHAR(20) UNIQUE NOT NULL,
+  `phone` VARCHAR(20) UNIQUE ,
   `address` VARCHAR(255),
   `status` ENUM('active', 'inactive', 'deleted', 'banned') DEFAULT 'inactive',
-  `role` ENUM('user', 'employee', 'admin') DEFAULT 'user',
+  `role` ENUM('user', 'employee', 'admin', 'customer') DEFAULT 'user',
   `last_login` DATETIME,
   `password_hash` VARCHAR(255) NOT NULL,
   `access_token` TEXT,
   `refresh_token_id` INT,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
   FOREIGN KEY (refresh_token_id) REFERENCES RefTokens(id)
 );
+
+-- Add foreign key constraint to RefTokens after users table is created
+ALTER TABLE RefTokens ADD FOREIGN KEY (user_id) REFERENCES users(id);
 
 
 CREATE TABLE IF NOT EXISTS salons (
@@ -23,6 +34,7 @@ CREATE TABLE IF NOT EXISTS salons (
   `phone` VARCHAR(20),
   `email` VARCHAR(255),
   `description` TEXT,
+  `sharecode` VARCHAR(100) UNIQUE,
   `status` ENUM('open', 'closed', 'renovation') DEFAULT 'open',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -84,21 +96,13 @@ CREATE TABLE IF NOT EXISTS ratings(
 );
 
 
-CREATE TABLE IF NOT EXISTS RefTokens(
-  `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-  `user_id` INT NOT NULL,
-  `refresh_token` TEXT NOT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id)
-)
-
 -- Optional: Insert sample data (seed)
 
 -- Insert test salons
-INSERT INTO salons (name, address, phone, email, description, status) VALUES 
-  ('Premium Hair Salon', '100 Beauty Blvd, Budapest', '2012345678', 'contact@premiumhair.com', 'Top-rated hair salon with expert stylists', 'open'),
-  ('Wellness Spa Center', '200 Relaxation St, Budapest', '2098765432', 'info@wellnessspa.com', 'Full-service spa offering massage and beauty treatments', 'open'),
-  ('Tech Repair Pro', '300 Tech Ave, Budapest', '2011223344', 'support@techrepair.com', 'Professional electronics repair service', 'open');
+INSERT INTO salons (name, address, phone, email, description, sharecode, status) VALUES 
+  ('Premium Hair Salon', '100 Beauty Blvd, Budapest', '2012345678', 'contact@premiumhair.com', 'Top-rated hair salon with expert stylists', 'HAIR01', 'open'),
+  ('Wellness Spa Center', '200 Relaxation St, Budapest', '2098765432', 'info@wellnessspa.com', 'Full-service spa offering massage and beauty treatments', 'SPA001', 'open'),
+  ('Tech Repair Pro', '300 Tech Ave, Budapest', '2011223344', 'support@techrepair.com', 'Professional electronics repair service', 'TECH01', 'open');
 
 -- Insert test users
 INSERT INTO users (name, email, phone, address, status, role, password_hash) VALUES 

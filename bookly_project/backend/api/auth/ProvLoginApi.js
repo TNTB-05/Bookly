@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const database = require('../../sql/database.js');
+const { pool } = require('../../sql/database.js');
 const fs = require('fs/promises');
 const bcrypt = require('bcryptjs'); //?npm install bcrypt
 const jwt = require('jsonwebtoken'); //?npm install jsonwebtoken
+const crypto = require('crypto');
 
 
 
@@ -41,6 +42,11 @@ setInterval(() => {
 
 const Users = [];
 
+// Helper function to generate unique salon share code
+function generateShareCode() {
+    return crypto.randomBytes(3).toString('hex').toUpperCase();
+}
+
 // Helper function to generate tokens  
 const generateTokens = (email, userId) => {
     if (!process.env.JWT_SECRET) {
@@ -68,10 +74,51 @@ const generateTokens = (email, userId) => {
     return { accessToken, refreshToken };
 };        
 
-router.post('/register', async (request, response) => {
-    const { companyName, email, password, phone } = request.body;
+// Validate salon code endpoint
+router.post('/validate-salon-code', async (request, response) => {
+    const { code } = request.body;
 
-    if (!companyName || !email || !password || !phone) {
+    if (!code || code.trim().length < 6) {
+        return response.status(400).json({
+            success: false,
+            message: 'Érvénytelen szalon kód'
+        });
+    }
+
+    try {
+        const [salons] = await pool.query(
+            'SELECT id, name FROM salons WHERE sharecode = ? AND status != "closed"',
+            [code.trim().toUpperCase()]
+        );
+
+        if (salons.length === 0) {
+            return response.status(404).json({
+                success: false,
+                message: 'Nem található szalon ezzel a kóddal'
+            });
+        }
+
+        const salon = salons[0];
+
+        response.status(200).json({
+            success: true,
+            salonId: salon.id,
+            salonName: salon.name
+        });
+    } catch (error) {
+        console.error('Validate salon code error:', error);
+        response.status(500).json({
+            success: false,
+            message: error.message || 'Szerver hiba történt'
+        });
+    }
+});
+
+router.post('/register', async (request, response) => {
+    const { name, email, password, phone, registrationType, salonId, salon } = request.body;
+
+    // Validate required user fields
+    if (!name || !email || !password || !phone) {
         return response.status(400).json({
             success: false,
             message: 'Minden mező kitöltése kötelező'
@@ -85,38 +132,158 @@ router.post('/register', async (request, response) => {
         });
     }
 
+    // Validate registration type
+    if (!registrationType || !['join', 'create'].includes(registrationType)) {
+        return response.status(400).json({
+            success: false,
+            message: 'Érvénytelen regisztrációs típus'
+        });
+    }
+
+    // Validate based on registration type
+    if (registrationType === 'join' && !salonId) {
+        return response.status(400).json({
+            success: false,
+            message: 'Szalon azonosító szükséges a csatlakozáshoz'
+        });
+    }
+
+    if (registrationType === 'create') {
+        if (!salon || !salon.companyName || !salon.address || !salon.description || !salon.salonType) {
+            return response.status(400).json({
+                success: false,
+                message: 'Minden szalon adat kitöltése kötelező'
+            });
+        }
+    }
+
+    const connection = await pool.getConnection();
+
     try {
-        const hashedPassword = await bcrypt.hash(password, 10);
+        await connection.beginTransaction();
 
         // Check if provider already exists
-        const existingProvider = Users.find(u => u.email === email);
-        if (existingProvider) {
+        const [existingProviders] = await connection.query(
+            'SELECT id FROM providers WHERE email = ? OR phone = ?',
+            [email, phone]
+        );
+
+        if (existingProviders.length > 0) {
+            await connection.rollback();
             return response.status(409).json({
                 success: false,
-                message: 'Ez az email cím már használatban van'
+                message: 'Ez az email cím vagy telefonszám már használatban van'
             });
         }
 
-        const userId = Users.length + 1;
-        Users.push({ 
-            userId, 
-            companyName, 
-            email, 
-            hashedPassword, 
-            phone,
-            role: 'provider'
-        });
+        let finalSalonId;
+        let isManager = false;
+
+        if (registrationType === 'create') {
+            // Verify salon doesn't already exist with same name at same address
+            const [existingSalons] = await connection.query(
+                'SELECT id FROM salons WHERE name = ? AND address = ?',
+                [salon.companyName.trim(), salon.address.trim()]
+            );
+
+            if (existingSalons.length > 0) {
+                await connection.rollback();
+                return response.status(409).json({
+                    success: false,
+                    message: 'Már létezik szalon ezzel a névvel ezen a címen'
+                });
+            }
+
+            // Generate unique share code
+            let shareCode;
+            let isUnique = false;
+            while (!isUnique) {
+                shareCode = generateShareCode();
+                const [existing] = await connection.query(
+                    'SELECT id FROM salons WHERE sharecode = ?',
+                    [shareCode]
+                );
+                if (existing.length === 0) {
+                    isUnique = true;
+                }
+            }
+
+            // Create new salon
+            const [salonResult] = await connection.query(
+                `INSERT INTO salons (name, address, description, sharecode, status) 
+                 VALUES (?, ?, ?, ?, 'open')`,
+                [
+                    salon.companyName.trim(),
+                    salon.address.trim(),
+                    salon.description.trim(),
+                    shareCode
+                ]
+            );
+
+            finalSalonId = salonResult.insertId;
+            isManager = true; // Creator becomes manager
+        } else {
+            // Join existing salon - verify it exists
+            const [salons] = await connection.query(
+                'SELECT id FROM salons WHERE id = ?',
+                [salonId]
+            );
+
+            if (salons.length === 0) {
+                await connection.rollback();
+                return response.status(404).json({
+                    success: false,
+                    message: 'A megadott szalon nem található'
+                });
+            }
+
+            finalSalonId = salonId;
+            isManager = false; // Joining members are regular providers
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create provider
+        const [providerResult] = await connection.query(
+            `INSERT INTO providers (salon_id, name, email, phone, status, role, isManager, password_hash) 
+             VALUES (?, ?, ?, ?, 'active', ?, ?, ?)`,
+            [
+                finalSalonId,
+                name.trim(),
+                email.trim().toLowerCase(),
+                phone.trim(),
+                isManager ? 'manager' : 'provider',
+                isManager,
+                hashedPassword
+            ]
+        );
+
+        await connection.commit();
 
         response.status(201).json({
             success: true,
-            message: 'Sikeres regisztráció'
+            message: 'Sikeres regisztráció',
+            providerId: providerResult.insertId,
+            isManager
         });
     } catch (error) {
+        if (connection) {
+            try {
+                await connection.rollback();
+            } catch (rollbackError) {
+                console.error('Rollback error:', rollbackError);
+            }
+        }
         console.error('Registration error:', error);
         response.status(500).json({
             success: false,
-            message: 'Szerver hiba történt'
+            message: error.message || 'Szerver hiba történt'
         });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 });
 
@@ -131,16 +298,32 @@ router.post('/login', async (request, response) => {
     }
 
     try {
-        const user = Users.find(u => u.email === email && u.role === 'provider');
+        // Query provider from database
+        const [providers] = await pool.query(
+            `SELECT p.id, p.name, p.email, p.password_hash, p.salon_id, p.isManager, p.status, s.name as salon_name 
+             FROM providers p 
+             JOIN salons s ON p.salon_id = s.id 
+             WHERE p.email = ?`,
+            [email.trim().toLowerCase()]
+        );
 
-        if (!user) {
+        if (providers.length === 0) {
             return response.status(422).json({
                 success: false,
                 message: 'Hibás email vagy jelszó'
             });
         }
 
-        const passwordMatch = await bcrypt.compare(password, user.hashedPassword);
+        const provider = providers[0];
+
+        if (provider.status === 'banned' || provider.status === 'deleted') {
+            return response.status(403).json({
+                success: false,
+                message: 'Ez a fiók le van tiltva'
+            });
+        }
+
+        const passwordMatch = await bcrypt.compare(password, provider.password_hash);
         if (!passwordMatch) {
             return response.status(422).json({
                 success: false,
@@ -149,10 +332,13 @@ router.post('/login', async (request, response) => {
         }
 
         // Generate both access and refresh tokens
-        const { accessToken, refreshToken } = generateTokens(email, user.userId);
+        const { accessToken, refreshToken } = generateTokens(email, provider.id);
 
-        // Store refresh token
-        refreshTokenStore.set(refreshToken, { email, userId: user.userId, createdAt: Date.now() });
+        // Update last login and store refresh token in database
+        await pool.query(
+            'UPDATE providers SET last_login = NOW(), refresh_token = ? WHERE id = ?',
+            [refreshToken, provider.id]
+        );
 
         // Send refresh token as HTTP-only cookie
         response.cookie('refreshToken', refreshToken, {
@@ -166,7 +352,14 @@ router.post('/login', async (request, response) => {
             success: true,
             message: 'Sikeres bejelentkezés',
             accessToken,
-            companyName: user.companyName
+            provider: {
+                id: provider.id,
+                name: provider.name,
+                email: provider.email,
+                salonId: provider.salon_id,
+                salonName: provider.salon_name,
+                isManager: provider.isManager
+            }
         });
     } catch (error) {
         console.error('Login error:', error);

@@ -54,13 +54,13 @@ const generateTokens = (email, userId) => {
     }
 
     const accessToken = jwt.sign(
-        { email, userId , role: 'costumer'},
+        { email, userId , role: 'customer'},
         process.env.JWT_SECRET,
         { expiresIn: '15m' } // Short-lived access token
     );
 
     const refreshToken = jwt.sign(
-        { email, userId , role: 'costumer'},
+        { email, userId , role: 'customer'},
         process.env.JWT_REFRESH_SECRET,
         { expiresIn: '7d' } // Long-lived refresh token
     );
@@ -95,7 +95,7 @@ router.post('/register', async (request, response) => {
             });
         }
 
-        await addUser(email, hashedPassword, 'costumer');
+        await addUser(email, hashedPassword, 'customer');
         
 
         response.status(201).json({
@@ -139,7 +139,7 @@ router.post('/login', async (request, response) => {
             });
         }
 
-        const passwordMatch = await bcrypt.compare(password, user.hashedPassword);
+        const passwordMatch = await bcrypt.compare(password, user.password_hash);
         if (!passwordMatch) {
             return response.status(422).json({
                 success: false,
