@@ -1,0 +1,34 @@
+const { get } = require('../api/auth/LoginApi');
+const {pool} = require('./database.js');
+const mysql = require('mysql2/promise');
+
+
+const getUserById=async (userId) => {
+    const query = 'SELECT userId, email, role, createdAt FROM users WHERE userId = ?';
+    const [rows] = await pool.execute(query, [userId]);
+    return rows[0];
+};
+
+const getUserByEmail=async (email) => {
+    const query = 'SELECT * FROM users WHERE email = ?';
+    const [rows] = await pool.execute(query, [email]);
+    return rows[0];
+};
+const getUsers=async () => {
+    const query = 'SELECT * FROM users';
+    const [rows] = await pool.execute(query);
+    return rows;
+}
+
+const addUser=async (email, hashedPassword, role) => {
+    const query = 'INSERT INTO users (email, hashedPassword, role) VALUES (?, ?, ?)';
+    const [result] = await pool.execute(query, [email, hashedPassword, role]);
+    return result.insertId;
+};
+
+module.exports = {
+    getUserById,
+    getUserByEmail,
+    addUser,
+    getUsers
+};

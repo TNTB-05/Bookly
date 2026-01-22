@@ -9,9 +9,12 @@ CREATE TABLE IF NOT EXISTS users (
   `last_login` DATETIME,
   `password_hash` VARCHAR(255) NOT NULL,
   `access_token` TEXT,
-  `refresh_token` TEXT,
+  `refresh_token_id` INT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+  FOREIGN KEY (refresh_token_id) REFERENCES RefTokens(id)
 );
+
 
 CREATE TABLE IF NOT EXISTS salons (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -79,6 +82,15 @@ CREATE TABLE IF NOT EXISTS ratings(
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (provider_id) REFERENCES providers(id)
 );
+
+
+CREATE TABLE IF NOT EXISTS RefTokens(
+  `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+  `user_id` INT NOT NULL,
+  `refresh_token` TEXT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+)
 
 -- Optional: Insert sample data (seed)
 
