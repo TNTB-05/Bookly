@@ -15,62 +15,98 @@ export default function LandingBody() {
     const navigate = useNavigate();
 
     return (
-        <div className="landing-body bg-inherit">
-            <section className="flex flex-col lg:flex-row lg:justify-between items-center gap-6 lg:gap-10 p-6 sm:p-8 lg:p-10 bg-inherit rounded-lg ">
-                <span className="flex flex-col justify-center items-start w-full lg:w-auto">
-                    <h1 className="font-bold text-5xl">Foglalj egyszerűen és gyorsan</h1>
-                    <p>Tedd egyszerűbbé a foglalást a bookly-val </p>
+        <div className="pt-16 sm:pt-20 pb-20 sm:pb-0">
+            {/* Hero Section */}
+            <section className="px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+                <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
+                    <div className="flex flex-col items-start max-w-xl w-full lg:w-1/2">
+                        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-dark-blue leading-tight mb-6">Foglalj egyszerűen és gyorsan</h1>
+                        <p className="text-lg sm:text-xl text-gray-700 mb-8">
+                            Tedd egyszerűbbé a foglalást a Bookly-val. Találd meg a legjobb szolgáltatókat a közeledben.
+                        </p>
+                        <button
+                            className="px-8 py-4 bg-dark-blue text-white font-bold rounded-2xl hover:bg-blue-800 transition-all shadow-xl text-lg hover:scale-105 active:scale-95 duration-200"
+                            onClick={() => navigate('/login')}
+                        >
+                            Foglalás most
+                        </button>
+                    </div>
+                    <div className="w-full lg:w-1/2 flex justify-center lg:justify-end">
+                        <img
+                            src={landinghero}
+                            alt="Bookly Hero"
+                            className="w-full max-w-lg rounded-3xl shadow-2xl transform hover:scale-105 transition-all duration-500"
+                        />
+                    </div>
+                </div>
+            </section>
+
+            {/* Features Section */}
+            <section className="bg-light-blue/50 backdrop-blur-sm rounded-[3rem] mx-4 sm:mx-6 lg:mx-8 shadow-inner border border-white/50">
+                <div className="px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+                    <h2 className="text-3xl sm:text-4xl font-bold text-center text-dark-blue mb-4">Miért használd a Bookly-t?</h2>
+                    <p className="text-center text-gray-600 mb-12">Fedezd fel, miért választanak minket több ezren</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                        <Card title="Időpont foglalás" description="Egyszerű és gyors időpontfoglalás a kedvenc szolgáltatóidhoz." imageUrl={appointment} />
+                        <Card title="Széles Választék" description="Partnereink széles választékából tudsz böngészni kedvedre." imageUrl={services} />
+                        <Card title="Minden egy helyen" description="Nálunk minden szolgáltatás elérhető egy helyen." imageUrl={allinone} />
+                    </div>
+                </div>
+            </section>
+
+            {/* Provider CTA Section */}
+            <section className="px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+                <div className="bg-white/40 backdrop-blur-md rounded-3xl shadow-xl border border-white/50 p-8 sm:p-12 text-center mx-4 sm:mx-6 lg:mx-8">
+                    <h2 className="text-3xl sm:text-4xl font-bold text-dark-blue mb-4">Vállalkozó vagy?</h2>
+                    <p className="text-lg text-gray-700 mb-8">
+                        Szeretnél egy egyszerű és átlátható rendszert a foglalások kezelésére? Csatlakozz partnereinkhez!
+                    </p>
                     <button
-                        className="rounded-2xl bg-black text-white p-2"
-                        onClick={() => navigate('/login')}
+                        onClick={() => navigate('/provider/landing')}
+                        className="px-8 py-4 bg-dark-blue text-white font-bold rounded-2xl hover:bg-blue-800 transition-all shadow-xl text-lg hover:scale-105 active:scale-95 duration-200"
                     >
-                        Foglalás
+                        Csatlakozz!
                     </button>
-                </span>
-                <span className="w-full lg:w-auto">
-                    <img
-                        src={landinghero}
-                        alt="section-1-alt"
-                        className="w-full max-w-md lg:max-w-lg xl:max-w-xl rounded-lg"
-                    />
-                </span>
+                </div>
             </section>
 
-            <section className=" bg-light-blue mt-10 rounded-lg py-4">
-                <h1 className="text-center text-2xl sm:text-3xl md:text-4xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-bold mb-6 sm:mb-8 px-4">
-                    Miért használd a Bookly-t?
-                </h1>
-                <span className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-3 xl:gap-4 2xl:gap-6 px-4 sm:px-6 lg:px-4 xl:px-8 2xl:px-10 py-8">
+            {/* Provider Features */}
+            <section className="px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                     <Card
-                        title="Időpont foglalás"
-                        description="Egyszerű és gyors időpontfoglalás a kedvenc szolgáltatóidhoz."
-                        imageUrl={appointment}
+                        title="Átlátható időpontok"
+                        description="A Bookly-val egyszerűen és átláthatóan tudod kezelni ügyfeleid időpontjait."
+                        imageUrl={calendar}
                     />
                     <Card
-                        title="Széles Választék"
-                        description="Partnereink széles választékából tudsz böngészni kedvedre"
-                        imageUrl={services}
+                        title="Kapcsolatbiztosítás"
+                        description="Felmerülő probléma esetén gyorsan el tudod érni az ügyfeleket."
+                        imageUrl={connectionservices}
                     />
-                    <Card
-                        title="Minden egy helyen"
-                        description="Nálunk minden szolgáltatás elérhető egy helyen"
-                        imageUrl={allinone}
-                    />
-                </span>
+                    <Card title="Időpont-egyeztetés támogatás" description="Segít az átfedések és ütközések elkerülésében." imageUrl={collision} />
+                </div>
             </section>
 
-            <section className="">
-               <span className="flex flex-col justify-center items-center gap-4 p-6 sm:p-8 lg:p-10 bg-inherit rounded-lg">
-                    <h1 className="text-center text-2xl sm:text-3xl md:text-4xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-bold mb-6 sm:mb-8 px-4">Vállakozó vagy?</h1>
-                    <p className="text-center mb-6 sm:mb-8 px-4">Szeretnél egy egyszerű és átlátható rendszert a foglalások kezelésére?</p>
-                    <button onClick={() => navigate('/provider/landing')} className="rounded-2xl bg-black text-white p-2">Csatlakozz!</button>
-               </span>
-            <span className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-3 xl:gap-4 2xl:gap-6 px-4 sm:px-6 lg:px-4 xl:px-8 2xl:px-10 py-8">
-                    <Card title="Átlátható időpontok" description="A Bookly-val egyszerűen és átláthatóan tudod kezelni ügyfeleid időpontjait" imageUrl={calendar} />
-                    <Card title="Kapcsolatbiztosítás" description="Felmerülő probléma esetén gyorsan el tudod érni az ügyfeleket" imageUrl={connectionservices} />
-                    <Card title="Időpont-egyeztetés támogatás" description="Segít az átfedések és ütközések elkerülésében" imageUrl={collision} />
-            </span>
-            </section>
+            {/* Footer */}
+            <footer className="bg-dark-blue text-white/90 py-10 px-6 mt-auto">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="flex flex-col items-center md:items-start">
+                        <span className="text-2xl font-bold mb-2">Bookly</span>
+                        <p className="text-sm opacity-80">&copy; {new Date().getFullYear()} Minden jog fenntartva.</p>
+                    </div>
+                    <div className="flex gap-8 font-medium">
+                        <a href="#" className="hover:text-accent-blue transition-colors">
+                            Rólunk
+                        </a>
+                        <a href="#" className="hover:text-accent-blue transition-colors">
+                            Kapcsolat
+                        </a>
+                        <a href="#" className="hover:text-accent-blue transition-colors">
+                            Adatvédelem
+                        </a>
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 }
