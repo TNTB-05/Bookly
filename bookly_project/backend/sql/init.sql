@@ -1,3 +1,11 @@
+CREATE DATABASE IF NOT EXISTS bookly_db
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_hungarian_ci;
+
+USE bookly_db;
+
+ALTER DATABASE bookly_db CHARACTER SET utf8mb4 COLLATE utf8mb4_hungarian_ci;
+
 CREATE TABLE IF NOT EXISTS users (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
   `name` VARCHAR(255) NOT NULL,
@@ -11,7 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
   `access_token` TEXT,
   `refresh_token` TEXT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 CREATE TABLE IF NOT EXISTS salons (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -20,9 +28,11 @@ CREATE TABLE IF NOT EXISTS salons (
   `phone` VARCHAR(20),
   `email` VARCHAR(255),
   `description` TEXT,
+  `latitude` DECIMAL(9, 6) NOT NULL,
+  `longitude` DECIMAL(9, 6) NOT NULL,
   `status` ENUM('open', 'closed', 'renovation') DEFAULT 'open',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 CREATE TABLE IF NOT EXISTS providers (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -40,7 +50,7 @@ CREATE TABLE IF NOT EXISTS providers (
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   -- rating DECIMAL(2,1) DEFAULT 0.0 - consider adding later
   FOREIGN KEY (salon_id) REFERENCES salons(id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 CREATE TABLE IF NOT EXISTS services (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -52,7 +62,7 @@ CREATE TABLE IF NOT EXISTS services (
   `status` ENUM('available', 'unavailable') DEFAULT 'available',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (provider_id) REFERENCES providers(id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 CREATE TABLE IF NOT EXISTS appointments (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -66,7 +76,7 @@ CREATE TABLE IF NOT EXISTS appointments (
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (provider_id) REFERENCES providers(id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 CREATE TABLE IF NOT EXISTS ratings(
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -78,7 +88,7 @@ CREATE TABLE IF NOT EXISTS ratings(
   `active` BOOLEAN DEFAULT TRUE,
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (provider_id) REFERENCES providers(id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 -- Optional: Insert sample data (seed)
 

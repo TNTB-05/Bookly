@@ -6,7 +6,7 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "start": "node server.js",
-        "db:up": "cd .. && docker-compose up -d db",
+        "db:up": "cd .. && docker-compose up -d",
         "dev": "npm run db:up && nodemon"
     },
     "author": "Kardos Krisztián",
