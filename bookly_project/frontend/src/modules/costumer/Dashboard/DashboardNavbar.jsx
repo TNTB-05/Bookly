@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { logout } from '../../auth/auth';
 import NavItem from './NavItem';
 import Logo from '../../Logo';
+import ProfileIcon from '../../../icons/ProfileIcon';
+import ExitIcon from '../../../icons/ExitIcon';
 
 export default function DashboardNavbar({ activeTab, setActiveTab, user }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -17,7 +19,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user }) {
     return (
         <>
             {/* Desktop/Tablet Header */}
-            <nav className="bg-white/30 backdrop-blur-[12px] shadow-sm fixed w-full z-30 top-0 border-b border-white/40">
+            <nav className="bg-white/30 backdrop-blur-md shadow-sm fixed w-full z-30 top-0 border-b border-white/40">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16 relative">
                         <div className="flex items-center">
@@ -48,48 +50,28 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user }) {
                                 setActiveTab={setActiveTab}
                                 setIsMobileMenuOpen={setIsMobileMenuOpen}
                             />
-                            <NavItem
-                                tab="profile"
-                                label="Profil"
-                                activeTab={activeTab}
-                                setActiveTab={setActiveTab}
-                                setIsMobileMenuOpen={setIsMobileMenuOpen}
-                            />
                         </div>
 
                         {/* User Menu & Logout */}
-                        <div className="hidden sm:ml-6 sm:flex sm:items-center">
-                            <div className="flex items-center space-x-4">
-                                <div className="flex-col items-end hidden md:flex">
-                                    <span className="text-sm font-medium text-gray-900">
-                                        {user?.name}
-                                    </span>
-                                    <span className="text-xs text-gray-500">{user?.email}</span>
-                                </div>
-                                <div className="h-9 w-9 rounded-full bg-linear-to-br from-dark-blue to-blue-500 flex items-center justify-center text-white font-bold shadow-lg border-2 border-white/50">
-                                    {user?.name?.charAt(0)?.toUpperCase()}
-                                </div>
-                                <button
-                                    onClick={handleLogout}
-                                    className="p-2 ml-2 text-gray-400 hover:text-red-600 transition-colors rounded-full hover:bg-red-50"
-                                    title="Kijelentkezés"
+                        <div className="hidden sm:ml-6 sm:flex sm:items-center gap-4">
+                            <button
+                                onClick={() => setActiveTab('profile')}
+                                className="flex items-center gap-3 group px-3 py-2 rounded-lg hover:bg-blue-50 transition-all"
+                                title="Profilom"
+                            >
+                                <div
+                                    className={`w-9 h-9 transition-all ${activeTab === 'profile' ? 'text-blue-600 scale-110' : 'text-gray-600 group-hover:text-blue-600 group-hover:scale-110'}`}
                                 >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="h-6 w-6"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                                        />
-                                    </svg>
-                                </button>
-                            </div>
+                                    <ProfileIcon />
+                                </div>
+                            </button>
+                            <button
+                                onClick={handleLogout}
+                                className="w-9 h-9 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all hover:scale-110 p-1"
+                                title="Kijelentkezés"
+                            >
+                                <ExitIcon />
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -124,15 +106,17 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user }) {
                     setIsMobileMenuOpen={setIsMobileMenuOpen}
                     isMobile={true}
                 />
-                <NavItem
-                    tab="profile"
-                    label="Profil"
-                    icon="👤"
-                    activeTab={activeTab}
-                    setActiveTab={setActiveTab}
-                    setIsMobileMenuOpen={setIsMobileMenuOpen}
-                    isMobile={true}
-                />
+                <button
+                    onClick={() => setActiveTab('profile')}
+                    className={`flex flex-col items-center justify-center gap-1 px-3 py-1 rounded-lg transition-all ${
+                        activeTab === 'profile' ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                >
+                    <div className="w-6 h-6 flex items-center justify-center">
+                        <ProfileIcon />
+                    </div>
+                    <span className="text-xs font-medium">Profil</span>
+                </button>
             </nav>
         </>
     );

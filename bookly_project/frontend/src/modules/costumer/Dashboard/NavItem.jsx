@@ -1,12 +1,4 @@
-export default function NavItem({
-    tab,
-    label,
-    icon,
-    activeTab,
-    setActiveTab,
-    setIsMobileMenuOpen,
-    isMobile
-}) {
+export default function NavItem({ tab, label, icon, activeTab, setActiveTab, setIsMobileMenuOpen, isMobile }) {
     return (
         <button
             onClick={() => {
@@ -16,9 +8,7 @@ export default function NavItem({
             className={`${
                 isMobile
                     ? `flex flex-col items-center gap-1 p-2 w-full justify-center rounded-xl transition-all duration-300 ${
-                          activeTab === tab
-                              ? 'bg-dark-blue text-white shadow-lg scale-105'
-                              : 'text-gray-700 hover:text-dark-blue'
+                          activeTab === tab ? 'bg-dark-blue text-white shadow-lg scale-105' : 'text-gray-700 hover:text-dark-blue'
                       }`
                     : `${
                           activeTab === tab
