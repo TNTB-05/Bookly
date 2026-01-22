@@ -32,19 +32,26 @@
 
 ## NodeJS - Template project használata:<br>
 
-1. Töltsd le a Template project-et és csomagold ki.<br>
+0. Töltsd le a Template project-et és csomagold ki.<br>
 
-2. Lépj be a backend mappába:<br>
+1. Lépj be a projekt fő könyvtárába:<br>
+   `cd bookly_projekt`<br>
+
+2. Indítsd el a docker-compose tárolót, ami az adatbázist futtatja:<br>
+   `docker-compose up -d db`<br>
+
+3. Lépj be a backend mappába:<br>
    `cd backend`<br>
 
-3. Telepítsd a függőségeket a backend mappába a következő parancs segítségével, amennyiben nincs node_modules mappa a backend mappában:<br>
+4. Telepítsd a függőségeket a backend mappába a következő parancs segítségével, amennyiben nincs node_modules mappa a backend mappában:<br>
    `npm install`<br>
 
-4. Backend indítása fejlesztés alatt: _(Fájlok szerkesztésének az esetén újraindul a szerver.)_<br>
+5. Backend indítása fejlesztés alatt: _(Fájlok szerkesztésének az esetén újraindul a szerver.)_<br>
    `npm run dev`<br>
 
-5. Backend indítása élesben: _(Fájlok szerkesztésének az esetén nem indul újra a szerver.)_<br>
+6. Backend indítása élesben: _(Fájlok szerkesztésének az esetén nem indul újra a szerver.)_<br>
    `npm run start`<br>
+
 
 ## NPM hiba esetén<br>
 

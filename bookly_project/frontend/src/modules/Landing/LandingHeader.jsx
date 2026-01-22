@@ -16,8 +16,8 @@ export default function LandingHeader() {
                 </span>
                 <span className="items-center gap-4 flex">
                     <button onClick={() => setShowContact(true)}>Kapcsolat</button>
-                    <button onClick={() => navigate('/provider-dashboard')}>Szolgáltató vagyok</button>
-                    <button className="bg-white/40 backdrop-blur-md border-2 border-white/50 hover:bg-white/50 text-gray-900 rounded-xl px-4 py-1.5 transition-all duration-300 shadow-lg hover:shadow-xl hover:border-white/70">
+                    <button onClick={() => navigate('/provider/landing')}>Szolgáltató vagyok</button>
+                    <button onClick={() => {navigate('/login')}} className="bg-white/40 backdrop-blur-md border-2 border-white/50 hover:bg-white/50 text-gray-900 rounded-xl px-4 py-1.5 transition-all duration-300 shadow-lg hover:shadow-xl hover:border-white/70">
                         Bejelentkezés
                     </button>
                 </span>
