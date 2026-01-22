@@ -6,6 +6,7 @@ import './App.css'
 import { useState, useEffect } from 'react'
 import { AuthContext } from './modules/auth/auth'
 import Dashboard from './modules/costumer/Dashboard/Dashboard'
+import DashboardTest from './modules/costumer/Dashboard/DashboardTest';
 
 function App() {
   const[isAuthenticated,setIsAuthenticated]=useState(!!localStorage.getItem('accessToken'));
@@ -53,7 +54,7 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={isAuthenticated?<Dashboard />:<Navigate to="/login" />} />
+        <Route path="/dashboard" element={isAuthenticated?<DashboardTest />:<Navigate to="/login" />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
 </AuthContext.Provider>

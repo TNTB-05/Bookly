@@ -93,10 +93,10 @@ CREATE TABLE IF NOT EXISTS ratings(
 -- Optional: Insert sample data (seed)
 
 -- Insert test salons
-INSERT INTO salons (name, address, phone, email, description, status) VALUES 
-  ('Premium Hair Salon', '100 Beauty Blvd, Budapest', '2012345678', 'contact@premiumhair.com', 'Top-rated hair salon with expert stylists', 'open'),
-  ('Wellness Spa Center', '200 Relaxation St, Budapest', '2098765432', 'info@wellnessspa.com', 'Full-service spa offering massage and beauty treatments', 'open'),
-  ('Tech Repair Pro', '300 Tech Ave, Budapest', '2011223344', 'support@techrepair.com', 'Professional electronics repair service', 'open');
+INSERT INTO salons (name, address, phone, email, description, latitude, longitude, status) VALUES 
+  ('Premium Hair Salon', '100 Beauty Blvd, Budapest', '2012345678', 'contact@premiumhair.com', 'Top-rated hair salon with expert stylists', 47.4979, 19.0402, 'open'),
+  ('Wellness Spa Center', '200 Relaxation St, Budapest', '2098765432', 'info@wellnessspa.com', 'Full-service spa offering massage and beauty treatments', 47.5103, 19.0560, 'open'),
+  ('Tech Repair Pro', '300 Tech Ave, Budapest', '2011223344', 'support@techrepair.com', 'Professional electronics repair service', 47.4850, 19.0780, 'open');
 
 -- Insert test users
 INSERT INTO users (name, email, phone, address, status, role, password_hash) VALUES 

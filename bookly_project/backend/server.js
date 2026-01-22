@@ -49,6 +49,8 @@ const loginApi = require('./api/auth/LoginApi.js');
 app.use('/auth', loginApi);
 const userApi = require('./api/userApi.js');
 app.use('/api', userApi);
+const searchApi = require('./api/searchApi.js');
+app.use('/api/search', searchApi);
 
 
 //!Szerver futtatása
