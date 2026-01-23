@@ -1,3 +1,12 @@
+//A nominatim OpenStreetMap API pontos cím alapján visszaadja a koordinátákat
+/*
+https://nominatim.openstreetmap.org/search?street=Akácfa%20utca%2057&city=Budapest&postalcode=1073&country=Hungary&format=json&limit=1
+*/
+
+/*
+https://nominatim.openstreetmap.org/search?street={utca, hazszam}&city={varos}&postalcode={iranyitoszam}&country={orszag}&format=json&limit=1
+*/
+
 //Átalakítja a helynevet koordinátákká és kiszámítja a távolságot a felhasználó és a szalonok között
 async function placeToCoordinate(placeName) {
     try {
