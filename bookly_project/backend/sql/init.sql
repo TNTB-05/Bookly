@@ -42,6 +42,9 @@ CREATE TABLE IF NOT EXISTS salons (
   `address` VARCHAR(255) NOT NULL,
   `phone` VARCHAR(20),
   `email` VARCHAR(255),
+  `type` VARCHAR(100),
+  `opening_hours` INT,
+  `closing_hours` INT,
   `description` TEXT,
   `sharecode` VARCHAR(100) UNIQUE,
   `status` ENUM('open', 'closed', 'renovation') DEFAULT 'open',
@@ -110,10 +113,10 @@ CREATE TABLE IF NOT EXISTS ratings(
 -- Optional: Insert sample data (seed)
 
 -- Insert test salons
-INSERT INTO salons (name, address, phone, email, description, sharecode, status) VALUES 
-  ('Premium Hair Salon', '100 Beauty Blvd, Budapest', '2012345678', 'contact@premiumhair.com', 'Top-rated hair salon with expert stylists', 'HAIR01', 'open'),
-  ('Wellness Spa Center', '200 Relaxation St, Budapest', '2098765432', 'info@wellnessspa.com', 'Full-service spa offering massage and beauty treatments', 'SPA001', 'open'),
-  ('Tech Repair Pro', '300 Tech Ave, Budapest', '2011223344', 'support@techrepair.com', 'Professional electronics repair service', 'TECH01', 'open');
+INSERT INTO salons (name, address, phone, email, description, sharecode, status, opening_hours, closing_hours) VALUES 
+  ('Premium Hair Salon', '100 Beauty Blvd, Budapest', '2012345678', 'contact@premiumhair.com', 'Top-rated hair salon with expert stylists', 'HAIR01', 'open', 9, 18),
+  ('Wellness Spa Center', '200 Relaxation St, Budapest', '2098765432', 'info@wellnessspa.com', 'Full-service spa offering massage and beauty treatments', 'SPA001', 'open', 8, 20),
+  ('Tech Repair Pro', '300 Tech Ave, Budapest', '2011223344', 'support@techrepair.com', 'Professional electronics repair service', 'TECH01', 'open', 10, 19);
 
 -- Insert test users
 INSERT INTO users (name, email, phone, address, status, role, password_hash) VALUES 

@@ -210,13 +210,14 @@ router.post('/register', async (request, response) => {
 
             // Create new salon
             const [salonResult] = await connection.query(
-                `INSERT INTO salons (name, address, description, sharecode, status) 
-                 VALUES (?, ?, ?, ?, 'open')`,
+                `INSERT INTO salons (name, address, description, sharecode, status, type) 
+                 VALUES (?, ?, ?, ?, 'open', ?)`,
                 [
                     salon.companyName.trim(),
                     salon.address.trim(),
                     salon.description.trim(),
-                    shareCode
+                    shareCode,
+                    salon.salonType.trim()
                 ]
             );
 
@@ -369,8 +370,6 @@ router.post('/login', async (request, response) => {
         });
     }
 });
-
-
 
 
 module.exports=router;

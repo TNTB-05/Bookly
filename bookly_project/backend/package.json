@@ -7,6 +7,7 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "start": "node server.js",
         "db:up": "cd .. && docker-compose up -d db",
+        "myadmin:up": "cd .. && docker-compose up -d phpmyadmin",
         "db:reset": "cd .. && docker-compose down && docker volume rm bookly_project_db_data 2>/dev/null; docker-compose up -d && sleep 10 && echo 'Database reset complete!'",
         "db:restart": "cd .. && docker-compose restart db",
         "dev": "npm run db:up && nodemon"
