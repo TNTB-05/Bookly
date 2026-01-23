@@ -4,7 +4,9 @@ const database = require('../../sql/database.js');
 const fs = require('fs/promises');
 const bcrypt = require('bcryptjs'); //?npm install bcrypt
 const jwt = require('jsonwebtoken'); //?npm install jsonwebtoken
-
+const addUser = require('../../sql/users.js').addUser;
+const getUserByEmail = require('../../sql/users.js').getUserByEmail;
+const getUsers = require('../../sql/users.js').getUsers;
 
 
 //!Multer
@@ -39,8 +41,6 @@ setInterval(() => {
 
 //!Endpoints:
 
-const Users = [];
-
 // Helper function to generate tokens
 const generateTokens = (email, userId) => {
     if (!process.env.JWT_SECRET) {
@@ -54,13 +54,13 @@ const generateTokens = (email, userId) => {
     }
 
     const accessToken = jwt.sign(
-        { email, userId },
+        { email, userId , role: 'customer'},
         process.env.JWT_SECRET,
         { expiresIn: '15m' } // Short-lived access token
     );
 
     const refreshToken = jwt.sign(
-        { email, userId },
+        { email, userId , role: 'customer'},
         process.env.JWT_REFRESH_SECRET,
         { expiresIn: '7d' } // Long-lived refresh token
     );
@@ -87,7 +87,7 @@ router.post('/register', async (request, response) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     try {
-        const existingUser = Users.find(u => u.email === email);
+        const existingUser = await getUserByEmail(email);
         if (existingUser) {
             return response.status(409).json({
                 success: false,
@@ -95,8 +95,7 @@ router.post('/register', async (request, response) => {
             });
         }
 
-        const userId = Users.length + 1;
-        Users.push({ userId, email, hashedPassword });
+        await addUser(email, hashedPassword, 'customer');
         
 
         response.status(201).json({
@@ -131,7 +130,7 @@ router.post('/login', async (request, response) => {
     }
 
     try {
-        const user = Users.find(u => u.email === email);
+        const user = await getUserByEmail(email);
 
         if (!user) {
             return response.status(422).json({
@@ -140,7 +139,7 @@ router.post('/login', async (request, response) => {
             });
         }
 
-        const passwordMatch = await bcrypt.compare(password, user.hashedPassword);
+        const passwordMatch = await bcrypt.compare(password, user.password_hash);
         if (!passwordMatch) {
             return response.status(422).json({
                 success: false,
@@ -211,7 +210,7 @@ router.post('/refresh', (request, response) => {
 
         // Generate new access token with userId
         const newAccessToken = jwt.sign(
-            { email: decoded.email, userId: decoded.userId },
+            { email: decoded.email, userId: decoded.userId , role: decoded.role},
             process.env.JWT_SECRET,
             { expiresIn: '15m' }
         );

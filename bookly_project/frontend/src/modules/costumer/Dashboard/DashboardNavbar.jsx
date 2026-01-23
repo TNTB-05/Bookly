@@ -1,0 +1,236 @@
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { logout } from '../../auth/auth';
+import NavItem from './NavItem';
+import Logo from '../../Logo';
+import ProfileIcon from '../../../icons/ProfileIcon';
+import ExitIcon from '../../../icons/ExitIcon';
+import SettingsIcon from '../../../icons/SettingsIcon';
+
+export default function DashboardNavbar({ activeTab, setActiveTab, user }) {
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef(null);
+    const navigate = useNavigate();
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsDropdownOpen(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    async function handleLogout() {
+        await logout();
+        localStorage.removeItem('accessToken');
+        navigate('/');
+    }
+
+    return (
+        <>
+            {/* Desktop/Tablet Header */}
+            <nav className="hidden sm:block bg-white/30 backdrop-blur-md shadow-sm fixed w-full z-30 top-0 border-b border-white/40">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between h-16 relative">
+                        <div className="flex items-center">
+                            <div className="shrink-0 flex items-center">
+                                <Logo className="h-10 w-auto cursor-pointer" />
+                            </div>
+                        </div>
+
+                        <div className="flex sm:space-x-8 gap-10 h-full items-center absolute left-1/2 -translate-x-1/2">
+                            <NavItem
+                                tab="overview"
+                                label="Áttekintés"
+                                activeTab={activeTab}
+                                setActiveTab={setActiveTab}
+                                setIsMobileMenuOpen={setIsMobileMenuOpen}
+                            />
+                            <NavItem
+                                tab="appointments"
+                                label="Foglalásaim"
+                                activeTab={activeTab}
+                                setActiveTab={setActiveTab}
+                                setIsMobileMenuOpen={setIsMobileMenuOpen}
+                            />
+                            <NavItem
+                                tab="book"
+                                label="Mentett helyek"
+                                activeTab={activeTab}
+                                setActiveTab={setActiveTab}
+                                setIsMobileMenuOpen={setIsMobileMenuOpen}
+                            />
+                        </div>
+
+                        {/* Desktop Profile Dropdown */}
+                        <div className="ml-6 flex items-center relative" ref={dropdownRef}>
+                            <button
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                className="flex items-center gap-3 group px-3 py-2 rounded-lg hover:bg-blue-50 transition-all"
+                            >
+                                <span className="text-sm font-medium text-gray-700 group-hover:text-dark-blue transition-colors">
+                                    {user?.name || 'Felhasználó'}
+                                </span>
+                                <div className="w-10 h-10 rounded-full bg-dark-blue text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all text-sm font-bold">
+                                    {user?.name?.charAt(0).toUpperCase() || 'U'}
+                                </div>
+                            </button>
+
+                            {/* Dropdown Menu */}
+                            {isDropdownOpen && (
+                                <div className="absolute top-14 right-0 w-52 bg-white/90 backdrop-blur-xl border border-white/50 rounded-2xl shadow-xl overflow-hidden z-50">
+                                    <div className="p-4 border-b border-gray-200">
+                                        <p className="text-sm font-bold text-gray-900">{user?.name || 'Felhasználó'}</p>
+                                        <p className="text-xs text-gray-600 truncate">{user?.email || ''}</p>
+                                    </div>
+                                    <div className="p-2 space-y-1">
+                                        <button
+                                            onClick={() => {
+                                                setActiveTab('profile');
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-white/50 rounded-lg transition-colors flex items-center gap-2"
+                                        >
+                                            <div className="w-4 h-4">
+                                                <ProfileIcon />
+                                            </div>
+                                            Profil
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setActiveTab('settings');
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-white/50 rounded-lg transition-colors flex items-center gap-2"
+                                        >
+                                            <div className="w-4 h-4">
+                                                <SettingsIcon />
+                                            </div>
+                                            Beállítások
+                                        </button>
+                                        <div className="border-t border-gray-200 my-1"></div>
+                                        <button
+                                            onClick={() => {
+                                                handleLogout();
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
+                                        >
+                                            <div className="w-4 h-4">
+                                                <ExitIcon />
+                                            </div>
+                                            Kijelentkezés
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            {/* Mobile Header - Top */}
+            <nav className="sm:hidden bg-white/30 backdrop-blur-md shadow-sm fixed w-full z-30 top-0 border-b border-white/40">
+                <div className="px-4 py-3">
+                    <div className="flex justify-between items-center">
+                        <Logo className="h-10 w-auto cursor-pointer" />
+
+                        {/* Mobile Profile Dropdown */}
+                        <div className="relative" ref={dropdownRef}>
+                            <button
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                className="w-10 h-10 rounded-full bg-dark-blue text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all text-sm font-bold"
+                            >
+                                {user?.name?.charAt(0).toUpperCase() || 'U'}
+                            </button>
+
+                            {/* Dropdown Menu */}
+                            {isDropdownOpen && (
+                                <div className="absolute top-12 right-0 w-52 bg-white/90 backdrop-blur-xl border border-white/50 rounded-2xl shadow-xl overflow-hidden z-50">
+                                    <div className="p-4 border-b border-gray-200">
+                                        <p className="text-sm font-bold text-gray-900">{user?.name || 'Felhasználó'}</p>
+                                        <p className="text-xs text-gray-600 truncate">{user?.email || ''}</p>
+                                    </div>
+                                    <div className="p-2 space-y-1">
+                                        <button
+                                            onClick={() => {
+                                                setActiveTab('profile');
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-white/50 rounded-lg transition-colors flex items-center gap-2"
+                                        >
+                                            <div className="w-4 h-4">
+                                                <ProfileIcon />
+                                            </div>
+                                            Profil
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setActiveTab('settings');
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-white/50 rounded-lg transition-colors flex items-center gap-2"
+                                        >
+                                            <SettingsIcon />
+                                            Beállítások
+                                        </button>
+                                        <div className="border-t border-gray-200 my-1"></div>
+                                        <button
+                                            onClick={() => {
+                                                handleLogout();
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
+                                        >
+                                            <div className="w-4 h-4">
+                                                <ExitIcon />
+                                            </div>
+                                            Kijelentkezés
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            {/* Mobile Bottom Navigation */}
+            <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-white/50 p-2 pb-safe z-50 flex justify-around items-center shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)]">
+                <NavItem
+                    tab="overview"
+                    label="Áttekintés"
+                    icon="🏠"
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    setIsMobileMenuOpen={setIsMobileMenuOpen}
+                    isMobile={true}
+                />
+                <NavItem
+                    tab="appointments"
+                    label="Foglalásaim"
+                    icon="📅"
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    setIsMobileMenuOpen={setIsMobileMenuOpen}
+                    isMobile={true}
+                />
+                <NavItem
+                    tab="book"
+                    label="Mentett"
+                    icon="➕"
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    setIsMobileMenuOpen={setIsMobileMenuOpen}
+                    isMobile={true}
+                />
+            </nav>
+        </>
+    );
+}

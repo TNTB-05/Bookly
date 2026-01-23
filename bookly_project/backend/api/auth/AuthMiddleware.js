@@ -19,7 +19,7 @@ const AuthMiddleware = (req, res, next) => {
             });
         }
 
-        jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
             if (err) {
                 const statusCode = err.name === 'TokenExpiredError' ? 401 : 403;
                 const message = err.name === 'TokenExpiredError' 
@@ -33,7 +33,8 @@ const AuthMiddleware = (req, res, next) => {
                 });
             }
             
-            req.user = user;
+            // Attach the decoded JWT payload to the request object
+            req.user = decoded;
             next();
         });
     } catch (error) {

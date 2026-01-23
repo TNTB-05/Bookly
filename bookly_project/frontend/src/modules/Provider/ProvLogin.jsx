@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth';
 
-export default function Login() {
+export default function ProvLogin() {
     const emailRef = useRef(null);
     const passwordRef = useRef(null);
     const [loading, setLoading] = useState(false);
@@ -29,7 +29,7 @@ export default function Login() {
         setError(null);
         setSuccess(null);
 
-        const email = emailRef.current.value;
+        const email = emailRef.current.value.trim();
         const password = passwordRef.current.value;
 
         if (!validateInputs(email, password)) {
@@ -39,28 +39,29 @@ export default function Login() {
 
         try {
             const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3000';
-            const response = await fetch(`${apiUrl}/auth/login`, {
+            const response = await fetch(`${apiUrl}/auth/provider/login`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                credentials: 'include', // Send cookies with request
-                body: JSON.stringify({ email, password })
+                credentials: 'include',
+                body: JSON.stringify({ email, password }),
             });
-
+            
             const data = await response.json();
-
+            
             if (response.ok) {
                 setSuccess(data.message || 'Sikeres bejelentkezés!');
                 console.log('Login successful:', data);
-
+                
                 emailRef.current.value = '';
                 passwordRef.current.value = '';
-
                 localStorage.setItem('accessToken', data.accessToken);
                 setIsAuthenticated(true);
-
-                setTimeout(() => navigate('/dashboard'), 2000);
+                
+                setTimeout(() => 
+                    navigate('/ProvDash'), 1500);
+                
             } else {
                 setError(data.message || 'Bejelentkezés sikertelen');
                 console.error('Login failed:', data);
@@ -79,19 +80,30 @@ export default function Login() {
                 {/* Glass Card */}
                 <div className="bg-white/40 backdrop-blur-md rounded-2xl shadow-xl border-2 border-white/50 p-6 sm:p-8 lg:p-10">
                     {/* Back Button */}
-                    <button onClick={() => navigate('/')} className="mb-4 text-gray-700 hover:text-gray-900 flex items-center gap-2 transition-colors">
+                    <button
+                        onClick={() => navigate('/provider/landing')}
+                        className="mb-4 text-gray-700 hover:text-gray-900 flex items-center gap-2 transition-colors"
+                    >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                         </svg>
                         Vissza
                     </button>
+                    
+                    <h1 className="text-center mb-6 sm:mb-8 text-gray-900">
+                        Szolgáltató Bejelentkezés
+                    </h1>
 
-                    <h1 className="text-center mb-6 sm:mb-8 text-gray-900">Bejelentkezés</h1>
-
-                    {error && <div className="mb-4 p-3 bg-red-100/80 backdrop-blur-sm border border-red-400 text-red-700 rounded-lg text-sm">{error}</div>}
+                    {error && (
+                        <div className="mb-4 p-3 bg-red-100/80 backdrop-blur-sm border border-red-400 text-red-700 rounded-lg text-sm">
+                            {error}
+                        </div>
+                    )}
 
                     {success && (
-                        <div className="mb-4 p-3 bg-green-100/80 backdrop-blur-sm border border-green-400 text-green-700 rounded-lg text-sm">{success}</div>
+                        <div className="mb-4 p-3 bg-green-100/80 backdrop-blur-sm border border-green-400 text-green-700 rounded-lg text-sm">
+                            {success}
+                        </div>
                     )}
 
                     <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
@@ -100,9 +112,9 @@ export default function Login() {
                             <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-1.5">
                                 Email cím
                             </label>
-                            <input
-                                type="email"
-                                id="email"
+                            <input 
+                                type="email" 
+                                id="email" 
                                 ref={emailRef}
                                 required
                                 className="w-full px-4 py-2.5 bg-white/60 backdrop-blur-sm border-2 border-white/50 rounded-lg 
@@ -118,9 +130,9 @@ export default function Login() {
                             <label htmlFor="password" className="block text-sm font-medium text-gray-900 mb-1.5">
                                 Jelszó
                             </label>
-                            <input
-                                type="password"
-                                id="password"
+                            <input 
+                                type="password" 
+                                id="password" 
                                 ref={passwordRef}
                                 required
                                 className="w-full px-4 py-2.5 bg-white/60 backdrop-blur-sm border-2 border-white/50 rounded-lg 
@@ -147,7 +159,7 @@ export default function Login() {
                     {/* Register Link */}
                     <p className="text-center mt-6 text-sm text-gray-700">
                         Még nincs fiókod?{' '}
-                        <a href="/register" className="font-semibold text-blue-600 hover:text-blue-700 underline">
+                        <a href="/provider/register" className="font-semibold text-blue-600 hover:text-blue-700 underline">
                             Regisztráció
                         </a>
                     </p>
