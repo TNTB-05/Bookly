@@ -26,13 +26,14 @@ export default function Dashboard() {
     const [serviceFilter, setServiceFilter] = useState('all');
     const [locationSearch, setLocationSearch] = useState('');
     const [userLocation, setUserLocation] = useState(null);
+    const [searchActive, setSearchActive] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
     const navigate = useNavigate();
 
     useEffect(() => {
         loadData();
     }, []);
 
-    
     async function loadData() {
         try {
             const [userData, appointmentsData, providersData, servicesData] = await Promise.all([
@@ -77,6 +78,62 @@ export default function Dashboard() {
         return <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusInfo.className}`}>{statusInfo.text}</span>;
     }
 
+    function handleSearch() {
+        // Filter providers based on search criteria
+        let results = providers;
+
+        // Filter by search query (name)
+        if (searchQuery.trim() !== '') {
+            results = results.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        }
+
+        // Filter by service type
+        if (serviceFilter !== 'all') {
+            // This would need backend support to filter by actual services
+            // For now, just keep all results if not 'all'
+            results = results;
+        }
+
+        // Filter by location (if location search is implemented)
+        if (locationSearch.trim() !== '') {
+            // This would need geocoding and distance calculation
+            // For now, just keep all results
+            results = results;
+        }
+
+        setSearchResults(results);
+        setSearchActive(true);
+    }
+
+    function handleGetCurrentLocation() {
+        if (!navigator.geolocation) {
+            alert('A böngésző nem támogatja a helymeghatározást');
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                setUserLocation({ latitude, longitude });
+
+                // Reverse geocode to get place name
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                    const data = await response.json();
+                    const placeName = data.address.city || data.address.town || data.address.village || 'Jelenlegi helyzet';
+                    setLocationSearch(placeName);
+                } catch (error) {
+                    console.error('Reverse geocoding failed:', error);
+                    setLocationSearch(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+                }
+            },
+            (error) => {
+                console.error('Geolocation error:', error);
+                alert('Nem sikerült lekérni a helyzetet. Kérjük, engedélyezd a helymeghatározást.');
+            }
+        );
+    }
+
     if (loading) {
         return <div className="flex justify-center items-center min-h-screen text-2xl text-gray-600">Betöltés...</div>;
     }
@@ -101,75 +158,144 @@ export default function Dashboard() {
                                         <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
                                             Foglalj időpontot a legjobb szakemberekhez egyszerűen és gyorsan
                                         </p>
-                                        <div className="max-w-xl mx-auto">
-                                            <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-full shadow-xl border border-white/50 overflow-hidden">
+
+                                        {/* Enhanced Search Bar */}
+                                        <div className="max-w-4xl mx-auto space-y-4">
+                                            {/* Main Search Bar */}
+                                            <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 overflow-hidden">
                                                 <div className="pl-4">
                                                     <SearchIcon />
                                                 </div>
                                                 <input
                                                     type="text"
-                                                    placeholder="Keress szolgáltatót, szolgáltatást..."
+                                                    placeholder="Keress szolgáltatót vagy szolgáltatást..."
                                                     value={searchQuery}
                                                     onChange={(e) => setSearchQuery(e.target.value)}
+                                                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                                                     className="flex-1 px-4 py-4 text-gray-900 placeholder-gray-500 focus:outline-none bg-transparent"
                                                 />
-                                                <button className="px-6 py-4 bg-dark-blue text-white font-semibold hover:bg-blue-800 transition-colors rounded-r-full">
+                                                <button
+                                                    onClick={handleSearch}
+                                                    className="px-8 py-4 bg-dark-blue text-white font-semibold hover:bg-blue-800 transition-colors rounded-r-2xl"
+                                                >
                                                     Keresés
                                                 </button>
                                             </div>
+
+                                            {/* Filters Row */}
+                                            <div className="flex flex-col sm:flex-row gap-3">
+                                                {/* Location Search */}
+                                                <div className="flex-1 flex flex-col sm:flex-row gap-2">
+                                                    <div className="flex-1 flex items-center bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 overflow-hidden">
+                                                        <div className="pl-4 text-gray-500">
+                                                            <LocationIcon />
+                                                        </div>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Helyszín (pl. Budapest)"
+                                                            value={locationSearch}
+                                                            onChange={(e) => setLocationSearch(e.target.value)}
+                                                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                                            className="flex-1 px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none bg-transparent"
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        onClick={handleGetCurrentLocation}
+                                                        className="px-4 py-3 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors whitespace-nowrap shadow-md"
+                                                        title="Jelenlegi helyzetem használata"
+                                                    >
+                                                        📍 Jelenlegi helyzetem
+                                                    </button>
+                                                </div>
+
+                                                {/* Service Filter */}
+                                                <div className="flex-1 sm:max-w-xs">
+                                                    <select
+                                                        value={serviceFilter}
+                                                        onChange={(e) => setServiceFilter(e.target.value)}
+                                                        className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
+                                                    >
+                                                        <option value="all">Összes szolgáltatás</option>
+                                                        <option value="hajvágás">Hajvágás</option>
+                                                        <option value="manikűr">Manikűr</option>
+                                                        <option value="masszázs">Masszázs</option>
+                                                        <option value="kozmetika">Kozmetika</option>
+                                                        <option value="pedikűr">Pedikűr</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            {/* Reset Search Button */}
+                                            {searchActive && (
+                                                <button
+                                                    onClick={() => {
+                                                        setSearchActive(false);
+                                                        setSearchQuery('');
+                                                        setLocationSearch('');
+                                                        setServiceFilter('all');
+                                                        setSearchResults([]);
+                                                    }}
+                                                    className="text-dark-blue font-medium hover:text-blue-800 transition-colors"
+                                                >
+                                                    ✕ Keresés törlése
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Kiemelt szolgáltatók */}
+                            {/* Kiemelt szolgáltatók / Keresési eredmények */}
                             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                                 <div className="flex items-center justify-between mb-8">
                                     <div>
-                                        <h2 className="text-2xl font-bold text-dark-blue">Kiemelt szolgáltatók</h2>
-                                        <p className="text-gray-600 mt-1">A legjobban értékelt partnereink</p>
+                                        <h2 className="text-2xl font-bold text-dark-blue">{searchActive ? 'Keresési eredmények' : 'Kiemelt szolgáltatók'}</h2>
+                                        <p className="text-gray-600 mt-1">
+                                            {searchActive ? `${searchResults.length} találat` : 'A legjobban értékelt partnereink'}
+                                        </p>
                                     </div>
-                                    <button
-                                        onClick={() => setActiveTab('book')}
-                                        className="text-dark-blue font-medium hover:text-blue-800 flex items-center transition-colors"
-                                    >
-                                        Összes megtekintése
-                                        <RightPointArrowIcon />
-                                    </button>
+                                    {!searchActive && (
+                                        <button
+                                            onClick={() => setActiveTab('book')}
+                                            className="text-dark-blue font-medium hover:text-blue-800 flex items-center transition-colors"
+                                        >
+                                            Összes megtekintése
+                                            <RightPointArrowIcon />
+                                        </button>
+                                    )}
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    {providers
-                                        .filter((p) => searchQuery === '' || p.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                                        .slice(0, 4)
-                                        .map((provider) => (
-                                            <div
-                                                key={provider.id}
-                                                className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
-                                            >
-                                                <div className="h-24 bg-linear-to-r from-blue-500 to-dark-blue relative">
-                                                    <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
-                                                        <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-md">
-                                                            {provider.name.charAt(0).toUpperCase()}
-                                                        </div>
+                                    {(searchActive ? searchResults : providers).slice(0, searchActive ? searchResults.length : 4).map((provider) => (
+                                        <div
+                                            key={provider.id}
+                                            className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
+                                        >
+                                            <div className="h-24 bg-linear-to-r from-blue-500 to-dark-blue relative">
+                                                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+                                                    <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-md">
+                                                        {provider.name.charAt(0).toUpperCase()}
                                                     </div>
-                                                </div>
-                                                <div className="pt-10 p-4 text-center">
-                                                    <h3 className="text-lg font-bold text-gray-900 mb-1">{provider.name}</h3>
-                                                    <div className="flex items-center justify-center text-yellow-400 text-sm mb-2">
-                                                        ★★★★★ <span className="text-gray-400 text-xs ml-1">(24)</span>
-                                                    </div>
-                                                    <button
-                                                        onClick={() => setActiveTab('book')}
-                                                        className="w-full py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors"
-                                                    >
-                                                        Megnézem
-                                                    </button>
                                                 </div>
                                             </div>
-                                        ))}
-                                    {providers.length === 0 && (
-                                        <div className="col-span-full text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-                                            <p className="text-gray-500">Szolgáltatók betöltése...</p>
+                                            <div className="pt-10 p-4 text-center">
+                                                <h3 className="text-lg font-bold text-gray-900 mb-1">{provider.name}</h3>
+                                                <div className="flex items-center justify-center text-yellow-400 text-sm mb-2">
+                                                    ★★★★★ <span className="text-gray-400 text-xs ml-1">(24)</span>
+                                                </div>
+                                                <button
+                                                    onClick={() => setActiveTab('book')}
+                                                    className="w-full py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors"
+                                                >
+                                                    Megnézem
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {(searchActive ? searchResults : providers).length === 0 && (
+                                        <div className="col-span-full text-center py-12 bg-white/40 backdrop-blur-md rounded-xl border border-white/50">
+                                            <p className="text-gray-500">
+                                                {searchActive ? 'Nincs találat a keresési feltételeknek megfelelően' : 'Szolgáltatók betöltése...'}
+                                            </p>
                                         </div>
                                     )}
                                 </div>
@@ -184,7 +310,7 @@ export default function Dashboard() {
                                             <p className="text-gray-600 mt-1">Böngéssz szolgáltatásaink között</p>
                                         </div>
 
-                                        {/* Search by Location */}
+                                        {/* Search by Location
                                         <div className="bg-white/40 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/50">
                                             <div className="flex flex-col sm:flex-row gap-4">
                                                 <div className="flex-1">
@@ -240,7 +366,7 @@ export default function Dashboard() {
                                                     Helyadatok sikeresen lekérve ({userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)})
                                                 </p>
                                             )}
-                                        </div>
+                                        </div> */}
 
                                         {/* Filter by Service */}
                                         <div>

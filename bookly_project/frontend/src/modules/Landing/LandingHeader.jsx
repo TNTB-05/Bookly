@@ -12,7 +12,7 @@ export default function LandingHeader() {
         <>
             {/* Desktop/Tablet Header - Top */}
             <nav className="hidden sm:block bg-white/30 backdrop-blur-md shadow-sm fixed w-full z-30 top-0 border-b border-white/40">
-                <div className="px-4 sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-20">
                         <div className="flex items-center">
                             <Logo className="h-12 w-auto cursor-pointer" onClick={() => navigate('/')} />
@@ -51,29 +51,28 @@ export default function LandingHeader() {
             </nav>
 
             {/* Mobile Bottom Navigation */}
-            <nav className="sm:hidden bg-white/30 backdrop-blur-md shadow-lg fixed w-full z-30 bottom-0 border-t border-white/40">
-                <div className="px-4 py-3">
-                    <div className="grid grid-cols-3 gap-2">
-                        <button
-                            onClick={() => setShowContact(true)}
-                            className="px-3 py-2 text-xs font-medium text-gray-700 bg-white/50 rounded-lg hover:bg-white/70 transition-all active:scale-95"
-                        >
-                            Kapcsolat
-                        </button>
-                        <button
-                            onClick={() => navigate('/provider/landing')}
-                            className="px-3 py-2 text-xs font-medium text-gray-700 bg-white/50 rounded-lg hover:bg-white/70 transition-all active:scale-95"
-                        >
-                            Szolgáltató
-                        </button>
-                        <button
-                            onClick={() => navigate('/login')}
-                            className="px-3 py-2 text-xs font-semibold bg-dark-blue text-white rounded-lg hover:bg-blue-800 transition-all active:scale-95"
-                        >
-                            Belépés
-                        </button>
-                    </div>
-                </div>
+            <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-white/50 p-2 pb-safe z-50 flex justify-around items-center shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)]">
+                <button
+                    onClick={() => setShowContact(true)}
+                    className="flex flex-col items-center gap-1 p-2 w-full justify-center rounded-xl transition-all duration-300 text-gray-700 hover:text-dark-blue hover:bg-white/40"
+                >
+                    <span className="text-lg">📞</span>
+                    <span className="text-[10px] font-medium">Kapcsolat</span>
+                </button>
+                <button
+                    onClick={() => navigate('/provider/landing')}
+                    className="flex flex-col items-center gap-1 p-2 w-full justify-center rounded-xl transition-all duration-300 text-gray-700 hover:text-dark-blue hover:bg-white/40"
+                >
+                    <span className="text-lg">💼</span>
+                    <span className="text-[10px] font-medium">Szolgáltató</span>
+                </button>
+                <button
+                    onClick={() => navigate('/login')}
+                    className="flex flex-col items-center gap-1 p-2 w-full justify-center rounded-xl transition-all duration-300 bg-dark-blue text-white shadow-lg scale-105 hover:bg-blue-800"
+                >
+                    <span className="text-lg">🔐</span>
+                    <span className="text-[10px] font-medium">Belépés</span>
+                </button>
             </nav>
             {showContact && createPortal(<ContactModal onClose={() => setShowContact(false)} />, document.body)}
         </>

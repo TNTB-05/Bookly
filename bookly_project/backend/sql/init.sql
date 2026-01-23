@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS salons (
   `address` VARCHAR(255) NOT NULL,
   `phone` VARCHAR(20),
   `email` VARCHAR(255),
+  `type` VARCHAR(100),
   `description` TEXT,
   `sharecode` VARCHAR(100) UNIQUE,
   `status` ENUM('open', 'closed', 'renovation') DEFAULT 'open',
