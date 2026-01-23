@@ -8,7 +8,7 @@ const pool = mysql.createPool({
     database: process.env.DB_NAME,
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
 });
 
 //!SQL Queries
@@ -48,6 +48,18 @@ async function getProvidersBySalonId(salonId) {
     return rows;
 }
 
+async function getDistinctSalonTypes() {
+    const query = `
+        SELECT DISTINCT type
+        FROM salons
+        WHERE status != 'closed' AND type IS NOT NULL AND type != ''
+        ORDER BY type
+    `;
+
+    const [rows] = await pool.execute(query);
+    return rows.map(row => row.type);
+}
+
 async function getServicesByProviderId(providerId) {
     const query = `
         SELECT id, provider_id, name, description, duration_minutes, price, status, created_at
@@ -77,5 +89,6 @@ module.exports = {
     getSalonById,
     getProvidersBySalonId,
     getServicesByProviderId,
-    getServicesBySalonId
+    getServicesBySalonId,
+    getDistinctSalonTypes
 };

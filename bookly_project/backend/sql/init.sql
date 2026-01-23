@@ -1,12 +1,13 @@
--- Create RefTokens table first (no dependencies)
+SET NAMES utf8mb4 COLLATE utf8mb4_hungarian_ci;
+SET CHARACTER SET utf8mb4;
+
 CREATE DATABASE IF NOT EXISTS bookly_db
   DEFAULT CHARACTER SET utf8mb4
   DEFAULT COLLATE utf8mb4_hungarian_ci;
 
 USE bookly_db;
 
-ALTER DATABASE bookly_db CHARACTER SET utf8mb4 COLLATE utf8mb4_hungarian_ci;
-
+-- Create RefTokens table first (no dependencies)
 CREATE TABLE IF NOT EXISTS RefTokens(
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
   `user_id` INT,
@@ -112,10 +113,10 @@ CREATE TABLE IF NOT EXISTS ratings(
 -- Optional: Insert sample data (seed)
 
 -- Insert test salons
-INSERT INTO salons (name, address, phone, email, description, latitude, longitude, status) VALUES 
-  ('Premium Hair Salon', '100 Beauty Blvd, Budapest', '2012345678', 'contact@premiumhair.com', 'Top-rated hair salon with expert stylists', 47.4979, 19.0402, 'HAIR01','open'),
-  ('Wellness Spa Center', '200 Relaxation St, Budapest', '2098765432', 'info@wellnessspa.com', 'Full-service spa offering massage and beauty treatments', 47.5103, 19.0560, 'SPA001','open'),
-  ('Tech Repair Pro', '300 Tech Ave, Budapest', '2011223344', 'support@techrepair.com', 'Professional electronics repair service', 47.4850, 19.0780, 'TECH01','open');
+INSERT INTO salons (name, address, phone, email, type, description, latitude, longitude, sharecode, status) VALUES 
+  ('Premium Hair Salon', '100 Beauty Blvd, Budapest', '2012345678', 'contact@premiumhair.com', 'fodrász', 'Top-rated hair salon with expert stylists', 47.4979, 19.0402, 'HAIR01', 'open'),
+  ('Wellness Spa Center', '200 Relaxation St, Budapest', '2098765432', 'info@wellnessspa.com', 'szépségszalon', 'Full-service spa offering massage and beauty treatments', 47.5103, 19.0560, 'SPA001', 'open'),
+  ('Tech Repair Pro', '300 Tech Ave, Budapest', '2011223344', 'support@techrepair.com', 'javítószerviz', 'Professional electronics repair service', 47.4850, 19.0780, 'TECH01', 'open');
 
 -- Insert test users
 INSERT INTO users (name, email, phone, address, status, role, password_hash) VALUES 

@@ -131,4 +131,23 @@ router.post('/geocode', async (req, res) => {
     }
 });
 
+// Get distinct salon types
+router.get('/types', async (req, res) => {
+    try {
+        const types = await database.getDistinctSalonTypes();
+        
+        return res.status(200).json({
+            success: true,
+            types: types
+        });
+    } catch (error) {
+        console.error('Get types error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'problem merult fel a salon tipusok lekerese soran',
+            error: error.message
+        });
+    }
+});
+
 module.exports = router;
