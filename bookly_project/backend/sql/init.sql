@@ -64,10 +64,11 @@ CREATE TABLE IF NOT EXISTS providers (
   `isManager` BOOLEAN DEFAULT FALSE,
   `last_login` DATETIME,
   `password_hash` VARCHAR(255) NOT NULL,
-  `refresh_token` TEXT,
+  `refresh_token_id` INT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   -- rating DECIMAL(2,1) DEFAULT 0.0 - consider adding later
-  FOREIGN KEY (salon_id) REFERENCES salons(id)
+  FOREIGN KEY (salon_id) REFERENCES salons(id),
+  FOREIGN KEY (refresh_token_id) REFERENCES RefTokens(id)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 CREATE TABLE IF NOT EXISTS services (

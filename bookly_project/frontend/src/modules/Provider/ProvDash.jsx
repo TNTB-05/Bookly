@@ -68,8 +68,8 @@ const CalendarSection = () => {
     const MINUTES_PER_PIXEL = 1; // 1 minute = 1 pixel for better precision
     const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60;
     
-    // Hours for the day view
-    const hours = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => i + START_HOUR);
+    // Hours for the day view (only show hours where appointments can start)
+    const hours = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => i + START_HOUR);
 
     // Get start and end of current month for fetching appointments
     const getMonthRange = (date) => {
@@ -361,13 +361,14 @@ const CalendarSection = () => {
                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dark-blue"></div>
                                 </div>
                             ) : (
-                                <div className="flex">
+                                <div className="flex" style={{ height: `${TOTAL_MINUTES * MINUTES_PER_PIXEL}px` }}>
                                     {/* Hour labels column */}
-                                    <div className="w-12 sm:w-16 shrink-0 border-r border-gray-100">
-                                        {hours.map((hour) => (
+                                    <div className="w-12 sm:w-16 shrink-0 border-r border-gray-100 relative">
+                                        {hours.map((hour, index) => (
                                             <div 
                                                 key={hour} 
-                                                className="h-15 p-1 sm:p-2 text-right border-b border-gray-50"
+                                                className="absolute left-0 right-0 pr-1 sm:pr-2 text-right -translate-y-1/2"
+                                                style={{ top: `${index * 60 * MINUTES_PER_PIXEL}px` }}
                                             >
                                                 <span className="text-[10px] sm:text-xs font-medium text-gray-400">
                                                     {hour.toString().padStart(2, '0')}:00
@@ -379,13 +380,12 @@ const CalendarSection = () => {
                                     {/* Timeline with appointments */}
                                     <div 
                                         className="flex-1 relative"
-                                        style={{ height: `${TOTAL_MINUTES * MINUTES_PER_PIXEL}px` }}
                                     >
                                         {/* Hour grid lines */}
                                         {hours.map((hour) => (
                                             <div 
                                                 key={hour}
-                                                className="absolute left-0 right-0 border-b border-gray-100"
+                                                className="absolute left-0 right-0 border-b-2 border-gray-300"
                                                 style={{ top: `${(hour - START_HOUR) * 60 * MINUTES_PER_PIXEL}px` }}
                                             />
                                         ))}
@@ -394,7 +394,7 @@ const CalendarSection = () => {
                                         {hours.map((hour) => (
                                             <div 
                                                 key={`half-${hour}`}
-                                                className="absolute left-0 right-0 border-b border-gray-50 border-dashed"
+                                                className="absolute left-0 right-0 border-b border-gray-200 border-dashed"
                                                 style={{ top: `${((hour - START_HOUR) * 60 + 30) * MINUTES_PER_PIXEL}px` }}
                                             />
                                         ))}
@@ -413,20 +413,17 @@ const CalendarSection = () => {
                                                         onClick={() => handleAppointmentClick(apt)}
                                                         className={`
                                                             absolute left-1 right-1 sm:left-2 sm:right-2 
-                                                            p-1.5 sm:p-2 rounded-lg border transition-all overflow-hidden
+                                                            px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg border transition-all overflow-hidden
                                                             hover:shadow-md hover:z-10 active:scale-[0.98]
                                                             ${getStatusColor(apt.status)}
                                                         `}
                                                         style={style}
                                                     >
-                                                        <div className="flex flex-col h-full">
-                                                            <p className="font-semibold text-xs sm:text-sm truncate">
+                                                        <div className="flex items-center justify-between gap-1 h-full">
+                                                            <p className="font-semibold text-[10px] sm:text-xs truncate">
                                                                 {apt.user_name}
                                                             </p>
-                                                            <p className="text-[10px] sm:text-xs opacity-80">
-                                                                {formatTime(apt.appointment_start)} - {formatTime(apt.appointment_end)}
-                                                            </p>
-                                                            <span className="text-[10px] sm:text-xs font-medium mt-auto">
+                                                            <span className="text-[10px] sm:text-xs font-medium whitespace-nowrap shrink-0">
                                                                 {apt.price.toLocaleString()} Ft
                                                             </span>
                                                         </div>
