@@ -44,6 +44,91 @@ const verifyProvider = async (req, res, next) => {
 // Apply middleware to all routes: Auth -> Role check -> Provider verification
 router.use(AuthMiddleware, requireRole(['provider']), verifyProvider);
 
+// Get dashboard statistics
+router.get('/statistics', async (request, response) => {
+    try {
+        const providerId = request.providerId;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - today.getDay() + 1); // Monday
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 7);
+
+        // Today's appointments count
+        const [todayResult] = await pool.query(
+            `SELECT COUNT(*) as count FROM appointments 
+             WHERE provider_id = ? 
+             AND appointment_start >= ? 
+             AND appointment_start < ? 
+             AND status != 'canceled'`,
+            [providerId, today, tomorrow]
+        );
+
+        // Weekly revenue
+        const [revenueResult] = await pool.query(
+            `SELECT SUM(price) as total FROM appointments 
+             WHERE provider_id = ? 
+             AND appointment_start >= ? 
+             AND appointment_start < ? 
+             AND status IN ('completed', 'scheduled')`,
+            [providerId, weekStart, weekEnd]
+        );
+
+        // New customers this month (users created this month with appointments)
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        const [newCustomersResult] = await pool.query(
+            `SELECT COUNT(DISTINCT u.id) as count 
+             FROM users u
+             INNER JOIN appointments a ON a.user_id = u.id
+             WHERE a.provider_id = ? 
+             AND u.created_at >= ?`,
+            [providerId, monthStart]
+        );
+
+        // Upcoming appointments (next 5)
+        const [upcomingAppointments] = await pool.query(
+            `SELECT 
+                a.id,
+                a.appointment_start,
+                a.appointment_end,
+                a.status,
+                a.price,
+                COALESCE(u.name, a.guest_name) as user_name,
+                COALESCE(u.email, a.guest_email) as user_email,
+                s.name as service_name
+             FROM appointments a
+             LEFT JOIN users u ON a.user_id = u.id
+             LEFT JOIN services s ON a.service_id = s.id
+             WHERE a.provider_id = ? 
+             AND a.appointment_start >= NOW()
+             AND a.status = 'scheduled'
+             ORDER BY a.appointment_start ASC
+             LIMIT 5`,
+            [providerId]
+        );
+
+        response.status(200).json({
+            success: true,
+            statistics: {
+                todayAppointments: todayResult[0].count,
+                weeklyRevenue: revenueResult[0].total || 0,
+                newCustomers: newCustomersResult[0].count,
+                upcomingAppointments: upcomingAppointments
+            }
+        });
+    } catch (error) {
+        console.error('Get statistics error:', error);
+        response.status(500).json({
+            success: false,
+            message: 'Hiba történt az adatok lekérdezésekor'
+        });
+    }
+});
+
 // Get working hours for provider's salon
 router.get('/working-hours', async (request, response) => {
     try {
