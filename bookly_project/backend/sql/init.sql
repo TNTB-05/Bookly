@@ -9,7 +9,8 @@ ALTER DATABASE bookly_db CHARACTER SET utf8mb4 COLLATE utf8mb4_hungarian_ci;
 
 CREATE TABLE IF NOT EXISTS RefTokens(
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-  `user_id` INT,
+  `user_id` INT NULL,
+  `provider_id` INT NULL,
   `refresh_token` TEXT NOT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
@@ -33,7 +34,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 
 -- Add foreign key constraint to RefTokens after users table is created
-ALTER TABLE RefTokens ADD FOREIGN KEY (user_id) REFERENCES users(id);
+ALTER TABLE RefTokens ADD FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 
 
 CREATE TABLE IF NOT EXISTS salons (
@@ -70,6 +71,9 @@ CREATE TABLE IF NOT EXISTS providers (
   FOREIGN KEY (salon_id) REFERENCES salons(id),
   FOREIGN KEY (refresh_token_id) REFERENCES RefTokens(id)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
+
+-- Add foreign key constraint to RefTokens after providers table is created
+ALTER TABLE RefTokens ADD FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS services (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,

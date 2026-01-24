@@ -151,7 +151,7 @@ router.post('/login', async (request, response) => {
         // Generate both access and refresh tokens
         const { accessToken, refreshToken } = generateTokens(email, user.userId);
 
-        // Store refresh token in database
+        // Store refresh token in database (user_id for customers)
         const [tokenResult] = await pool.query(
             'INSERT INTO RefTokens (user_id, refresh_token) VALUES (?, ?)',
             [user.userId, refreshToken]
@@ -213,7 +213,7 @@ router.post('/refresh', async (request, response) => {
 
         // Check if token exists in database
         const [tokens] = await pool.query(
-            'SELECT id, user_id FROM RefTokens WHERE refresh_token = ?',
+            'SELECT id, user_id, provider_id FROM RefTokens WHERE refresh_token = ?',
             [refreshToken]
         );
 
@@ -225,16 +225,28 @@ router.post('/refresh', async (request, response) => {
             });
         }
 
+        const tokenRecord = tokens[0];
+
         // Validate user still exists and is active based on role
         if (decoded.role === 'provider') {
+            // Verify token belongs to a provider
+            if (!tokenRecord.provider_id) {
+                await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
+                response.clearCookie('refreshToken');
+                return response.status(401).json({
+                    success: false,
+                    message: 'Invalid token for user type'
+                });
+            }
+
             const [providers] = await pool.query(
                 'SELECT id, status FROM providers WHERE id = ?',
-                [decoded.userId]
+                [tokenRecord.provider_id]
             );
 
             if (providers.length === 0 || providers[0].status === 'deleted' || providers[0].status === 'banned') {
                 // Remove invalid token
-                await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokens[0].id]);
+                await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
                 response.clearCookie('refreshToken');
                 return response.status(401).json({
                     success: false,
@@ -242,15 +254,24 @@ router.post('/refresh', async (request, response) => {
                 });
             }
         } else {
-            // Customer validation
+            // Customer validation - verify token belongs to a customer
+            if (!tokenRecord.user_id) {
+                await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
+                response.clearCookie('refreshToken');
+                return response.status(401).json({
+                    success: false,
+                    message: 'Invalid token for user type'
+                });
+            }
+
             const [users] = await pool.query(
                 'SELECT id, status FROM users WHERE id = ?',
-                [decoded.userId]
+                [tokenRecord.user_id]
             );
 
             if (users.length === 0 || users[0].status === 'deleted' || users[0].status === 'banned') {
                 // Remove invalid token
-                await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokens[0].id]);
+                await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
                 response.clearCookie('refreshToken');
                 return response.status(401).json({
                     success: false,

@@ -320,9 +320,9 @@ router.post('/login', async (request, response) => {
         // Generate both access and refresh tokens
         const { accessToken, refreshToken } = generateTokens(email, provider.id);
 
-        // Store refresh token in database
+        // Store refresh token in database (provider_id for providers)
         const [tokenResult] = await pool.query(
-            'INSERT INTO RefTokens (user_id, refresh_token) VALUES (?, ?)',
+            'INSERT INTO RefTokens (provider_id, refresh_token) VALUES (?, ?)',
             [provider.id, refreshToken]
         );
 
