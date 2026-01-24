@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Logo from '../../modules/Logo';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth';
@@ -59,6 +60,21 @@ const CalendarSection = () => {
     const [showModal, setShowModal] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
     
+    // Create appointment modal
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [services, setServices] = useState([]);
+    const [saving, setSaving] = useState(false);
+    const [createFormData, setCreateFormData] = useState({
+        is_guest: false,
+        user_email: '',
+        user_name: '',
+        user_phone: '',
+        service_id: '',
+        appointment_date: '',
+        appointment_time: '',
+        comment: ''
+    });
+    
     // Working hours state (fetched from database)
     const [workingHours, setWorkingHours] = useState({ openingHour: 8, closingHour: 20 });
 
@@ -117,11 +133,77 @@ const CalendarSection = () => {
     // Fetch working hours on mount
     useEffect(() => {
         fetchWorkingHours();
+        fetchServices();
     }, [fetchWorkingHours]);
 
     useEffect(() => {
         fetchAppointments();
     }, [fetchAppointments]);
+
+    // Fetch services for dropdown
+    const fetchServices = async () => {
+        try {
+            const response = await authApi.get('/api/provider/calendar/services');
+            const data = await response.json();
+            if (data.success) {
+                setServices(data.services.filter(s => s.status === 'available'));
+            }
+        } catch (error) {
+            console.error('Error fetching services:', error);
+        }
+    };
+
+    // Handle opening create modal
+    const handleOpenCreateModal = () => {
+        setCreateFormData({
+            is_guest: false,
+            user_email: '',
+            user_name: '',
+            user_phone: '',
+            service_id: '',
+            appointment_date: selectedDate.toISOString().split('T')[0],
+            appointment_time: `${workingHours.openingHour.toString().padStart(2, '0')}:00`,
+            comment: ''
+        });
+        setShowCreateModal(true);
+    };
+
+    // Handle create appointment
+    const handleCreateAppointment = async () => {
+        // Validation
+        if (!createFormData.user_name || !createFormData.service_id) {
+            alert('Név és szolgáltatás megadása kötelező!');
+            return;
+        }
+
+        if (!createFormData.is_guest && !createFormData.user_email) {
+            alert('Regisztrált felhasználóhoz email cím szükséges!');
+            return;
+        }
+
+        if (createFormData.is_guest && !createFormData.user_email && !createFormData.user_phone) {
+            alert('Vendég foglaláshoz legalább email vagy telefonszám szükséges!');
+            return;
+        }
+
+        try {
+            setSaving(true);
+            const response = await authApi.post('/api/provider/calendar/appointments', createFormData);
+            const data = await response.json();
+            
+            if (data.success) {
+                setShowCreateModal(false);
+                fetchAppointments();
+            } else {
+                alert(data.message || 'Hiba történt a foglalás létrehozásakor');
+            }
+        } catch (error) {
+            console.error('Create appointment error:', error);
+            alert('Hiba történt a foglalás létrehozásakor');
+        } finally {
+            setSaving(false);
+        }
+    };
 
     // Get appointments for selected date
     const getAppointmentsForDate = (date) => {
@@ -266,7 +348,15 @@ const CalendarSection = () => {
 
     return (
         <div className="space-y-4 sm:space-y-6">
-            <h2 className="text-xl sm:text-2xl font-bold text-dark-blue">Naptár</h2>
+            <div className="flex justify-between items-center">
+                <h2 className="text-xl sm:text-2xl font-bold text-dark-blue">Naptár</h2>
+                <button 
+                    onClick={handleOpenCreateModal}
+                    className="px-4 py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors shadow-md text-sm"
+                >
+                    + Új Időpont
+                </button>
+            </div>
             
             <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
                 {/* Calendar - Mini on mobile, larger on desktop */}
@@ -419,13 +509,20 @@ const CalendarSection = () => {
                                                         `}
                                                         style={style}
                                                     >
-                                                        <div className="flex items-center justify-between gap-1 h-full">
-                                                            <p className="font-semibold text-[10px] sm:text-xs truncate">
-                                                                {apt.user_name}
-                                                            </p>
-                                                            <span className="text-[10px] sm:text-xs font-medium whitespace-nowrap shrink-0">
-                                                                {apt.price.toLocaleString()} Ft
-                                                            </span>
+                                                        <div className="flex flex-col h-full justify-between">
+                                                            <div className="flex items-center justify-between gap-1">
+                                                                <p className="font-semibold text-[10px] sm:text-xs truncate">
+                                                                    {apt.user_name}
+                                                                </p>
+                                                                <span className="text-[10px] sm:text-xs font-medium whitespace-nowrap shrink-0">
+                                                                    {apt.price.toLocaleString()} Ft
+                                                                </span>
+                                                            </div>
+                                                            {apt.service_name && (
+                                                                <p className="text-[9px] sm:text-[10px] text-gray-600 truncate">
+                                                                    {apt.service_name}
+                                                                </p>
+                                                            )}
                                                         </div>
                                                     </button>
                                                 );
@@ -457,6 +554,11 @@ const CalendarSection = () => {
                                     <h3 className="text-lg sm:text-xl font-bold">
                                         {selectedAppointment.user_name}
                                     </h3>
+                                    {selectedAppointment.service_name && (
+                                        <p className="text-sm sm:text-base font-medium mt-0.5 opacity-90">
+                                            {selectedAppointment.service_name}
+                                        </p>
+                                    )}
                                     <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-white/30">
                                         {getStatusText(selectedAppointment.status)}
                                     </span>
@@ -567,41 +669,540 @@ const CalendarSection = () => {
                     </div>
                 </div>
             )}
+
+            {/* Create Appointment Modal */}
+            {showCreateModal && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
+                    <div 
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+                        onClick={() => setShowCreateModal(false)}
+                    ></div>
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md my-8 max-h-[calc(100vh-4rem)] overflow-y-auto">
+                        <div className="p-6 border-b border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xl font-bold text-dark-blue">Új Időpont Létrehozása</h3>
+                                <button 
+                                    onClick={() => setShowCreateModal(false)}
+                                    className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            {/* Booking Type Toggle */}
+                            <div className="bg-gray-50 p-4 rounded-xl">
+                                <label className="block text-sm font-medium text-gray-700 mb-3">Foglalás típusa</label>
+                                <div className="flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setCreateFormData({ ...createFormData, is_guest: false, user_email: '', user_phone: '' })}
+                                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+                                            !createFormData.is_guest 
+                                                ? 'bg-dark-blue text-white shadow-md' 
+                                                : 'bg-white text-gray-700 border border-gray-300 hover:border-dark-blue'
+                                        }`}
+                                    >
+                                        Regisztrált felhasználó
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setCreateFormData({ ...createFormData, is_guest: true })}
+                                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+                                            createFormData.is_guest 
+                                                ? 'bg-dark-blue text-white shadow-md' 
+                                                : 'bg-white text-gray-700 border border-gray-300 hover:border-dark-blue'
+                                        }`}
+                                    >
+                                        Vendég
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Név *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={createFormData.user_name}
+                                    onChange={(e) => setCreateFormData({ ...createFormData, user_name: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent"
+                                    placeholder="Kovács János"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Email {!createFormData.is_guest ? '*' : ''}
+                                </label>
+                                <input
+                                    type="email"
+                                    value={createFormData.user_email}
+                                    onChange={(e) => setCreateFormData({ ...createFormData, user_email: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent"
+                                    placeholder="pelda@email.hu"
+                                />
+                                {!createFormData.is_guest && (
+                                    <p className="text-xs text-gray-500 mt-1">Meglévő felhasználó email címe vagy új létrehozásához</p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Telefonszám {createFormData.is_guest && !createFormData.user_email ? '*' : ''}
+                                </label>
+                                <input
+                                    type="tel"
+                                    value={createFormData.user_phone}
+                                    onChange={(e) => setCreateFormData({ ...createFormData, user_phone: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent"
+                                    placeholder="+36 20 123 4567"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Szolgáltatás *</label>
+                                <select
+                                    value={createFormData.service_id}
+                                    onChange={(e) => setCreateFormData({ ...createFormData, service_id: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent"
+                                >
+                                    <option value="">Válassz szolgáltatást...</option>
+                                    {services.map(service => (
+                                        <option key={service.id} value={service.id}>
+                                            {service.name} - {service.duration_minutes} perc - {service.price.toLocaleString()} Ft
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Dátum *</label>
+                                    <input
+                                        type="date"
+                                        value={createFormData.appointment_date}
+                                        onChange={(e) => setCreateFormData({ ...createFormData, appointment_date: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Időpont *</label>
+                                    <input
+                                        type="time"
+                                        value={createFormData.appointment_time}
+                                        onChange={(e) => setCreateFormData({ ...createFormData, appointment_time: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Megjegyzés</label>
+                                <textarea
+                                    value={createFormData.comment}
+                                    onChange={(e) => setCreateFormData({ ...createFormData, comment: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent resize-none"
+                                    rows={3}
+                                    placeholder="Speciális kérések, megjegyzések..."
+                                />
+                            </div>
+                        </div>
+
+                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-3">
+                            <button
+                                onClick={() => setShowCreateModal(false)}
+                                className="flex-1 py-2.5 px-4 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-100 transition-colors"
+                            >
+                                Mégse
+                            </button>
+                            <button
+                                onClick={handleCreateAppointment}
+                                disabled={saving}
+                                className="flex-1 py-2.5 px-4 bg-dark-blue text-white font-medium rounded-xl hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {saving ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                ) : (
+                                    'Létrehozás'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };
 
-const ServicesSection = () => (
-    <div className="space-y-6">
-        <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-dark-blue">Szolgáltatások Kezelése</h2>
-            <button className="px-4 py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors shadow-md">
-                + Új Szolgáltatás
-            </button>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4].map((item) => (
-                <div key={item} className="group bg-white/40 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-white/50 hover:border-white/80 transition-all hover:-translate-y-1">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="w-12 h-12 bg-light-blue rounded-lg flex items-center justify-center text-dark-blue">
-                             <ServicesIcon />
+const ServicesSection = () => {
+    const [services, setServices] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [showModal, setShowModal] = useState(false);
+    const [editingService, setEditingService] = useState(null);
+    const [deleteConfirm, setDeleteConfirm] = useState(null);
+    const [saving, setSaving] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        description: '',
+        duration_minutes: 30,
+        price: 0,
+        status: 'available'
+    });
+
+    useEffect(() => {
+        fetchServices();
+    }, []);
+
+    const fetchServices = async () => {
+        try {
+            setLoading(true);
+            const response = await authApi.get('/api/provider/calendar/services');
+            const data = await response.json();
+            if (data.success) {
+                setServices(data.services);
+            } else {
+                setError('Nem sikerült betölteni a szolgáltatásokat');
+            }
+        } catch (error) {
+            console.error('Fetch services error:', error);
+            setError('Hiba történt a szolgáltatások betöltésekor');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const formatPrice = (price) => {
+        return new Intl.NumberFormat('hu-HU').format(price);
+    };
+
+    const handleOpenModal = (service = null) => {
+        if (service) {
+            setEditingService(service);
+            setFormData({
+                name: service.name,
+                description: service.description || '',
+                duration_minutes: service.duration_minutes,
+                price: service.price,
+                status: service.status
+            });
+        } else {
+            setEditingService(null);
+            setFormData({
+                name: '',
+                description: '',
+                duration_minutes: 30,
+                price: 0,
+                status: 'available'
+            });
+        }
+        setShowModal(true);
+    };
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setEditingService(null);
+        setFormData({
+            name: '',
+            description: '',
+            duration_minutes: 30,
+            price: 0,
+            status: 'available'
+        });
+    };
+
+    const handleSave = async () => {
+        if (!formData.name.trim()) {
+            alert('A szolgáltatás neve kötelező!');
+            return;
+        }
+        if (formData.duration_minutes < 5) {
+            alert('A minimum időtartam 5 perc!');
+            return;
+        }
+        if (formData.price < 0) {
+            alert('Az ár nem lehet negatív!');
+            return;
+        }
+
+        try {
+            setSaving(true);
+            let response;
+            
+            if (editingService) {
+                response = await authApi.put(`/api/provider/calendar/services/${editingService.id}`, formData);
+            } else {
+                response = await authApi.post('/api/provider/calendar/services', formData);
+            }
+
+            const data = await response.json();
+            if (data.success) {
+                handleCloseModal();
+                fetchServices();
+            } else {
+                alert(data.message || 'Hiba történt a mentés során');
+            }
+        } catch (error) {
+            console.error('Save service error:', error);
+            alert('Hiba történt a mentés során');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDelete = async (serviceId) => {
+        try {
+            setDeleting(true);
+            const response = await authApi.delete(`/api/provider/calendar/services/${serviceId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                setDeleteConfirm(null);
+                fetchServices();
+            } else {
+                alert(data.message || 'Hiba történt a törlés során');
+            }
+        } catch (error) {
+            console.error('Delete service error:', error);
+            alert('Hiba történt a törlés során');
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-dark-blue">Szolgáltatások Kezelése</h2>
+                <button 
+                    onClick={() => handleOpenModal()}
+                    className="px-4 py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors shadow-md"
+                >
+                    + Új Szolgáltatás
+                </button>
+            </div>
+
+            {loading ? (
+                <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dark-blue"></div>
+                </div>
+            ) : error ? (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
+                    {error}
+                </div>
+            ) : services.length === 0 ? (
+                <div className="bg-white/40 backdrop-blur-md p-12 rounded-2xl shadow-lg border border-white/50 text-center">
+                    <ServicesIcon className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600 text-lg">Még nincsenek szolgáltatások</p>
+                    <p className="text-gray-500 text-sm mt-2">Kattints a "+ Új Szolgáltatás" gombra a kezdéshez</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {services.map((service) => (
+                        <div key={service.id} className="group bg-white/40 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-white/50 hover:border-white/80 transition-all hover:-translate-y-1">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="w-12 h-12 bg-light-blue rounded-lg flex items-center justify-center text-dark-blue">
+                                    <ServicesIcon />
+                                </div>
+                                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button 
+                                        onClick={() => handleOpenModal(service)}
+                                        className="p-1 hover:bg-white/50 rounded text-blue-600"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                        </svg>
+                                    </button>
+                                    <button 
+                                        onClick={() => setDeleteConfirm(service)}
+                                        className="p-1 hover:bg-white/50 rounded text-red-500"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <h3 className="font-bold text-lg text-gray-900">{service.name}</h3>
+                            {service.description && (
+                                <p className="text-gray-600 text-sm mt-1 line-clamp-2">{service.description}</p>
+                            )}
+                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
+                                <span className="text-gray-500 text-sm">{service.duration_minutes} perc</span>
+                                <span className="font-bold text-dark-blue">{formatPrice(service.price)} Ft</span>
+                            </div>
+                            {service.status !== 'available' && (
+                                <div className="mt-2">
+                                    <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
+                                        Nem elérhető
+                                    </span>
+                                </div>
+                            )}
                         </div>
-                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button className="p-1 hover:bg-white/50 rounded text-blue-600">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                    ))}
+                </div>
+            )}
+
+            {/* Add/Edit Service Modal */}
+            {showModal && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
+                    <div 
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+                        onClick={handleCloseModal}
+                    ></div>
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md my-8 max-h-[calc(100vh-4rem)] overflow-y-auto">
+                        <div className="p-6 border-b border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xl font-bold text-dark-blue">
+                                    {editingService ? 'Szolgáltatás Szerkesztése' : 'Új Szolgáltatás'}
+                                </h3>
+                                <button 
+                                    onClick={handleCloseModal}
+                                    className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Név *</label>
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent"
+                                    placeholder="pl. Férfi Hajvágás"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Leírás</label>
+                                <textarea
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent resize-none"
+                                    rows={3}
+                                    placeholder="Rövid leírás a szolgáltatásról..."
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Időtartam (perc) *</label>
+                                    <input
+                                        type="number"
+                                        value={formData.duration_minutes}
+                                        onChange={(e) => setFormData({ ...formData, duration_minutes: parseInt(e.target.value) || 0 })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent"
+                                        min="5"
+                                        max="480"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Ár (Ft) *</label>
+                                    <input
+                                        type="number"
+                                        value={formData.price}
+                                        onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent"
+                                        min="0"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Státusz</label>
+                                <select
+                                    value={formData.status}
+                                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent"
+                                >
+                                    <option value="available">Elérhető</option>
+                                    <option value="unavailable">Nem elérhető</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-3">
+                            <button
+                                onClick={handleCloseModal}
+                                className="flex-1 py-2.5 px-4 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-100 transition-colors"
+                            >
+                                Mégse
                             </button>
-                            <button className="p-1 hover:bg-white/50 rounded text-red-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                            <button
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="flex-1 py-2.5 px-4 bg-dark-blue text-white font-medium rounded-xl hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {saving ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                ) : (
+                                    editingService ? 'Mentés' : 'Létrehozás'
+                                )}
                             </button>
                         </div>
                     </div>
-                    <h3 className="font-bold text-lg text-gray-900">Férfi Hajvágás</h3>
-                    <p className="text-gray-500 text-sm mt-1">30 perc • 4.500 Ft</p>
-                </div>
-            ))}
+                </div>,
+                document.body
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteConfirm && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
+                    <div 
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+                        onClick={() => setDeleteConfirm(null)}
+                    ></div>
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm my-8">
+                        <div className="p-6">
+                            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-red-600">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-bold text-center text-gray-900 mb-2">Szolgáltatás Törlése</h3>
+                            <p className="text-gray-600 text-center text-sm">
+                                Biztosan törölni szeretnéd a <strong>"{deleteConfirm.name}"</strong> szolgáltatást? Ez a művelet nem vonható vissza.
+                            </p>
+                        </div>
+                        <div className="p-4 border-t border-gray-100 bg-gray-50 flex gap-3">
+                            <button
+                                onClick={() => setDeleteConfirm(null)}
+                                className="flex-1 py-2.5 px-4 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-100 transition-colors"
+                            >
+                                Mégse
+                            </button>
+                            <button
+                                onClick={() => handleDelete(deleteConfirm.id)}
+                                disabled={deleting}
+                                className="flex-1 py-2.5 px-4 bg-red-500 text-white font-medium rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {deleting ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                ) : (
+                                    'Törlés'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
-    </div>
-);
+    );
+};
 
 const NavButton = ({ activeTab, tabId, label, icon, onClick, isMobile }) => (
     <button

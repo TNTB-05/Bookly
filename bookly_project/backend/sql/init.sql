@@ -89,16 +89,21 @@ CREATE TABLE IF NOT EXISTS services (
 
 CREATE TABLE IF NOT EXISTS appointments (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-  `user_id` INT NOT NULL,
+  `user_id` INT NULL,
   `provider_id` INT NOT NULL,
+  `service_id` INT NOT NULL,
   `appointment_start` DATETIME NOT NULL,
   `appointment_end` DATETIME NOT NULL,
   `comment` TEXT,
   `price` INT NOT NULL,
   `status` ENUM('scheduled', 'completed', 'canceled', 'no_show') DEFAULT 'scheduled',
+  `guest_name` VARCHAR(255) NULL,
+  `guest_email` VARCHAR(255) NULL,
+  `guest_phone` VARCHAR(20) NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id),
-  FOREIGN KEY (provider_id) REFERENCES providers(id)
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (provider_id) REFERENCES providers(id),
+  FOREIGN KEY (service_id) REFERENCES services(id)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 CREATE TABLE IF NOT EXISTS ratings(
@@ -149,13 +154,13 @@ INSERT INTO services (provider_id, name, description, duration_minutes, price, s
   (6, 'Phone Screen Replacement', 'Replace broken phone screen', 30, 7000.00, 'available');
 
 -- Insert test appointments
-INSERT INTO appointments (user_id, provider_id, appointment_start, appointment_end, comment, price, status) VALUES 
-  (1, 1, '2026-01-25 10:00:00', '2026-01-25 10:45:00', 'First time customer', 3500, 'scheduled'),
-  (2, 3, '2026-01-25 14:00:00', '2026-01-25 15:00:00', 'Needs relaxation massage', 8000, 'scheduled'),
-  (1, 5, '2026-01-26 11:00:00', '2026-01-26 12:30:00', 'Laptop not turning on', 15000, 'scheduled'),
-  (4, 2, '2026-01-23 09:00:00', '2026-01-23 11:00:00', 'Want blonde highlights', 12000, 'completed'),
-  (2, 6, '2026-01-22 16:00:00', '2026-01-22 16:30:00', 'Cracked iPhone screen', 7000, 'completed'),
-  (1, 4, '2026-01-27 13:00:00', '2026-01-27 14:15:00', 'Anti-aging facial treatment', 9500, 'scheduled');
+INSERT INTO appointments (user_id, provider_id, service_id, appointment_start, appointment_end, comment, price, status) VALUES 
+  (1, 1, 1, '2026-01-25 10:00:00', '2026-01-25 10:45:00', 'First time customer', 3500, 'scheduled'),
+  (2, 3, 3, '2026-01-25 14:00:00', '2026-01-25 15:00:00', 'Needs relaxation massage', 8000, 'scheduled'),
+  (1, 5, 5, '2026-01-26 11:00:00', '2026-01-26 12:30:00', 'Laptop not turning on', 15000, 'scheduled'),
+  (4, 2, 2, '2026-01-23 09:00:00', '2026-01-23 11:00:00', 'Want blonde highlights', 12000, 'completed'),
+  (2, 6, 6, '2026-01-22 16:00:00', '2026-01-22 16:30:00', 'Cracked iPhone screen', 7000, 'completed'),
+  (1, 4, 4, '2026-01-27 13:00:00', '2026-01-27 14:15:00', 'Anti-aging facial treatment', 9500, 'scheduled');
 
 -- Insert test ratings
 INSERT INTO ratings (user_id, provider_id, rating, comment, active) VALUES 
