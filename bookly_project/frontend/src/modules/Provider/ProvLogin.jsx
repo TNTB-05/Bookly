@@ -16,8 +16,8 @@ export default function ProvLogin() {
             setError('Minden mező kitöltése kötelező');
             return false;
         }
-        if (password.length < 6) {
-            setError('A jelszónak legalább 6 karakter hosszúnak kell lennie');
+        if (password.length ===0) {
+            setError('A jelszó nem lehet üres');
             return false;
         }
         return true;

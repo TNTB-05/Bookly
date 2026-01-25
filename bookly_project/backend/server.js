@@ -53,6 +53,8 @@ const provLoginApi = require('./api/auth/provLoginApi.js');
 app.use('/auth/provider', provLoginApi);
 const userApi = require('./api/userApi.js');
 app.use('/api/user', userApi);
+const calendarApi = require('./api/calendarApi.js');
+app.use('/api/provider/calendar', calendarApi);
 
 
 //!Szerver futtatása

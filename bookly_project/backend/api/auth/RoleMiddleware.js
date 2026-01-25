@@ -2,7 +2,7 @@
  * Middleware factory that creates a role checker.
  * Use after AuthMiddleware to restrict routes to specific user roles.
  * 
- * @param {string[]} allowedRoles - Array of roles that can access the route (e.g., ['provider'], ['costumer'], ['provider', 'admin'])
+ * @param {string[]} allowedRoles - Array of roles that can access the route (e.g., ['provider'], ['customer'], ['provider', 'admin'])
  * @returns {Function} Express middleware function
  * 
  * @example

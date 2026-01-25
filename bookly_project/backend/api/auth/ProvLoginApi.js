@@ -23,21 +23,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-//!Refresh token store (in production, use database)
-const refreshTokenStore = new Map();
-
-// Clean up expired refresh tokens every hour
-setInterval(() => {
-    const now = Date.now();
-    const sevenDays = 7 * 24 * 60 * 60 * 1000;
-    
-    for (const [token, data] of refreshTokenStore.entries()) {
-        if (now - data.createdAt > sevenDays) {
-            refreshTokenStore.delete(token);
-        }
-    }
-}, 60 * 60 * 1000); // Run every hour
-
 //!Endpoints:
 
 const Users = [];
@@ -210,13 +195,14 @@ router.post('/register', async (request, response) => {
 
             // Create new salon
             const [salonResult] = await connection.query(
-                `INSERT INTO salons (name, address, description, sharecode, status) 
-                 VALUES (?, ?, ?, ?, 'open')`,
+                `INSERT INTO salons (name, address, description, sharecode, status, type) 
+                 VALUES (?, ?, ?, ?, 'open', ?)`,
                 [
                     salon.companyName.trim(),
                     salon.address.trim(),
                     salon.description.trim(),
-                    shareCode
+                    shareCode,
+                    salon.salonType.trim()
                 ]
             );
 
@@ -334,17 +320,23 @@ router.post('/login', async (request, response) => {
         // Generate both access and refresh tokens
         const { accessToken, refreshToken } = generateTokens(email, provider.id);
 
-        // Update last login and store refresh token in database
+        // Store refresh token in database (provider_id for providers)
+        const [tokenResult] = await pool.query(
+            'INSERT INTO RefTokens (provider_id, refresh_token) VALUES (?, ?)',
+            [provider.id, refreshToken]
+        );
+
+        // Update last login and link refresh token to provider
         await pool.query(
-            'UPDATE providers SET last_login = NOW(), refresh_token = ? WHERE id = ?',
-            [refreshToken, provider.id]
+            'UPDATE providers SET last_login = NOW(), refresh_token_id = ? WHERE id = ?',
+            [tokenResult.insertId, provider.id]
         );
 
         // Send refresh token as HTTP-only cookie
         response.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
 
@@ -369,8 +361,6 @@ router.post('/login', async (request, response) => {
         });
     }
 });
-
-
 
 
 module.exports=router;
