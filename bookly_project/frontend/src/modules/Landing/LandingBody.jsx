@@ -17,7 +17,7 @@ export default function LandingBody() {
     return (
         <div className="pt-16 sm:pt-20 pb-20 sm:pb-0">
             {/* Hero Section */}
-            <section className="px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
                 <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
                     <div className="flex flex-col items-start max-w-xl w-full lg:w-1/2">
                         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-dark-blue leading-tight mb-6">Foglalj egyszerűen és gyorsan</h1>
@@ -42,10 +42,10 @@ export default function LandingBody() {
             </section>
 
             {/* Features Section */}
-            <section className="bg-light-blue/50 backdrop-blur-sm rounded-[3rem] mx-4 sm:mx-6 lg:mx-8 shadow-inner border border-white/50">
+            <section className="bg-light-blue/50 backdrop-blur-sm rounded-[3rem] max-w-7xl mx-auto shadow-inner border border-white/50">
                 <div className="px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
                     <h2 className="text-3xl sm:text-4xl font-bold text-center text-dark-blue mb-4">Miért használd a Bookly-t?</h2>
-                    <p className="text-center text-gray-600 mb-12">Fedezd fel, miért választanak minket több ezren</p>
+                    <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">Fedezd fel, miért választanak minket több ezren</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                         <Card title="Időpont foglalás" description="Egyszerű és gyors időpontfoglalás a kedvenc szolgáltatóidhoz." imageUrl={appointment} />
                         <Card title="Széles Választék" description="Partnereink széles választékából tudsz böngészni kedvedre." imageUrl={services} />
@@ -55,10 +55,10 @@ export default function LandingBody() {
             </section>
 
             {/* Provider CTA Section */}
-            <section className="px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-                <div className="bg-white/40 backdrop-blur-md rounded-3xl shadow-xl border border-white/50 p-8 sm:p-12 text-center mx-4 sm:mx-6 lg:mx-8">
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+                <div className="bg-white/40 backdrop-blur-md rounded-3xl shadow-xl border border-white/50 p-8 sm:p-12 text-center">
                     <h2 className="text-3xl sm:text-4xl font-bold text-dark-blue mb-4">Vállalkozó vagy?</h2>
-                    <p className="text-lg text-gray-700 mb-8">
+                    <p className="text-lg text-gray-700 mb-8 max-w-2xl mx-auto">
                         Szeretnél egy egyszerű és átlátható rendszert a foglalások kezelésére? Csatlakozz partnereinkhez!
                     </p>
                     <button
@@ -71,7 +71,7 @@ export default function LandingBody() {
             </section>
 
             {/* Provider Features */}
-            <section className="px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24">
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                     <Card
                         title="Átlátható időpontok"
@@ -89,7 +89,7 @@ export default function LandingBody() {
 
             {/* Footer */}
             <footer className="bg-dark-blue text-white/90 py-10 px-6 mt-auto">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex flex-col items-center md:items-start">
                         <span className="text-2xl font-bold mb-2">Bookly</span>
                         <p className="text-sm opacity-80">&copy; {new Date().getFullYear()} Minden jog fenntartva.</p>

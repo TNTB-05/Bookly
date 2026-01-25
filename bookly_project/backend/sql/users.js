@@ -4,7 +4,7 @@ const mysql = require('mysql2/promise');
 
 
 const getUserById=async (userId) => {
-    const query = 'SELECT userId, email, role, createdAt FROM users WHERE userId = ?';
+    const query = 'SELECT id, name, email, phone, address, role, status, created_at FROM users WHERE id = ?';
     const [rows] = await pool.execute(query, [userId]);
     return rows[0];
 };
@@ -20,9 +20,9 @@ const getUsers=async () => {
     return rows;
 }
 
-const addUser=async (email, hashedPassword, role) => {
-    const query = 'INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)';
-    const [result] = await pool.execute(query, [email, hashedPassword, role]);
+const addUser=async (name, email, hashedPassword, role) => {
+    const query = 'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)';
+    const [result] = await pool.execute(query, [name, email, hashedPassword, role]);
     return result.insertId;
 };
 

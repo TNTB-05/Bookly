@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
 import DashboardNavbar from './DashboardNavbar';
 import './Dashboard.css';
+import { searchSalons } from '../../../services/searchService';
+import { getUserFromToken } from '../../auth/auth';
+import { authApi } from '../../auth/auth';
 
 //Ikonok importálása
 import SearchIcon from '../../../icons/SearchIcon';
-import RightPointArrowIcon from '../../../icons/RightPointArrowIcon';
 import LocationIcon from '../../../icons/LocationIcon';
 import EarthIcon from '../../../icons/EarthIcon';
 import ServicesLoadingIcon from '../../../icons/ServicesLoadingIcon';
@@ -14,6 +15,9 @@ import HourIcon from '../../../icons/HourIcon';
 import TickIcon from '../../../icons/TickIcon';
 import PlusIcon from '../../../icons/PlusIcon';
 import DiaryIcon from '../../../icons/DiaryIcon';
+import LeftArrowIcon from '../../../icons/LeftArrowIcon';
+import RightArrowIcon from '../../../icons/RightArrowIcon';
+import SaveIcon from '../../../icons/SaveIcon';
 
 export default function Dashboard() {
     const [user, setUser] = useState(null);
@@ -26,23 +30,43 @@ export default function Dashboard() {
     const [serviceFilter, setServiceFilter] = useState('all');
     const [locationSearch, setLocationSearch] = useState('');
     const [userLocation, setUserLocation] = useState(null);
-    const navigate = useNavigate();
+    const [searchActive, setSearchActive] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
+    const [serviceTypes, setServiceTypes] = useState([]);
+    const [topRatedSalons, setTopRatedSalons] = useState([]);
+    const [showAllFeatured, setShowAllFeatured] = useState(false);
+    const [salonLimit, setSalonLimit] = useState(12);
+    const [userProfile, setUserProfile] = useState(null);
+    const [savedSalonIds, setSavedSalonIds] = useState([]);
+    const [savedSalons, setSavedSalons] = useState([]);
+    const carouselRef = useRef(null);
 
     useEffect(() => {
         loadData();
+        loadServiceTypes();
+        loadTopRatedSalons();
+        loadUserProfile();
+        loadSavedSalonIds();
     }, []);
 
-    
+    // Load full saved salons when visiting the "Mentett helyek" tab
+    useEffect(() => {
+        if (activeTab === 'book') {
+            loadSavedSalons();
+        }
+    }, [activeTab]);
+
     async function loadData() {
         try {
-            const [userData, appointmentsData, providersData, servicesData] = await Promise.all([
-                getCurrentUser(),
+            const tokenUser = getUserFromToken();
+            setUser(tokenUser);
+
+            const [appointmentsData, providersData, servicesData] = await Promise.all([
                 getUserAppointments(),
                 getProviders(),
                 getServices()
             ]);
 
-            setUser(userData);
             setAppointments(appointmentsData);
             setProviders(providersData);
             setServices(servicesData);
@@ -50,6 +74,89 @@ export default function Dashboard() {
             console.error('Error loading data:', error);
         } finally {
             setLoading(false);
+        }
+    }
+
+    //Gets the user's full profile data from the API
+    async function loadUserProfile() {
+        try {
+            const response = await authApi.get('/api/user/profile');
+            const data = await response.json();
+            if (data.success) {
+                setUserProfile(data.user);
+            }
+        } catch (error) {
+            console.error('Error loading user profile:', error);
+        }
+    }
+
+    //Gets the saved salon IDs to check which salons are saved
+    async function loadSavedSalonIds() {
+        try {
+            const response = await authApi.get('/api/user/saved-salon-ids');
+            const data = await response.json();
+            if (data.success) {
+                setSavedSalonIds(data.savedIds);
+            }
+        } catch (error) {
+            console.error('Error loading saved salon IDs:', error);
+        }
+    }
+
+    //Gets the full saved salons list
+    async function loadSavedSalons() {
+        try {
+            const response = await authApi.get('/api/user/saved-salons');
+            const data = await response.json();
+            if (data.success) {
+                setSavedSalons(data.salons);
+            }
+        } catch (error) {
+            console.error('Error loading saved salons:', error);
+        }
+    }
+
+    //Toggle save/unsave a salon
+    async function toggleSaveSalon(salonId) {
+        try {
+            const isSaved = savedSalonIds.includes(salonId);
+            
+            if (isSaved) {
+                await authApi.delete(`/api/user/saved-salons/${salonId}`);
+                setSavedSalonIds(prev => prev.filter(id => id !== salonId));
+                setSavedSalons(prev => prev.filter(salon => salon.id !== salonId));
+            } else {
+                await authApi.post(`/api/user/saved-salons/${salonId}`);
+                setSavedSalonIds(prev => [...prev, salonId]);
+            }
+        } catch (error) {
+            console.error('Error toggling save salon:', error);
+        }
+    }
+
+    //Gets the service types for the service filter dropdown
+    async function loadServiceTypes() {
+        try {
+            const response = await fetch('http://localhost:3000/api/search/types');
+            const data = await response.json();
+            if (data.success) {
+                setServiceTypes(data.types);
+            }
+        } catch (error) {
+            console.error('Error loading service types:', error);
+        }
+    }
+
+    //Gets top rated salons for the featured section
+    async function loadTopRatedSalons(limit = 12) {
+        try {
+            const response = await fetch(`http://localhost:3000/api/search/top-rated?limit=${limit}`);
+            const data = await response.json();
+            if (data.success) {
+                setTopRatedSalons(data.salons);
+            }
+        } catch (error) {
+            console.error('Error loading top-rated salons:', error);
         }
     }
 
@@ -77,6 +184,100 @@ export default function Dashboard() {
         return <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusInfo.className}`}>{statusInfo.text}</span>;
     }
 
+    async function handleSearch() {
+        // Check if any search criteria is provided
+        const hasSearchQuery = searchQuery.trim().length > 0;
+        const hasLocationSearch = locationSearch.trim().length > 0;
+        const hasServiceFilter = serviceFilter !== 'all';
+        
+        if (!hasSearchQuery && !hasLocationSearch && !hasServiceFilter) {
+            setSearchActive(true);
+            setSearchResults([]);
+            return;
+        }
+
+        setSearchActive(true);
+
+        const results = await searchSalons({
+            searchQuery,
+            locationSearch,
+            serviceFilter,
+            userLocation
+        });
+
+        setSearchResults(results || []);
+    }
+
+    function handleGetCurrentLocation() {
+        if (!navigator.geolocation) {
+            alert('A böngésző nem támogatja a helymeghatározást');
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                setUserLocation({ latitude, longitude });
+
+                // Reverse geocode to get full address
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
+                        headers: {
+                            'User-Agent': 'Bookly-App/1.0'
+                        }
+                    });
+                    const data = await response.json();
+                    
+                    // Build full address string
+                    const address = data.address;
+                    const parts = [];
+                    
+                    // Add city first
+                    const city = address.city || address.town || address.village || '';
+                    if (city) parts.push(city);
+                    
+                    // Add street and house number
+                    const street = address.road || '';
+                    const houseNumber = address.house_number || '';
+                    if (street) {
+                        parts.push(houseNumber ? `${street} ${houseNumber}` : street);
+                    }
+                    
+                    // Add postal code
+                    const postalCode = address.postcode || '';
+                    if (postalCode) parts.push(postalCode);
+                    
+                    const fullAddress = parts.join(', ') || 'Jelenlegi helyzet';
+                    setLocationSearch(fullAddress);
+                } catch (error) {
+                    console.error('Reverse geocoding failed:', error);
+                    setLocationSearch(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+                }
+            },
+            (error) => {
+                console.error('Geolocation error:', error);
+                alert('Nem sikerült lekérni a helyzetet. Kérjük, engedélyezd a helymeghatározást.');
+            }
+        );
+    }
+
+    function scrollCarousel(direction) {
+        if (carouselRef.current) {
+            const scrollAmount = 400;
+            const newScrollPosition = carouselRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+            carouselRef.current.scrollTo({
+                left: newScrollPosition,
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    function handleLoadMore() {
+        const newLimit = salonLimit + 12;
+        setSalonLimit(newLimit);
+        loadTopRatedSalons(newLimit);
+    }
+
     if (loading) {
         return <div className="flex justify-center items-center min-h-screen text-2xl text-gray-600">Betöltés...</div>;
     }
@@ -101,60 +302,152 @@ export default function Dashboard() {
                                         <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
                                             Foglalj időpontot a legjobb szakemberekhez egyszerűen és gyorsan
                                         </p>
-                                        <div className="max-w-xl mx-auto">
-                                            <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-full shadow-xl border border-white/50 overflow-hidden">
-                                                <div className="pl-4">
-                                                    <SearchIcon />
+
+                                        {/* Enhanced Search Bar */}
+                                        <div className="max-w-4xl mx-auto space-y-3">
+                                            {/* First Line: Search Bar + Service Filter */}
+                                            <div className="flex flex-col sm:flex-row gap-3">
+                                                {/* Search Bar */}
+                                                <div className="flex-1 flex items-center bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 overflow-hidden">
+                                                    <div className="pl-4">
+                                                        <SearchIcon />
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Keress szolgáltatót vagy szolgáltatást..."
+                                                        value={searchQuery}
+                                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                                        className="flex-1 px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none bg-transparent"
+                                                    />
                                                 </div>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Keress szolgáltatót, szolgáltatást..."
-                                                    value={searchQuery}
-                                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                                    className="flex-1 px-4 py-4 text-gray-900 placeholder-gray-500 focus:outline-none bg-transparent"
-                                                />
-                                                <button className="px-6 py-4 bg-dark-blue text-white font-semibold hover:bg-blue-800 transition-colors rounded-r-full">
+
+                                                {/* Service Filter */}
+                                                <div className="w-full sm:w-64">
+                                                    <select
+                                                        value={serviceFilter}
+                                                        onChange={(e) => setServiceFilter(e.target.value)}
+                                                        className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
+                                                    >
+                                                        <option value="all">Összes szolgáltatás</option>
+                                                        {serviceTypes.map((type) => (
+                                                            <option key={type} value={type}>{type}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            {/* Second Line: Location + Jelenlegi helyzetem + Keresés */}
+                                            <div className="flex flex-col sm:flex-row gap-3">
+                                                {/* Location Input */}
+                                                <div className="flex-1 flex items-center bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 overflow-hidden">
+                                                    <div className="pl-4 text-gray-500">
+                                                        <LocationIcon />
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Helyszín (pl. Budapest, sample street 12, 1111)"
+                                                        value={locationSearch}
+                                                        onChange={(e) => {
+                                                            setLocationSearch(e.target.value);
+                                                            // Clear user location when typing manually
+                                                            if (userLocation) {
+                                                                setUserLocation(null);
+                                                            }
+                                                        }}
+                                                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                                        className="flex-1 px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none bg-transparent"
+                                                    />
+                                                </div>
+
+                                                {/* Jelenlegi helyzetem Button */}
+                                                <button
+                                                    onClick={handleGetCurrentLocation}
+                                                    className="px-4 py-3 bg-white/80 backdrop-blur-sm text-dark-blue rounded-xl font-medium hover:bg-white transition-colors whitespace-nowrap shadow-md border border-white/50"
+                                                    title="Jelenlegi helyzetem használata"
+                                                >
+                                                    📍 Jelenlegi helyzetem
+                                                </button>
+
+                                                {/* Keresés Button */}
+                                                <button
+                                                    onClick={handleSearch}
+                                                    className="px-8 py-3 bg-dark-blue text-white font-semibold hover:bg-blue-800 transition-colors rounded-xl shadow-md"
+                                                >
                                                     Keresés
                                                 </button>
                                             </div>
+
+                                            {/* Reset Search Button */}
+                                            {searchActive && (
+                                                <button
+                                                    onClick={() => {
+                                                        setSearchActive(false);
+                                                        setSearchQuery('');
+                                                        setLocationSearch('');
+                                                        setServiceFilter('all');
+                                                        setSearchResults([]);
+                                                        setUserLocation(null);
+                                                    }}
+                                                    className="text-dark-blue font-medium hover:text-blue-800 transition-colors"
+                                                >
+                                                    ✕ Keresés törlése
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Kiemelt szolgáltatók */}
-                            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                                <div className="flex items-center justify-between mb-8">
-                                    <div>
-                                        <h2 className="text-2xl font-bold text-dark-blue">Kiemelt szolgáltatók</h2>
-                                        <p className="text-gray-600 mt-1">A legjobban értékelt partnereink</p>
+                            {/* Keresési eredmények - Show when search is active */}
+                            {searchActive && (
+                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                                    <div className="flex items-center justify-between mb-8">
+                                        <div>
+                                            <h2 className="text-2xl font-bold text-dark-blue">Keresési eredmények</h2>
+                                            <p className="text-gray-600 mt-1">{searchResults.length} találat</p>
+                                        </div>
                                     </div>
-                                    <button
-                                        onClick={() => setActiveTab('book')}
-                                        className="text-dark-blue font-medium hover:text-blue-800 flex items-center transition-colors"
-                                    >
-                                        Összes megtekintése
-                                        <RightPointArrowIcon />
-                                    </button>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    {providers
-                                        .filter((p) => searchQuery === '' || p.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                                        .slice(0, 4)
-                                        .map((provider) => (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                        {searchResults.map((salon) => (
                                             <div
-                                                key={provider.id}
+                                                key={salon.id}
                                                 className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
                                             >
                                                 <div className="h-24 bg-linear-to-r from-blue-500 to-dark-blue relative">
                                                     <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
                                                         <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-md">
-                                                            {provider.name.charAt(0).toUpperCase()}
+                                                            {salon.name.charAt(0).toUpperCase()}
                                                         </div>
                                                     </div>
+                                                    {/* Save button */}
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            toggleSaveSalon(salon.id);
+                                                        }}
+                                                        className={`absolute top-2 left-2 p-2 rounded-lg backdrop-blur-sm transition-all ${
+                                                            savedSalonIds.includes(salon.id) 
+                                                                ? 'bg-yellow-400 text-white' 
+                                                                : 'bg-white/90 text-gray-600 hover:bg-white hover:text-dark-blue'
+                                                        }`}
+                                                        title={savedSalonIds.includes(salon.id) ? 'Eltávolítás a mentett helyekből' : 'Mentés'}
+                                                    >
+                                                        <SaveIcon filled={savedSalonIds.includes(salon.id)} className="w-4 h-4" />
+                                                    </button>
+                                                    {/* Distance badge - only show when distance is available */}
+                                                    {salon.distance !== null && salon.distance !== undefined && (
+                                                        <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-semibold text-dark-blue">
+                                                            📍 {salon.distance} km
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div className="pt-10 p-4 text-center">
-                                                    <h3 className="text-lg font-bold text-gray-900 mb-1">{provider.name}</h3>
+                                                    <h3 className="text-lg font-bold text-gray-900 mb-1">{salon.name}</h3>
+                                                    <p className="text-xs text-gray-500 mb-1">{salon.address}</p>
+                                                    {salon.providers && salon.providers.length > 0 && (
+                                                        <p className="text-xs text-gray-400 mb-2">{salon.providers.length} szolgáltató</p>
+                                                    )}
                                                     <div className="flex items-center justify-center text-yellow-400 text-sm mb-2">
                                                         ★★★★★ <span className="text-gray-400 text-xs ml-1">(24)</span>
                                                     </div>
@@ -167,99 +460,231 @@ export default function Dashboard() {
                                                 </div>
                                             </div>
                                         ))}
-                                    {providers.length === 0 && (
-                                        <div className="col-span-full text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-                                            <p className="text-gray-500">Szolgáltatók betöltése...</p>
-                                        </div>
-                                    )}
+                                        
+                                        {/* Empty state */}
+                                        {searchResults.length === 0 && (
+                                            <div className="col-span-full text-center py-12 bg-white/40 backdrop-blur-md rounded-xl border border-white/50">
+                                                {!searchQuery.trim() && !locationSearch.trim() && serviceFilter === 'all' ? (
+                                                    <div>
+                                                        <p className="text-gray-700 font-medium text-lg mb-2">Keresési feltétel szükséges</p>
+                                                        <p className="text-gray-500">Kérjük, adj meg egy szalon nevet, válassz szolgáltatást vagy add meg a helyzeted!</p>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-gray-500">Nincs találat a keresési feltételeknek megfelelően</p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
+                            )}
+
+                            {/* Kiemelt szalonok - Always visible */}
+                            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                                <div className="flex items-center justify-between mb-8">
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-dark-blue">Kiemelt szalonok</h2>
+                                        <p className="text-gray-600 mt-1">A legjobban értékelt partnereink</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowAllFeatured(!showAllFeatured)}
+                                        className="text-dark-blue font-medium hover:text-blue-800 flex items-center transition-colors"
+                                    >
+                                        {showAllFeatured ? 'Kevesebb mutatása' : 'Összes megtekintése'}
+                                        <RightArrowIcon />
+                                    </button>
+                                </div>
+                                
+                                {!showAllFeatured ? (
+                                    /* Carousel view */
+                                    <div className="relative group">
+                                        {/* Left Arrow */}
+                                        <button
+                                            onClick={() => scrollCarousel('left')}
+                                            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
+                                            aria-label="Scroll left"
+                                        >
+                                            <LeftArrowIcon />
+                                        </button>
+
+                                        {/* Right Arrow */}
+                                        <button
+                                            onClick={() => scrollCarousel('right')}
+                                            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
+                                            aria-label="Scroll right"
+                                        >
+                                            <RightArrowIcon/>
+                                        </button>
+
+                                        <div ref={carouselRef} className="overflow-x-auto pb-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                                            <div className="flex gap-6" style={{ minWidth: 'min-content' }}>
+                                                {topRatedSalons.map((salon) => (
+                                                    <div
+                                                        key={salon.id}
+                                                        className="shrink-0 w-80 bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
+                                                    >
+                                                        <div className="h-24 bg-linear-to-r from-blue-500 to-dark-blue relative">
+                                                            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+                                                                <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-md">
+                                                                    {salon.name.charAt(0).toUpperCase()}
+                                                                </div>
+                                                            </div>
+                                                            {/* Save button */}
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    toggleSaveSalon(salon.id);
+                                                                }}
+                                                                className={`absolute top-2 left-2 p-2 rounded-lg backdrop-blur-sm transition-all ${
+                                                                    savedSalonIds.includes(salon.id) 
+                                                                        ? 'bg-yellow-400 text-white' 
+                                                                        : 'bg-white/90 text-gray-600 hover:bg-white hover:text-dark-blue'
+                                                                }`}
+                                                                title={savedSalonIds.includes(salon.id) ? 'Eltávolítás a mentett helyekből' : 'Mentés'}
+                                                            >
+                                                                <SaveIcon filled={savedSalonIds.includes(salon.id)} className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                        <div className="pt-10 p-4 text-center">
+                                                            <h3 className="text-lg font-bold text-gray-900 mb-1">{salon.name}</h3>
+                                                            <p className="text-xs text-gray-500 mb-2">{salon.address}</p>
+                                                            {salon.providers && salon.providers.length > 0 && (
+                                                                <p className="text-xs text-gray-400 mb-2">{salon.providers.length} szolgáltató</p>
+                                                            )}
+                                                            <div className="flex items-center justify-center text-yellow-400 text-sm mb-2">
+                                                                {salon.average_rating > 0 ? (
+                                                                    <>
+                                                                        {'★'.repeat(Math.round(salon.average_rating))}{'☆'.repeat(5 - Math.round(salon.average_rating))}
+                                                                        <span className="text-gray-400 text-xs ml-1">
+                                                                            ({salon.rating_count})
+                                                                        </span>
+                                                                    </>
+                                                                ) : (
+                                                                    <span className="text-gray-400 text-xs">Még nincs értékelés</span>
+                                                                )}
+                                                            </div>
+                                                            <button
+                                                                onClick={() => setActiveTab('book')}
+                                                                className="w-full py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors"
+                                                            >
+                                                                Megnézem
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* Grid view */
+                                    <>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {topRatedSalons.map((salon) => (
+                                                <div
+                                                    key={salon.id}
+                                                    className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
+                                                >
+                                                    <div className="h-24 bg-linear-to-r from-blue-500 to-dark-blue relative">
+                                                        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+                                                            <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-md">
+                                                                {salon.name.charAt(0).toUpperCase()}
+                                                            </div>
+                                                        </div>
+                                                        {/* Save button */}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                toggleSaveSalon(salon.id);
+                                                            }}
+                                                            className={`absolute top-2 left-2 p-2 rounded-lg backdrop-blur-sm transition-all ${
+                                                                savedSalonIds.includes(salon.id) 
+                                                                    ? 'bg-yellow-400 text-white' 
+                                                                    : 'bg-white/90 text-gray-600 hover:bg-white hover:text-dark-blue'
+                                                            }`}
+                                                            title={savedSalonIds.includes(salon.id) ? 'Eltávolítás a mentett helyekből' : 'Mentés'}
+                                                        >
+                                                            <SaveIcon filled={savedSalonIds.includes(salon.id)} className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                    <div className="pt-10 p-4 text-center">
+                                                        <h3 className="text-lg font-bold text-gray-900 mb-1">{salon.name}</h3>
+                                                        <p className="text-xs text-gray-500 mb-2">{salon.address}</p>
+                                                        {salon.providers && salon.providers.length > 0 && (
+                                                            <p className="text-xs text-gray-400 mb-2">{salon.providers.length} szolgáltató</p>
+                                                        )}
+                                                        <div className="flex items-center justify-center text-yellow-400 text-sm mb-2">
+                                                            {salon.average_rating > 0 ? (
+                                                                <>
+                                                                    {'★'.repeat(Math.round(salon.average_rating))}{'☆'.repeat(5 - Math.round(salon.average_rating))}
+                                                                    <span className="text-gray-400 text-xs ml-1">
+                                                                        ({salon.rating_count})
+                                                                    </span>
+                                                                </>
+                                                            ) : (
+                                                                <span className="text-gray-400 text-xs">Még nincs értékelés</span>
+                                                            )}
+                                                        </div>
+                                                        <button
+                                                            onClick={() => setActiveTab('book')}
+                                                            className="w-full py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors"
+                                                        >
+                                                            Megnézem
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        {topRatedSalons.length >= salonLimit && (
+                                            <div className="mt-8 text-center">
+                                                <button
+                                                    onClick={handleLoadMore}
+                                                    className="px-8 py-3 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors shadow-lg hover:shadow-xl"
+                                                >
+                                                    Még több mutatása
+                                                </button>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                                
+                                {topRatedSalons.length === 0 && (
+                                    <div className="col-span-full text-center py-12 bg-white/40 backdrop-blur-md rounded-xl border border-white/50">
+                                        <p className="text-gray-500">Szalonok betöltése...</p>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Szolgáltatások */}
                             <div>
                                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                                    <div className="flex flex-col mb-8 gap-6">
-                                        <div>
-                                            <h2 className="text-2xl font-bold text-gray-900">Szolgáltatások</h2>
-                                            <p className="text-gray-600 mt-1">Böngéssz szolgáltatásaink között</p>
-                                        </div>
-
-                                        {/* Search by Location */}
-                                        <div className="bg-white/40 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/50">
-                                            <div className="flex flex-col sm:flex-row gap-4">
-                                                <div className="flex-1">
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Keresés hely szerint</label>
-                                                    <div className="relative">
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Írd be a várost vagy a címet..."
-                                                            value={locationSearch}
-                                                            onChange={(e) => setLocationSearch(e.target.value)}
-                                                            className="w-full px-4 py-2.5 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent"
-                                                        />
-                                                        <LocationIcon />
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-end">
-                                                    <button
-                                                        onClick={() => {
-                                                            if (navigator.geolocation) {
-                                                                navigator.geolocation.getCurrentPosition(
-                                                                    (position) => {
-                                                                        setUserLocation({
-                                                                            lat: position.coords.latitude,
-                                                                            lng: position.coords.longitude
-                                                                        });
-                                                                        setLocationSearch('Aktuális helyem');
-                                                                    },
-                                                                    (error) => {
-                                                                        console.error('Geolocation error:', error);
-                                                                        alert('Nem sikerült lekérni a helyadatokat');
-                                                                    }
-                                                                );
-                                                            }
-                                                        }}
-                                                        className="px-4 py-2.5 bg-white/50 text-gray-700 rounded-lg font-medium hover:bg-white/70 transition-colors flex items-center gap-2 whitespace-nowrap border border-white/50"
-                                                    >
-                                                        <EarthIcon />
-                                                        Jelenlegi helyzet
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            {userLocation && (
-                                                <p className="text-sm text-green-600 mt-3 flex items-center gap-1">
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        className="h-4 w-4"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                    >
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                    Helyadatok sikeresen lekérve ({userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)})
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* Filter by Service */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-3">Szűrés szolgáltatás szerint</label>
-                                            <div className="flex gap-2 flex-wrap">
-                                                {['all', 'hajvágás', 'manikűr', 'masszázs'].map((filter) => (
-                                                    <button
-                                                        key={filter}
-                                                        onClick={() => setServiceFilter(filter)}
-                                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                                                            serviceFilter === filter
-                                                                ? 'bg-dark-blue text-white shadow-lg'
-                                                                : 'bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-white/70 border border-white/50'
-                                                        }`}
-                                                    >
-                                                        {filter === 'all' ? 'Összes' : filter.charAt(0).toUpperCase() + filter.slice(1)}
-                                                    </button>
-                                                ))}
-                                            </div>
+                                    <div className="mb-8">
+                                        <h2 className="text-2xl font-bold text-dark-blue mb-3">Szolgáltatások</h2>
+                                        
+                                        {/* Filter by Service Type */}
+                                        <div className="flex gap-2 flex-wrap">
+                                            <button
+                                                key="all"
+                                                onClick={() => setServiceFilter('all')}
+                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                                                    serviceFilter === 'all'
+                                                        ? 'bg-dark-blue text-white shadow-lg'
+                                                        : 'bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-white/70 border border-white/50'
+                                                }`}
+                                            >
+                                                Összes
+                                            </button>
+                                            {serviceTypes.map((type) => (
+                                                <button
+                                                    key={type}
+                                                    onClick={() => setServiceFilter(type)}
+                                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                                                        serviceFilter === type
+                                                            ? 'bg-dark-blue text-white shadow-lg'
+                                                            : 'bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-white/70 border border-white/50'
+                                                    }`}
+                                                >
+                                                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -357,7 +782,7 @@ export default function Dashboard() {
                                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 transition-all hover:shadow-md">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Elvégzett</p>
+                                            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Befejezett</p>
                                             <h3 className="text-3xl font-bold text-green-600 mt-1">
                                                 {appointments.filter((a) => a.status === 'completed').length}
                                             </h3>
@@ -441,34 +866,76 @@ export default function Dashboard() {
                     {activeTab === 'book' && (
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
                             <h1 className="text-3xl font-bold text-gray-900">Mentett helyek</h1>
-                            <p className="text-gray-600">Ezeken a helyeken már jártál korábban.</p>
+                            <p className="text-gray-600">Kedvenc szalonjaid egy helyen.</p>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {providers.map((provider) => (
-                                    <div
-                                        key={provider.id}
-                                        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 group"
-                                    >
-                                        <div className="h-32 bg-linear-to-r from-blue-500 to-indigo-600 relative">
-                                            <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2">
-                                                <div className="w-20 h-20 rounded-full border-4 border-white bg-white flex items-center justify-center text-3xl font-bold text-indigo-600 shadow-md">
-                                                    {provider.name.charAt(0).toUpperCase()}
+                            {savedSalons.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {savedSalons.map((salon) => (
+                                        <div
+                                            key={salon.id}
+                                            className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
+                                        >
+                                            <div className="h-24 bg-linear-to-r from-blue-500 to-dark-blue relative">
+                                                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+                                                    <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-md">
+                                                        {salon.name.charAt(0).toUpperCase()}
+                                                    </div>
                                                 </div>
+                                                {/* Remove from saved button */}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleSaveSalon(salon.id);
+                                                    }}
+                                                    className="absolute top-2 left-2 p-2 rounded-lg backdrop-blur-sm transition-all bg-yellow-400 text-white hover:bg-red-500"
+                                                    title="Eltávolítás a mentett helyekből"
+                                                >
+                                                    <SaveIcon filled={true} className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                            <div className="pt-10 p-4 text-center">
+                                                <h3 className="text-lg font-bold text-gray-900 mb-1">{salon.name}</h3>
+                                                <p className="text-xs text-gray-500 mb-1">{salon.address}</p>
+                                                <p className="text-xs text-gray-400 mb-2">{salon.type}</p>
+                                                {salon.providers && salon.providers.length > 0 && (
+                                                    <p className="text-xs text-gray-400 mb-2">{salon.providers.length} szolgáltató</p>
+                                                )}
+                                                <div className="flex items-center justify-center text-yellow-400 text-sm mb-2">
+                                                    {salon.average_rating > 0 ? (
+                                                        <>
+                                                            {'★'.repeat(Math.round(salon.average_rating))}{'☆'.repeat(5 - Math.round(salon.average_rating))}
+                                                            <span className="text-gray-400 text-xs ml-1">
+                                                                ({salon.rating_count})
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-gray-400 text-xs">Még nincs értékelés</span>
+                                                    )}
+                                                </div>
+                                                <button
+                                                    className="w-full py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors"
+                                                >
+                                                    Megnézem
+                                                </button>
                                             </div>
                                         </div>
-                                        <div className="pt-12 p-6 text-center">
-                                            <h3 className="text-xl font-bold text-gray-900 mb-2">{provider.name}</h3>
-                                            <div className="flex items-center justify-center text-yellow-400 mb-4 stars">
-                                                ★★★★☆ <span className="text-gray-400 text-xs ml-2">(12)</span>
-                                            </div>
-                                            <p className="text-gray-600 mb-6 text-sm line-clamp-2 min-h-10">{provider.description}</p>
-                                            <button className="w-full py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-sm group-hover:shadow-md">
-                                                Foglalás
-                                            </button>
-                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-16 bg-white/40 backdrop-blur-md rounded-xl border border-white/50">
+                                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                                        <SaveIcon filled={false} className="w-8 h-8 text-gray-400" />
                                     </div>
-                                ))}
-                            </div>
+                                    <h3 className="text-lg font-medium text-gray-900">Még nincs mentett helyed</h3>
+                                    <p className="text-gray-500 mt-1">Keresd meg kedvenc szalonjaidat és mentsd el őket!</p>
+                                    <button
+                                        onClick={() => setActiveTab('overview')}
+                                        className="mt-4 px-6 py-2 bg-dark-blue text-white rounded-xl hover:bg-blue-800 font-medium transition-colors"
+                                    >
+                                        Szalonok böngészése
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
 
