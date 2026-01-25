@@ -108,6 +108,16 @@ CREATE TABLE IF NOT EXISTS ratings(
   FOREIGN KEY (salon_id) REFERENCES salons(id)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
+CREATE TABLE IF NOT EXISTS saved_salons(
+  `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+  `user_id` INT NOT NULL,
+  `salon_id` INT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (salon_id) REFERENCES salons(id),
+  UNIQUE KEY unique_user_salon (user_id, salon_id)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
+
 
 
 -- Optional: Insert sample data (seed)

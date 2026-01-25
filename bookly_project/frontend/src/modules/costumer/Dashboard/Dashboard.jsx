@@ -17,6 +17,7 @@ import PlusIcon from '../../../icons/PlusIcon';
 import DiaryIcon from '../../../icons/DiaryIcon';
 import LeftArrowIcon from '../../../icons/LeftArrowIcon';
 import RightArrowIcon from '../../../icons/RightArrowIcon';
+import SaveIcon from '../../../icons/SaveIcon';
 
 export default function Dashboard() {
     const [user, setUser] = useState(null);
@@ -36,6 +37,8 @@ export default function Dashboard() {
     const [showAllFeatured, setShowAllFeatured] = useState(false);
     const [salonLimit, setSalonLimit] = useState(12);
     const [userProfile, setUserProfile] = useState(null);
+    const [savedSalonIds, setSavedSalonIds] = useState([]);
+    const [savedSalons, setSavedSalons] = useState([]);
     const carouselRef = useRef(null);
 
     useEffect(() => {
@@ -43,7 +46,15 @@ export default function Dashboard() {
         loadServiceTypes();
         loadTopRatedSalons();
         loadUserProfile();
+        loadSavedSalonIds();
     }, []);
+
+    // Load full saved salons when visiting the "Mentett helyek" tab
+    useEffect(() => {
+        if (activeTab === 'book') {
+            loadSavedSalons();
+        }
+    }, [activeTab]);
 
     async function loadData() {
         try {
@@ -76,6 +87,50 @@ export default function Dashboard() {
             }
         } catch (error) {
             console.error('Error loading user profile:', error);
+        }
+    }
+
+    //Gets the saved salon IDs to check which salons are saved
+    async function loadSavedSalonIds() {
+        try {
+            const response = await authApi.get('/api/user/saved-salon-ids');
+            const data = await response.json();
+            if (data.success) {
+                setSavedSalonIds(data.savedIds);
+            }
+        } catch (error) {
+            console.error('Error loading saved salon IDs:', error);
+        }
+    }
+
+    //Gets the full saved salons list
+    async function loadSavedSalons() {
+        try {
+            const response = await authApi.get('/api/user/saved-salons');
+            const data = await response.json();
+            if (data.success) {
+                setSavedSalons(data.salons);
+            }
+        } catch (error) {
+            console.error('Error loading saved salons:', error);
+        }
+    }
+
+    //Toggle save/unsave a salon
+    async function toggleSaveSalon(salonId) {
+        try {
+            const isSaved = savedSalonIds.includes(salonId);
+            
+            if (isSaved) {
+                await authApi.delete(`/api/user/saved-salons/${salonId}`);
+                setSavedSalonIds(prev => prev.filter(id => id !== salonId));
+                setSavedSalons(prev => prev.filter(salon => salon.id !== salonId));
+            } else {
+                await authApi.post(`/api/user/saved-salons/${salonId}`);
+                setSavedSalonIds(prev => [...prev, salonId]);
+            }
+        } catch (error) {
+            console.error('Error toggling save salon:', error);
         }
     }
 
@@ -130,6 +185,17 @@ export default function Dashboard() {
     }
 
     async function handleSearch() {
+        // Check if any search criteria is provided
+        const hasSearchQuery = searchQuery.trim().length > 0;
+        const hasLocationSearch = locationSearch.trim().length > 0;
+        const hasServiceFilter = serviceFilter !== 'all';
+        
+        if (!hasSearchQuery && !hasLocationSearch && !hasServiceFilter) {
+            setSearchActive(true);
+            setSearchResults([]);
+            return;
+        }
+
         setSearchActive(true);
 
         const results = await searchSalons({
@@ -354,6 +420,21 @@ export default function Dashboard() {
                                                             {salon.name.charAt(0).toUpperCase()}
                                                         </div>
                                                     </div>
+                                                    {/* Save button */}
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            toggleSaveSalon(salon.id);
+                                                        }}
+                                                        className={`absolute top-2 left-2 p-2 rounded-lg backdrop-blur-sm transition-all ${
+                                                            savedSalonIds.includes(salon.id) 
+                                                                ? 'bg-yellow-400 text-white' 
+                                                                : 'bg-white/90 text-gray-600 hover:bg-white hover:text-dark-blue'
+                                                        }`}
+                                                        title={savedSalonIds.includes(salon.id) ? 'Eltávolítás a mentett helyekből' : 'Mentés'}
+                                                    >
+                                                        <SaveIcon filled={savedSalonIds.includes(salon.id)} className="w-4 h-4" />
+                                                    </button>
                                                     {/* Distance badge - only show when distance is available */}
                                                     {salon.distance !== null && salon.distance !== undefined && (
                                                         <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-semibold text-dark-blue">
@@ -383,7 +464,14 @@ export default function Dashboard() {
                                         {/* Empty state */}
                                         {searchResults.length === 0 && (
                                             <div className="col-span-full text-center py-12 bg-white/40 backdrop-blur-md rounded-xl border border-white/50">
-                                                <p className="text-gray-500">Nincs találat a keresési feltételeknek megfelelően</p>
+                                                {!searchQuery.trim() && !locationSearch.trim() && serviceFilter === 'all' ? (
+                                                    <div>
+                                                        <p className="text-gray-700 font-medium text-lg mb-2">Keresési feltétel szükséges</p>
+                                                        <p className="text-gray-500">Kérjük, adj meg egy szalon nevet, válassz szolgáltatást vagy add meg a helyzeted!</p>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-gray-500">Nincs találat a keresési feltételeknek megfelelően</p>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -440,6 +528,21 @@ export default function Dashboard() {
                                                                     {salon.name.charAt(0).toUpperCase()}
                                                                 </div>
                                                             </div>
+                                                            {/* Save button */}
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    toggleSaveSalon(salon.id);
+                                                                }}
+                                                                className={`absolute top-2 left-2 p-2 rounded-lg backdrop-blur-sm transition-all ${
+                                                                    savedSalonIds.includes(salon.id) 
+                                                                        ? 'bg-yellow-400 text-white' 
+                                                                        : 'bg-white/90 text-gray-600 hover:bg-white hover:text-dark-blue'
+                                                                }`}
+                                                                title={savedSalonIds.includes(salon.id) ? 'Eltávolítás a mentett helyekből' : 'Mentés'}
+                                                            >
+                                                                <SaveIcon filled={savedSalonIds.includes(salon.id)} className="w-4 h-4" />
+                                                            </button>
                                                         </div>
                                                         <div className="pt-10 p-4 text-center">
                                                             <h3 className="text-lg font-bold text-gray-900 mb-1">{salon.name}</h3>
@@ -486,6 +589,21 @@ export default function Dashboard() {
                                                                 {salon.name.charAt(0).toUpperCase()}
                                                             </div>
                                                         </div>
+                                                        {/* Save button */}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                toggleSaveSalon(salon.id);
+                                                            }}
+                                                            className={`absolute top-2 left-2 p-2 rounded-lg backdrop-blur-sm transition-all ${
+                                                                savedSalonIds.includes(salon.id) 
+                                                                    ? 'bg-yellow-400 text-white' 
+                                                                    : 'bg-white/90 text-gray-600 hover:bg-white hover:text-dark-blue'
+                                                            }`}
+                                                            title={savedSalonIds.includes(salon.id) ? 'Eltávolítás a mentett helyekből' : 'Mentés'}
+                                                        >
+                                                            <SaveIcon filled={savedSalonIds.includes(salon.id)} className="w-4 h-4" />
+                                                        </button>
                                                     </div>
                                                     <div className="pt-10 p-4 text-center">
                                                         <h3 className="text-lg font-bold text-gray-900 mb-1">{salon.name}</h3>
@@ -748,34 +866,76 @@ export default function Dashboard() {
                     {activeTab === 'book' && (
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
                             <h1 className="text-3xl font-bold text-gray-900">Mentett helyek</h1>
-                            <p className="text-gray-600">Ezeken a helyeken már jártál korábban.</p>
+                            <p className="text-gray-600">Kedvenc szalonjaid egy helyen.</p>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {providers.map((provider) => (
-                                    <div
-                                        key={provider.id}
-                                        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 group"
-                                    >
-                                        <div className="h-32 bg-linear-to-r from-blue-500 to-indigo-600 relative">
-                                            <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2">
-                                                <div className="w-20 h-20 rounded-full border-4 border-white bg-white flex items-center justify-center text-3xl font-bold text-indigo-600 shadow-md">
-                                                    {provider.name.charAt(0).toUpperCase()}
+                            {savedSalons.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {savedSalons.map((salon) => (
+                                        <div
+                                            key={salon.id}
+                                            className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
+                                        >
+                                            <div className="h-24 bg-linear-to-r from-blue-500 to-dark-blue relative">
+                                                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+                                                    <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-md">
+                                                        {salon.name.charAt(0).toUpperCase()}
+                                                    </div>
                                                 </div>
+                                                {/* Remove from saved button */}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleSaveSalon(salon.id);
+                                                    }}
+                                                    className="absolute top-2 left-2 p-2 rounded-lg backdrop-blur-sm transition-all bg-yellow-400 text-white hover:bg-red-500"
+                                                    title="Eltávolítás a mentett helyekből"
+                                                >
+                                                    <SaveIcon filled={true} className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                            <div className="pt-10 p-4 text-center">
+                                                <h3 className="text-lg font-bold text-gray-900 mb-1">{salon.name}</h3>
+                                                <p className="text-xs text-gray-500 mb-1">{salon.address}</p>
+                                                <p className="text-xs text-gray-400 mb-2">{salon.type}</p>
+                                                {salon.providers && salon.providers.length > 0 && (
+                                                    <p className="text-xs text-gray-400 mb-2">{salon.providers.length} szolgáltató</p>
+                                                )}
+                                                <div className="flex items-center justify-center text-yellow-400 text-sm mb-2">
+                                                    {salon.average_rating > 0 ? (
+                                                        <>
+                                                            {'★'.repeat(Math.round(salon.average_rating))}{'☆'.repeat(5 - Math.round(salon.average_rating))}
+                                                            <span className="text-gray-400 text-xs ml-1">
+                                                                ({salon.rating_count})
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-gray-400 text-xs">Még nincs értékelés</span>
+                                                    )}
+                                                </div>
+                                                <button
+                                                    className="w-full py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors"
+                                                >
+                                                    Megnézem
+                                                </button>
                                             </div>
                                         </div>
-                                        <div className="pt-12 p-6 text-center">
-                                            <h3 className="text-xl font-bold text-gray-900 mb-2">{provider.name}</h3>
-                                            <div className="flex items-center justify-center text-yellow-400 mb-4 stars">
-                                                ★★★★☆ <span className="text-gray-400 text-xs ml-2">(12)</span>
-                                            </div>
-                                            <p className="text-gray-600 mb-6 text-sm line-clamp-2 min-h-10">{provider.description}</p>
-                                            <button className="w-full py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-sm group-hover:shadow-md">
-                                                Foglalás
-                                            </button>
-                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-16 bg-white/40 backdrop-blur-md rounded-xl border border-white/50">
+                                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                                        <SaveIcon filled={false} className="w-8 h-8 text-gray-400" />
                                     </div>
-                                ))}
-                            </div>
+                                    <h3 className="text-lg font-medium text-gray-900">Még nincs mentett helyed</h3>
+                                    <p className="text-gray-500 mt-1">Keresd meg kedvenc szalonjaidat és mentsd el őket!</p>
+                                    <button
+                                        onClick={() => setActiveTab('overview')}
+                                        className="mt-4 px-6 py-2 bg-dark-blue text-white rounded-xl hover:bg-blue-800 font-medium transition-colors"
+                                    >
+                                        Szalonok böngészése
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
 

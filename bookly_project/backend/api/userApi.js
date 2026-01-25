@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const AuthMiddleware = require('./auth/AuthMiddleware');
 const { getUserById } = require('../sql/users');
+const { getSavedSalonsByUserId, saveSalon, unsaveSalon, getSavedSalonIds, getProvidersBySalonId } = require('../sql/database');
 
 // Get current user's profile
 router.get('/profile', AuthMiddleware, async (req, res) => {
@@ -44,6 +45,111 @@ router.get('/profile', AuthMiddleware, async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server error while fetching profile'
+        });
+    }
+});
+
+// Get user's saved salons
+router.get('/saved-salons', AuthMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const savedSalons = await getSavedSalonsByUserId(userId);
+        
+        // Get providers for each salon
+        const salonsWithProviders = await Promise.all(
+            savedSalons.map(async (salon) => {
+                const providers = await getProvidersBySalonId(salon.id);
+                return {
+                    ...salon,
+                    providers
+                };
+            })
+        );
+        
+        res.status(200).json({
+            success: true,
+            salons: salonsWithProviders
+        });
+    } catch (error) {
+        console.error('Get saved salons error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while fetching saved salons'
+        });
+    }
+});
+
+// Get user's saved salon IDs (for checking if a salon is saved)
+router.get('/saved-salon-ids', AuthMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const savedIds = await getSavedSalonIds(userId);
+        
+        res.status(200).json({
+            success: true,
+            savedIds
+        });
+    } catch (error) {
+        console.error('Get saved salon IDs error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while fetching saved salon IDs'
+        });
+    }
+});
+
+// Save a salon
+router.post('/saved-salons/:salonId', AuthMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const salonId = parseInt(req.params.salonId);
+        
+        if (!salonId || isNaN(salonId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid salon ID'
+            });
+        }
+        
+        await saveSalon(userId, salonId);
+        
+        res.status(200).json({
+            success: true,
+            message: 'Salon saved successfully'
+        });
+    } catch (error) {
+        console.error('Save salon error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while saving salon'
+        });
+    }
+});
+
+// Unsave a salon
+router.delete('/saved-salons/:salonId', AuthMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const salonId = parseInt(req.params.salonId);
+        
+        if (!salonId || isNaN(salonId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid salon ID'
+            });
+        }
+        
+        await unsaveSalon(userId, salonId);
+        
+        res.status(200).json({
+            success: true,
+            message: 'Salon removed from saved list'
+        });
+    } catch (error) {
+        console.error('Unsave salon error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while removing saved salon'
         });
     }
 });
