@@ -7,10 +7,60 @@ https://nominatim.openstreetmap.org/search?street=Akácfa%20utca%2057&city=Budap
 https://nominatim.openstreetmap.org/search?street={utca, hazszam}&city={varos}&postalcode={iranyitoszam}&country={orszag}&format=json&limit=1
 */
 
+// Parse address string into components
+function parseAddress(addressString) {
+    // Expected format: "Budapest, Istvánmezei út 3, 1146" or "Istvánmezei út 3, Budapest, 1146"
+    const parts = addressString.split(',').map(p => p.trim());
+    
+    let street = '';
+    let city = '';
+    let postalcode = '';
+    
+    // Try to identify postal code (4 digits)
+    const postalMatch = addressString.match(/\b\d{4}\b/);
+    if (postalMatch) {
+        postalcode = postalMatch[0];
+    }
+    
+    // Try to identify city (common Hungarian cities)
+    const cityPattern = /budapest|debrecen|szeged|miskolc|pécs|győr/i;
+    const cityPart = parts.find(p => cityPattern.test(p));
+    if (cityPart) {
+        city = cityPart.replace(/\d{4}/, '').trim(); // Remove postal code if included
+    }
+    
+    // Remaining part is likely the street
+    const streetPart = parts.find(p => !cityPattern.test(p) && !/^\d{4}$/.test(p.trim()));
+    if (streetPart) {
+        street = streetPart.replace(/\d{4}/, '').trim(); // Remove postal code if included
+    }
+    
+    return { street, city, postalcode };
+}
+
 //Átalakítja a helynevet koordinátákká és kiszámítja a távolságot a felhasználó és a szalonok között
 async function placeToCoordinate(placeName) {
     try {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(placeName)}&limit=1`;
+        let url;
+        
+        // Check if the input looks like a structured address (contains comma and possibly postal code)
+        if (placeName.includes(',') || /\d{4}/.test(placeName)) {
+            const { street, city, postalcode } = parseAddress(placeName);
+            
+            // Build structured query
+            const params = new URLSearchParams();
+            if (street) params.append('street', street);
+            if (city) params.append('city', city);
+            if (postalcode) params.append('postalcode', postalcode);
+            params.append('country', 'Hungary');
+            params.append('format', 'json');
+            params.append('limit', '1');
+            
+            url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
+        } else {
+            // Use simple query for city names or simple searches
+            url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(placeName)}&limit=1`;
+        }
 
         const response = await fetch(url, {
             headers: {

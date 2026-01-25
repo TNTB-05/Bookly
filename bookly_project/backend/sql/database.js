@@ -20,7 +20,7 @@ async function selectall() {
 
 async function getAllSalons() {
     const query = `
-        SELECT id, name, address, phone, email, description, latitude, longitude, status, created_at
+        SELECT id, name, address, phone, email, type, description, latitude, longitude, status, created_at
         FROM salons
         WHERE status != 'closed'
     `;
@@ -30,7 +30,7 @@ async function getAllSalons() {
 
 async function getSalonById(salonId) {
     const query = `
-        SELECT id, name, address, phone, email, description, latitude, longitude, status, created_at
+        SELECT id, name, address, phone, email, type, description, latitude, longitude, status, created_at
         FROM salons
         WHERE id = ?
     `;
@@ -72,12 +72,34 @@ async function getServicesByProviderId(providerId) {
 
 async function getServicesBySalonId(salonId) {
     const query = `
-        SELECT services.id, services.provider_id, services.name, services.description, services.duration_minutes, services.price, services.status, services.created_at, providers.name as provider_name
-        FROM services
-        INNER JOIN providers ON services.provider_id = providers.id
-        WHERE providers.salon_id = ? AND services.status = 'available' AND providers.status = 'active'
+        SELECT s.id, s.provider_id, s.name, s.description, s.duration_minutes, s.price, s.status, s.created_at, providers.name as provider_name
+        FROM services s
+        INNER JOIN providers ON s.provider_id = providers.id
+        WHERE providers.salon_id = ? AND s.status = 'available' AND providers.status = 'active'
     `;
     const [rows] = await pool.execute(query, [salonId]);
+    return rows;
+}
+
+async function getTopRatedSalons(limit = 10) {
+    const limitValue = parseInt(limit) || 10;
+    const query = `
+        SELECT 
+            s.id,
+            s.name,
+            s.address,
+            s.type,
+            s.description,
+            COALESCE(AVG(r.rating), 0) as average_rating,
+            COUNT(r.id) as rating_count
+        FROM salons s
+        LEFT JOIN ratings r ON s.id = r.salon_id AND r.active = TRUE
+        WHERE s.status = 'open'
+        GROUP BY s.id
+        ORDER BY average_rating DESC, rating_count DESC
+        LIMIT ${limitValue}
+    `;
+    const [rows] = await pool.query(query);
     return rows;
 }
 
@@ -90,5 +112,6 @@ module.exports = {
     getProvidersBySalonId,
     getServicesByProviderId,
     getServicesBySalonId,
-    getDistinctSalonTypes
+    getDistinctSalonTypes,
+    getTopRatedSalons
 };

@@ -10,13 +10,17 @@ import SettingsIcon from '../../../icons/SettingsIcon';
 export default function DashboardNavbar({ activeTab, setActiveTab, user }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const dropdownRef = useRef(null);
+    const desktopDropdownRef = useRef(null);
+    const mobileDropdownRef = useRef(null);
     const navigate = useNavigate();
 
     // Close dropdown when clicking outside
     useEffect(() => {
         function handleClickOutside(event) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+            const clickedOutsideDesktop = desktopDropdownRef.current && !desktopDropdownRef.current.contains(event.target);
+            const clickedOutsideMobile = mobileDropdownRef.current && !mobileDropdownRef.current.contains(event.target);
+            
+            if (clickedOutsideDesktop && clickedOutsideMobile) {
                 setIsDropdownOpen(false);
             }
         }
@@ -69,7 +73,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user }) {
                         </div>
 
                         {/* Desktop Profile Dropdown */}
-                        <div className="ml-6 flex items-center relative" ref={dropdownRef}>
+                        <div className="ml-6 flex items-center relative" ref={desktopDropdownRef}>
                             <button
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                 className="flex items-center gap-3 group px-3 py-2 rounded-lg hover:bg-blue-50 transition-all"
@@ -84,45 +88,47 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user }) {
 
                             {/* Dropdown Menu */}
                             {isDropdownOpen && (
-                                <div className="absolute top-14 right-0 w-52 bg-white/90 backdrop-blur-xl border border-white/50 rounded-2xl shadow-xl overflow-hidden z-50">
-                                    <div className="p-4 border-b border-gray-200">
-                                        <p className="text-sm font-bold text-gray-900">{user?.name || 'Felhasználó'}</p>
-                                        <p className="text-xs text-gray-600 truncate">{user?.email || ''}</p>
+                                <div className="absolute top-14 right-0 w-56 bg-white/90 backdrop-blur-xl border border-white/50 rounded-2xl shadow-xl overflow-hidden z-50">
+                                    <div className="px-4 py-2 border-b border-gray-200">
+                                        <p className="text-xs font-semibold text-gray-900 truncate">{user?.name || 'Felhasználó'}</p>
                                     </div>
                                     <div className="p-2 space-y-1">
                                         <button
-                                            onClick={() => {
-                                                setActiveTab('profile');
+                                            onClick={(e) => {
+                                                e.stopPropagation();
                                                 setIsDropdownOpen(false);
+                                                setTimeout(() => setActiveTab('profile'), 10);
                                             }}
-                                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-white/50 rounded-lg transition-colors flex items-center gap-2"
+                                            className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-dark-blue rounded-lg transition-colors flex items-center gap-3"
                                         >
-                                            <div className="w-4 h-4">
+                                            <div className="w-5 h-5">
                                                 <ProfileIcon />
                                             </div>
                                             Profil
                                         </button>
                                         <button
-                                            onClick={() => {
-                                                setActiveTab('settings');
+                                            onClick={(e) => {
+                                                e.stopPropagation();
                                                 setIsDropdownOpen(false);
+                                                setTimeout(() => setActiveTab('settings'), 10);
                                             }}
-                                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-white/50 rounded-lg transition-colors flex items-center gap-2"
+                                            className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-dark-blue rounded-lg transition-colors flex items-center gap-3"
                                         >
-                                            <div className="w-4 h-4">
+                                            <div className="w-5 h-5">
                                                 <SettingsIcon />
                                             </div>
                                             Beállítások
                                         </button>
                                         <div className="border-t border-gray-200 my-1"></div>
                                         <button
-                                            onClick={() => {
-                                                handleLogout();
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
                                                 setIsDropdownOpen(false);
+                                                await handleLogout();
                                             }}
-                                            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
+                                            className="w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-100 hover:text-red-700 rounded-lg transition-colors flex items-center gap-3"
                                         >
-                                            <div className="w-4 h-4">
+                                            <div className="w-5 h-5">
                                                 <ExitIcon />
                                             </div>
                                             Kijelentkezés
@@ -142,7 +148,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user }) {
                         <Logo className="h-10 w-auto cursor-pointer" />
 
                         {/* Mobile Profile Dropdown */}
-                        <div className="relative" ref={dropdownRef}>
+                        <div className="relative" ref={mobileDropdownRef}>
                             <button
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                 className="w-10 h-10 rounded-full bg-dark-blue text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all text-sm font-bold"
@@ -152,43 +158,47 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user }) {
 
                             {/* Dropdown Menu */}
                             {isDropdownOpen && (
-                                <div className="absolute top-12 right-0 w-52 bg-white/90 backdrop-blur-xl border border-white/50 rounded-2xl shadow-xl overflow-hidden z-50">
-                                    <div className="p-4 border-b border-gray-200">
-                                        <p className="text-sm font-bold text-gray-900">{user?.name || 'Felhasználó'}</p>
-                                        <p className="text-xs text-gray-600 truncate">{user?.email || ''}</p>
+                                <div className="absolute top-12 right-0 w-56 bg-white/90 backdrop-blur-xl border border-white/50 rounded-2xl shadow-xl overflow-hidden z-50">
+                                    <div className="px-4 py-2 border-b border-gray-200">
+                                        <p className="text-xs font-semibold text-gray-900 truncate">{user?.name || 'Felhasználó'}</p>
                                     </div>
                                     <div className="p-2 space-y-1">
                                         <button
-                                            onClick={() => {
-                                                setActiveTab('profile');
+                                            onClick={(e) => {
+                                                e.stopPropagation();
                                                 setIsDropdownOpen(false);
+                                                setTimeout(() => setActiveTab('profile'), 10);
                                             }}
-                                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-white/50 rounded-lg transition-colors flex items-center gap-2"
+                                            className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-dark-blue rounded-lg transition-colors flex items-center gap-3"
                                         >
-                                            <div className="w-4 h-4">
+                                            <div className="w-5 h-5">
                                                 <ProfileIcon />
                                             </div>
                                             Profil
                                         </button>
                                         <button
-                                            onClick={() => {
-                                                setActiveTab('settings');
+                                            onClick={(e) => {
+                                                e.stopPropagation();
                                                 setIsDropdownOpen(false);
+                                                setTimeout(() => setActiveTab('settings'), 10);
                                             }}
-                                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-white/50 rounded-lg transition-colors flex items-center gap-2"
+                                            className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-dark-blue rounded-lg transition-colors flex items-center gap-3"
                                         >
-                                            <SettingsIcon />
+                                            <div className="w-5 h-5">
+                                                <SettingsIcon />
+                                            </div>
                                             Beállítások
                                         </button>
                                         <div className="border-t border-gray-200 my-1"></div>
                                         <button
-                                            onClick={() => {
-                                                handleLogout();
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
                                                 setIsDropdownOpen(false);
+                                                await handleLogout();
                                             }}
-                                            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
+                                            className="w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-100 hover:text-red-700 rounded-lg transition-colors flex items-center gap-3"
                                         >
-                                            <div className="w-4 h-4">
+                                            <div className="w-5 h-5">
                                                 <ExitIcon />
                                             </div>
                                             Kijelentkezés

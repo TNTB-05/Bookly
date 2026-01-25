@@ -42,7 +42,7 @@ setInterval(() => {
 //!Endpoints:
 
 // Helper function to generate tokens
-const generateTokens = (email, userId) => {
+const generateTokens = (email, userId, name) => {
     if (!process.env.JWT_SECRET) {
         console.error('JWT_SECRET is not configured');
         throw new Error('Server configuration error: JWT_SECRET missing');
@@ -54,13 +54,13 @@ const generateTokens = (email, userId) => {
     }
 
     const accessToken = jwt.sign(
-        { email, userId , role: 'customer'},
+        { email, userId, name, role: 'customer'},
         process.env.JWT_SECRET,
         { expiresIn: '15m' } // Short-lived access token
     );
 
     const refreshToken = jwt.sign(
-        { email, userId , role: 'customer'},
+        { email, userId, name, role: 'customer'},
         process.env.JWT_REFRESH_SECRET,
         { expiresIn: '7d' } // Long-lived refresh token
     );
@@ -69,12 +69,12 @@ const generateTokens = (email, userId) => {
 };
 
 router.post('/register', async (request, response) => {
-    const { email, password } = request.body;
+    const { name, email, password } = request.body;
 
-    if (!email || !password) {
+    if (!email || !password || !name) {
         return response.status(400).json({
             success: false,
-            message: 'Email and password are required'
+            message: 'Name and Email and password are required'
         });
     }
 
@@ -95,7 +95,7 @@ router.post('/register', async (request, response) => {
             });
         }
 
-        await addUser(email, hashedPassword, 'customer');
+        await addUser(name, email, hashedPassword, 'customer');
         
 
         response.status(201).json({
@@ -148,10 +148,10 @@ router.post('/login', async (request, response) => {
         }
 
         // Generate both access and refresh tokens
-        const { accessToken, refreshToken } = generateTokens(email, user.userId);
+        const { accessToken, refreshToken } = generateTokens(email, user.id, user.name);
 
         // Store refresh token (in production, save to database)
-        refreshTokenStore.set(refreshToken, { email, userId: user.userId, createdAt: Date.now() });
+        refreshTokenStore.set(refreshToken, { email, userId: user.id, createdAt: Date.now() });
 
         // Send refresh token as HTTP-only cookie
         response.cookie('refreshToken', refreshToken, {
@@ -208,9 +208,9 @@ router.post('/refresh', (request, response) => {
             process.env.JWT_REFRESH_SECRET
         );
 
-        // Generate new access token with userId
+        // Generate new access token with userId and name
         const newAccessToken = jwt.sign(
-            { email: decoded.email, userId: decoded.userId , role: decoded.role},
+            { email: decoded.email, userId: decoded.userId, name: decoded.name, role: decoded.role},
             process.env.JWT_SECRET,
             { expiresIn: '15m' }
         );

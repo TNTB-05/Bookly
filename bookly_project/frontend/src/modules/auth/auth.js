@@ -24,6 +24,7 @@ export function getUserFromToken() {
         return {
             email: decoded.email,
             userId: decoded.userId,
+            name: decoded.name,
             role: decoded.role // 'provider' or 'costumer'
         };
     } catch (error) {

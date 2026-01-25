@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Register() {
+    const nameRef = useRef(null);
     const emailRef = useRef(null);
     const passwordRef = useRef(null);
     const confirmPasswordRef = useRef(null);
@@ -15,9 +16,13 @@ export default function Register() {
         return emailRegex.test(email);
     }
 
-    function validateInputs(email, password, confirmPassword) {
-        if (!email || !password || !confirmPassword) {
+    function validateInputs(name, email, password, confirmPassword) {
+        if (!name || !email || !password || !confirmPassword) {
             setError('Minden mező kitöltése kötelező');
+            return false;
+        }
+        if (name.length < 2) {
+            setError('A név legalább 2 karakter hosszú legyen');
             return false;
         }
         if (!validateEmail(email)) {
@@ -41,11 +46,12 @@ export default function Register() {
         setError(null);
         setSuccess(null);
 
+        const name = nameRef.current.value.trim();
         const email = emailRef.current.value.trim();
         const password = passwordRef.current.value;
         const confirmPassword = confirmPasswordRef.current.value;
 
-        if (!validateInputs(email, password, confirmPassword)) {
+        if (!validateInputs(name, email, password, confirmPassword)) {
             setLoading(false);
             return;
         }
@@ -58,13 +64,14 @@ export default function Register() {
                     'Content-Type': 'application/json'
                 },
                 credentials: 'include', // Send cookies with request
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ name, email, password })
             });
 
             const data = await response.json();
 
             if (response.ok) {
                 setSuccess(data.message || 'Sikeres regisztráció!');
+                nameRef.current.value = '';
                 emailRef.current.value = '';
                 passwordRef.current.value = '';
                 confirmPasswordRef.current.value = '';
@@ -109,6 +116,24 @@ export default function Register() {
                     )}
 
                     <form onSubmit={handleRegister} className="space-y-4 sm:space-y-5">
+                        {/* Name Field */}
+                        <div>
+                            <label htmlFor="name" className="block text-sm font-medium text-gray-900 mb-1.5">
+                                Név
+                            </label>
+                            <input
+                                type="text"
+                                id="name"
+                                ref={nameRef}
+                                required
+                                disabled={loading}
+                                className="w-full px-4 py-2.5 bg-white/60 backdrop-blur-sm border-2 border-white/50 rounded-lg 
+                                         focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent
+                                         text-gray-900 placeholder-gray-500 transition-all disabled:opacity-50"
+                                placeholder="Teljes név"
+                            />
+                        </div>
+
                         {/* Email Field */}
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-1.5">

@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
 import DashboardNavbar from './DashboardNavbar';
 import './Dashboard.css';
-import { searchSalonsAndProviders } from '../../../services/searchService';
+import { searchSalons } from '../../../services/searchService';
+import { getUserFromToken } from '../../auth/auth';
+import { authApi } from '../../auth/auth';
 
 //Ikonok importálása
 import SearchIcon from '../../../icons/SearchIcon';
-import RightPointArrowIcon from '../../../icons/RightPointArrowIcon';
 import LocationIcon from '../../../icons/LocationIcon';
 import EarthIcon from '../../../icons/EarthIcon';
 import ServicesLoadingIcon from '../../../icons/ServicesLoadingIcon';
@@ -15,6 +15,8 @@ import HourIcon from '../../../icons/HourIcon';
 import TickIcon from '../../../icons/TickIcon';
 import PlusIcon from '../../../icons/PlusIcon';
 import DiaryIcon from '../../../icons/DiaryIcon';
+import LeftArrowIcon from '../../../icons/LeftArrowIcon';
+import RightArrowIcon from '../../../icons/RightArrowIcon';
 
 export default function Dashboard() {
     const [user, setUser] = useState(null);
@@ -30,23 +32,30 @@ export default function Dashboard() {
     const [searchActive, setSearchActive] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
     const [serviceTypes, setServiceTypes] = useState([]);
-    const navigate = useNavigate();
+    const [topRatedSalons, setTopRatedSalons] = useState([]);
+    const [showAllFeatured, setShowAllFeatured] = useState(false);
+    const [salonLimit, setSalonLimit] = useState(12);
+    const [userProfile, setUserProfile] = useState(null);
+    const carouselRef = useRef(null);
 
     useEffect(() => {
         loadData();
         loadServiceTypes();
+        loadTopRatedSalons();
+        loadUserProfile();
     }, []);
 
     async function loadData() {
         try {
-            const [userData, appointmentsData, providersData, servicesData] = await Promise.all([
-                getCurrentUser(),
+            const tokenUser = getUserFromToken();
+            setUser(tokenUser);
+
+            const [appointmentsData, providersData, servicesData] = await Promise.all([
                 getUserAppointments(),
                 getProviders(),
                 getServices()
             ]);
 
-            setUser(userData);
             setAppointments(appointmentsData);
             setProviders(providersData);
             setServices(servicesData);
@@ -57,6 +66,20 @@ export default function Dashboard() {
         }
     }
 
+    //Gets the user's full profile data from the API
+    async function loadUserProfile() {
+        try {
+            const response = await authApi.get('/api/user/profile');
+            const data = await response.json();
+            if (data.success) {
+                setUserProfile(data.user);
+            }
+        } catch (error) {
+            console.error('Error loading user profile:', error);
+        }
+    }
+
+    //Gets the service types for the service filter dropdown
     async function loadServiceTypes() {
         try {
             const response = await fetch('http://localhost:3000/api/search/types');
@@ -66,6 +89,19 @@ export default function Dashboard() {
             }
         } catch (error) {
             console.error('Error loading service types:', error);
+        }
+    }
+
+    //Gets top rated salons for the featured section
+    async function loadTopRatedSalons(limit = 12) {
+        try {
+            const response = await fetch(`http://localhost:3000/api/search/top-rated?limit=${limit}`);
+            const data = await response.json();
+            if (data.success) {
+                setTopRatedSalons(data.salons);
+            }
+        } catch (error) {
+            console.error('Error loading top-rated salons:', error);
         }
     }
 
@@ -96,14 +132,14 @@ export default function Dashboard() {
     async function handleSearch() {
         setSearchActive(true);
 
-        const response = await searchSalonsAndProviders({
+        const results = await searchSalons({
             searchQuery,
             locationSearch,
             serviceFilter,
             userLocation
         });
 
-        setSearchResults(response.results || []);
+        setSearchResults(results || []);
     }
 
     function handleGetCurrentLocation() {
@@ -117,12 +153,36 @@ export default function Dashboard() {
                 const { latitude, longitude } = position.coords;
                 setUserLocation({ latitude, longitude });
 
-                // Reverse geocode to get place name
+                // Reverse geocode to get full address
                 try {
-                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
+                        headers: {
+                            'User-Agent': 'Bookly-App/1.0'
+                        }
+                    });
                     const data = await response.json();
-                    const placeName = data.address.city || data.address.town || data.address.village || 'Jelenlegi helyzet';
-                    setLocationSearch(placeName);
+                    
+                    // Build full address string
+                    const address = data.address;
+                    const parts = [];
+                    
+                    // Add city first
+                    const city = address.city || address.town || address.village || '';
+                    if (city) parts.push(city);
+                    
+                    // Add street and house number
+                    const street = address.road || '';
+                    const houseNumber = address.house_number || '';
+                    if (street) {
+                        parts.push(houseNumber ? `${street} ${houseNumber}` : street);
+                    }
+                    
+                    // Add postal code
+                    const postalCode = address.postcode || '';
+                    if (postalCode) parts.push(postalCode);
+                    
+                    const fullAddress = parts.join(', ') || 'Jelenlegi helyzet';
+                    setLocationSearch(fullAddress);
                 } catch (error) {
                     console.error('Reverse geocoding failed:', error);
                     setLocationSearch(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
@@ -133,6 +193,23 @@ export default function Dashboard() {
                 alert('Nem sikerült lekérni a helyzetet. Kérjük, engedélyezd a helymeghatározást.');
             }
         );
+    }
+
+    function scrollCarousel(direction) {
+        if (carouselRef.current) {
+            const scrollAmount = 400;
+            const newScrollPosition = carouselRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+            carouselRef.current.scrollTo({
+                left: newScrollPosition,
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    function handleLoadMore() {
+        const newLimit = salonLimit + 12;
+        setSalonLimit(newLimit);
+        loadTopRatedSalons(newLimit);
     }
 
     if (loading) {
@@ -203,7 +280,7 @@ export default function Dashboard() {
                                                     </div>
                                                     <input
                                                         type="text"
-                                                        placeholder="Helyszín (pl. Budapest)"
+                                                        placeholder="Helyszín (pl. Budapest, sample street 12, 1111)"
                                                         value={locationSearch}
                                                         onChange={(e) => {
                                                             setLocationSearch(e.target.value);
@@ -244,6 +321,7 @@ export default function Dashboard() {
                                                         setLocationSearch('');
                                                         setServiceFilter('all');
                                                         setSearchResults([]);
+                                                        setUserLocation(null);
                                                     }}
                                                     className="text-dark-blue font-medium hover:text-blue-800 transition-colors"
                                                 >
@@ -255,133 +333,240 @@ export default function Dashboard() {
                                 </div>
                             </div>
 
-                            {/* Kiemelt szolgáltatók / Keresési eredmények */}
+                            {/* Keresési eredmények - Show when search is active */}
+                            {searchActive && (
+                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                                    <div className="flex items-center justify-between mb-8">
+                                        <div>
+                                            <h2 className="text-2xl font-bold text-dark-blue">Keresési eredmények</h2>
+                                            <p className="text-gray-600 mt-1">{searchResults.length} találat</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                        {searchResults.map((salon) => (
+                                            <div
+                                                key={salon.id}
+                                                className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
+                                            >
+                                                <div className="h-24 bg-linear-to-r from-blue-500 to-dark-blue relative">
+                                                    <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+                                                        <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-md">
+                                                            {salon.name.charAt(0).toUpperCase()}
+                                                        </div>
+                                                    </div>
+                                                    {/* Distance badge - only show when distance is available */}
+                                                    {salon.distance !== null && salon.distance !== undefined && (
+                                                        <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-semibold text-dark-blue">
+                                                            📍 {salon.distance} km
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="pt-10 p-4 text-center">
+                                                    <h3 className="text-lg font-bold text-gray-900 mb-1">{salon.name}</h3>
+                                                    <p className="text-xs text-gray-500 mb-1">{salon.address}</p>
+                                                    {salon.providers && salon.providers.length > 0 && (
+                                                        <p className="text-xs text-gray-400 mb-2">{salon.providers.length} szolgáltató</p>
+                                                    )}
+                                                    <div className="flex items-center justify-center text-yellow-400 text-sm mb-2">
+                                                        ★★★★★ <span className="text-gray-400 text-xs ml-1">(24)</span>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setActiveTab('book')}
+                                                        className="w-full py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors"
+                                                    >
+                                                        Megnézem
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        
+                                        {/* Empty state */}
+                                        {searchResults.length === 0 && (
+                                            <div className="col-span-full text-center py-12 bg-white/40 backdrop-blur-md rounded-xl border border-white/50">
+                                                <p className="text-gray-500">Nincs találat a keresési feltételeknek megfelelően</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Kiemelt szalonok - Always visible */}
                             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                                 <div className="flex items-center justify-between mb-8">
                                     <div>
-                                        <h2 className="text-2xl font-bold text-dark-blue">{searchActive ? 'Keresési eredmények' : 'Kiemelt szalonok'}</h2>
-                                        <p className="text-gray-600 mt-1">
-                                            {searchActive ? `${searchResults.length} találat` : 'A legjobban értékelt partnereink'}
-                                        </p>
+                                        <h2 className="text-2xl font-bold text-dark-blue">Kiemelt szalonok</h2>
+                                        <p className="text-gray-600 mt-1">A legjobban értékelt partnereink</p>
                                     </div>
-                                    {!searchActive && (
+                                    <button
+                                        onClick={() => setShowAllFeatured(!showAllFeatured)}
+                                        className="text-dark-blue font-medium hover:text-blue-800 flex items-center transition-colors"
+                                    >
+                                        {showAllFeatured ? 'Kevesebb mutatása' : 'Összes megtekintése'}
+                                        <RightArrowIcon />
+                                    </button>
+                                </div>
+                                
+                                {!showAllFeatured ? (
+                                    /* Carousel view */
+                                    <div className="relative group">
+                                        {/* Left Arrow */}
                                         <button
-                                            onClick={() => setActiveTab('book')}
-                                            className="text-dark-blue font-medium hover:text-blue-800 flex items-center transition-colors"
+                                            onClick={() => scrollCarousel('left')}
+                                            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
+                                            aria-label="Scroll left"
                                         >
-                                            Összes megtekintése
-                                            <RightPointArrowIcon />
+                                            <LeftArrowIcon />
                                         </button>
-                                    )}
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    {/* Search Results - Show Salons */}
-                                    {searchActive && searchResults.map((salon) => (
-                                        <div
-                                            key={salon.id}
-                                            className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
+
+                                        {/* Right Arrow */}
+                                        <button
+                                            onClick={() => scrollCarousel('right')}
+                                            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
+                                            aria-label="Scroll right"
                                         >
-                                            <div className="h-24 bg-linear-to-r from-blue-500 to-dark-blue relative">
-                                                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
-                                                    <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-md">
-                                                        {salon.name.charAt(0).toUpperCase()}
+                                            <RightArrowIcon/>
+                                        </button>
+
+                                        <div ref={carouselRef} className="overflow-x-auto pb-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                                            <div className="flex gap-6" style={{ minWidth: 'min-content' }}>
+                                                {topRatedSalons.map((salon) => (
+                                                    <div
+                                                        key={salon.id}
+                                                        className="shrink-0 w-80 bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
+                                                    >
+                                                        <div className="h-24 bg-linear-to-r from-blue-500 to-dark-blue relative">
+                                                            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+                                                                <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-md">
+                                                                    {salon.name.charAt(0).toUpperCase()}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="pt-10 p-4 text-center">
+                                                            <h3 className="text-lg font-bold text-gray-900 mb-1">{salon.name}</h3>
+                                                            <p className="text-xs text-gray-500 mb-2">{salon.address}</p>
+                                                            {salon.providers && salon.providers.length > 0 && (
+                                                                <p className="text-xs text-gray-400 mb-2">{salon.providers.length} szolgáltató</p>
+                                                            )}
+                                                            <div className="flex items-center justify-center text-yellow-400 text-sm mb-2">
+                                                                {salon.average_rating > 0 ? (
+                                                                    <>
+                                                                        {'★'.repeat(Math.round(salon.average_rating))}{'☆'.repeat(5 - Math.round(salon.average_rating))}
+                                                                        <span className="text-gray-400 text-xs ml-1">
+                                                                            ({salon.rating_count})
+                                                                        </span>
+                                                                    </>
+                                                                ) : (
+                                                                    <span className="text-gray-400 text-xs">Még nincs értékelés</span>
+                                                                )}
+                                                            </div>
+                                                            <button
+                                                                onClick={() => setActiveTab('book')}
+                                                                className="w-full py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors"
+                                                            >
+                                                                Megnézem
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                {/* Distance badge - only show when distance is available */}
-                                                {salon.distance !== null && salon.distance !== undefined && (
-                                                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-semibold text-dark-blue">
-                                                        📍 {salon.distance} km
-                                                    </div>
-                                                )}
+                                                ))}
                                             </div>
-                                            <div className="pt-10 p-4 text-center">
-                                                <h3 className="text-lg font-bold text-gray-900 mb-1">{salon.name}</h3>
-                                                <p className="text-xs text-gray-500 mb-1">{salon.address}</p>
-                                                {salon.providers && salon.providers.length > 0 && (
-                                                    <p className="text-xs text-gray-400 mb-2">{salon.providers.length} szolgáltató</p>
-                                                )}
-                                                <div className="flex items-center justify-center text-yellow-400 text-sm mb-2">
-                                                    ★★★★★ <span className="text-gray-400 text-xs ml-1">(24)</span>
-                                                </div>
-                                                <button
-                                                    onClick={() => setActiveTab('book')}
-                                                    className="w-full py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors"
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* Grid view */
+                                    <>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {topRatedSalons.map((salon) => (
+                                                <div
+                                                    key={salon.id}
+                                                    className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
                                                 >
-                                                    Megnézem
+                                                    <div className="h-24 bg-linear-to-r from-blue-500 to-dark-blue relative">
+                                                        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+                                                            <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-md">
+                                                                {salon.name.charAt(0).toUpperCase()}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="pt-10 p-4 text-center">
+                                                        <h3 className="text-lg font-bold text-gray-900 mb-1">{salon.name}</h3>
+                                                        <p className="text-xs text-gray-500 mb-2">{salon.address}</p>
+                                                        {salon.providers && salon.providers.length > 0 && (
+                                                            <p className="text-xs text-gray-400 mb-2">{salon.providers.length} szolgáltató</p>
+                                                        )}
+                                                        <div className="flex items-center justify-center text-yellow-400 text-sm mb-2">
+                                                            {salon.average_rating > 0 ? (
+                                                                <>
+                                                                    {'★'.repeat(Math.round(salon.average_rating))}{'☆'.repeat(5 - Math.round(salon.average_rating))}
+                                                                    <span className="text-gray-400 text-xs ml-1">
+                                                                        ({salon.rating_count})
+                                                                    </span>
+                                                                </>
+                                                            ) : (
+                                                                <span className="text-gray-400 text-xs">Még nincs értékelés</span>
+                                                            )}
+                                                        </div>
+                                                        <button
+                                                            onClick={() => setActiveTab('book')}
+                                                            className="w-full py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors"
+                                                        >
+                                                            Megnézem
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        {topRatedSalons.length >= salonLimit && (
+                                            <div className="mt-8 text-center">
+                                                <button
+                                                    onClick={handleLoadMore}
+                                                    className="px-8 py-3 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors shadow-lg hover:shadow-xl"
+                                                >
+                                                    Még több mutatása
                                                 </button>
                                             </div>
-                                        </div>
-                                    ))}
-                                    
-                                    {/* Default - Show Featured Providers */}
-                                    {!searchActive && providers.slice(0, 4).map((provider) => (
-                                        <div
-                                            key={provider.id}
-                                            className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
-                                        >
-                                            <div className="h-24 bg-linear-to-r from-blue-500 to-dark-blue relative">
-                                                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
-                                                    <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-md">
-                                                        {provider.name.charAt(0).toUpperCase()}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="pt-10 p-4 text-center">
-                                                <h3 className="text-lg font-bold text-gray-900 mb-1">{provider.name}</h3>
-                                                <div className="flex items-center justify-center text-yellow-400 text-sm mb-2">
-                                                    ★★★★★ <span className="text-gray-400 text-xs ml-1">(24)</span>
-                                                </div>
-                                                <button
-                                                    onClick={() => setActiveTab('book')}
-                                                    className="w-full py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors"
-                                                >
-                                                    Megnézem
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    
-                                    {/* Empty state */}
-                                    {searchActive && searchResults.length === 0 && (
-                                        <div className="col-span-full text-center py-12 bg-white/40 backdrop-blur-md rounded-xl border border-white/50">
-                                            <p className="text-gray-500">Nincs találat a keresési feltételeknek megfelelően</p>
-                                        </div>
-                                    )}
-                                    {!searchActive && providers.length === 0 && (
-                                        <div className="col-span-full text-center py-12 bg-white/40 backdrop-blur-md rounded-xl border border-white/50">
-                                            <p className="text-gray-500">Szolgáltatók betöltése...</p>
-                                        </div>
-                                    )}
-                                </div>
+                                        )}
+                                    </>
+                                )}
+                                
+                                {topRatedSalons.length === 0 && (
+                                    <div className="col-span-full text-center py-12 bg-white/40 backdrop-blur-md rounded-xl border border-white/50">
+                                        <p className="text-gray-500">Szalonok betöltése...</p>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Szolgáltatások */}
                             <div>
                                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                                    <div className="flex flex-col mb-8 gap-6">
-                                        <div>
-                                            <h2 className="text-2xl font-bold text-gray-900">Szolgáltatások</h2>
-                                            <p className="text-gray-600 mt-1">Böngéssz szolgáltatásaink között</p>
-                                        </div>
-
-                                        {/* Filter by Service */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-3">Szűrés szolgáltatás szerint</label>
-                                            <div className="flex gap-2 flex-wrap">
-                                                {['all', 'hajvágás', 'manikűr', 'masszázs'].map((filter) => (
-                                                    <button
-                                                        key={filter}
-                                                        onClick={() => setServiceFilter(filter)}
-                                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                                                            serviceFilter === filter
-                                                                ? 'bg-dark-blue text-white shadow-lg'
-                                                                : 'bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-white/70 border border-white/50'
-                                                        }`}
-                                                    >
-                                                        {filter === 'all' ? 'Összes' : filter.charAt(0).toUpperCase() + filter.slice(1)}
-                                                    </button>
-                                                ))}
-                                            </div>
+                                    <div className="mb-8">
+                                        <h2 className="text-2xl font-bold text-dark-blue mb-3">Szolgáltatások</h2>
+                                        
+                                        {/* Filter by Service Type */}
+                                        <div className="flex gap-2 flex-wrap">
+                                            <button
+                                                key="all"
+                                                onClick={() => setServiceFilter('all')}
+                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                                                    serviceFilter === 'all'
+                                                        ? 'bg-dark-blue text-white shadow-lg'
+                                                        : 'bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-white/70 border border-white/50'
+                                                }`}
+                                            >
+                                                Összes
+                                            </button>
+                                            {serviceTypes.map((type) => (
+                                                <button
+                                                    key={type}
+                                                    onClick={() => setServiceFilter(type)}
+                                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                                                        serviceFilter === type
+                                                            ? 'bg-dark-blue text-white shadow-lg'
+                                                            : 'bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-white/70 border border-white/50'
+                                                    }`}
+                                                >
+                                                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -479,7 +664,7 @@ export default function Dashboard() {
                                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 transition-all hover:shadow-md">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Elvégzett</p>
+                                            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Befejezett</p>
                                             <h3 className="text-3xl font-bold text-green-600 mt-1">
                                                 {appointments.filter((a) => a.status === 'completed').length}
                                             </h3>

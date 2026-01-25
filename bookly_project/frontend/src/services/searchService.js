@@ -1,7 +1,7 @@
 const API_BASE_URL = 'http://localhost:3000';
 
 /**
- * Search for salons and providers based on various criteria
+ * Search for salons based on various criteria
  * 
  * Case 1: Salon name only → Show salons (no location check)
  * Case 2: Service type only → Show salons with that service (no location check)
@@ -11,17 +11,15 @@ const API_BASE_URL = 'http://localhost:3000';
  * 
  * @param {Object} params - Search parameters
  * @param {string} params.searchQuery - Text search for salon name
- * @param {string} params.locationSearch - Location text (e.g., "Budapest")
- * @param {string} params.serviceFilter - Service type filter (e.g., "hajvágás", "all")
+ * @param {string} params.locationSearch - Location text (e.g., "Budapest, Istvánmezei út 3, 1146")
+ * @param {string} params.serviceFilter - Service type filter (e.g., "fodrász", "all")
  * @param {Object} params.userLocation - User's GPS coordinates {latitude, longitude}
- * @returns {Promise<Object>} - { results: Array, type: 'salons' | 'providers' }
+ * @returns {Promise<Array>} - Array of salon objects with distance info (if location provided)
  */
-export async function searchSalonsAndProviders({ searchQuery, locationSearch, serviceFilter, userLocation }) {
+export async function searchSalons({ searchQuery, locationSearch, serviceFilter, userLocation }) {
     const hasSearchQuery = searchQuery && searchQuery.trim() !== '';
     const hasLocation = (locationSearch && locationSearch.trim() !== '') || userLocation;
     const hasServiceFilter = serviceFilter && serviceFilter !== 'all';
-
-    console.log('Search params:', { hasSearchQuery, hasLocation, hasServiceFilter, searchQuery, locationSearch, serviceFilter });
 
     try {
         // ==========================================
@@ -45,8 +43,6 @@ export async function searchSalonsAndProviders({ searchQuery, locationSearch, se
                 requestBody.service_name = serviceFilter;
             }
 
-            console.log('Case 3/5: Location search with:', requestBody);
-
             const response = await fetch(`${API_BASE_URL}/api/search/nearby`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -54,7 +50,6 @@ export async function searchSalonsAndProviders({ searchQuery, locationSearch, se
             });
 
             const data = await response.json();
-            console.log('Location search response:', data);
 
             if (data.success) {
                 let salons = data.salons;
@@ -68,21 +63,18 @@ export async function searchSalonsAndProviders({ searchQuery, locationSearch, se
                 }
 
                 // Return salons with distance info
-                return {
-                    type: 'salons',
-                    results: salons.map((salon) => ({
-                        id: salon.id,
-                        name: salon.name,
-                        address: salon.address,
-                        description: salon.description,
-                        distance: salon.distance,
-                        providers: salon.providers,
-                        services: salon.services
-                    }))
-                };
+                return salons.map((salon) => ({
+                    id: salon.id,
+                    name: salon.name,
+                    address: salon.address,
+                    description: salon.description,
+                    distance: salon.distance,
+                    providers: salon.providers,
+                    services: salon.services
+                }));
             } else {
                 console.error('Search failed:', data.message);
-                return { type: 'salons', results: [] };
+                return [];
             }
         }
 
@@ -101,8 +93,6 @@ export async function searchSalonsAndProviders({ searchQuery, locationSearch, se
                 requestBody.service_name = serviceFilter;
             }
 
-            console.log('Case 1/2/4: Name/service search with:', requestBody);
-
             const response = await fetch(`${API_BASE_URL}/api/search/nearby`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -110,7 +100,6 @@ export async function searchSalonsAndProviders({ searchQuery, locationSearch, se
             });
 
             const data = await response.json();
-            console.log('Name/service search response:', data);
 
             if (data.success) {
                 let salons = data.salons;
@@ -123,33 +112,29 @@ export async function searchSalonsAndProviders({ searchQuery, locationSearch, se
                     );
                 }
 
-                // Return salons without distance (or set distance to null)
-                return {
-                    type: 'salons',
-                    results: salons.map((salon) => ({
-                        id: salon.id,
-                        name: salon.name,
-                        address: salon.address,
-                        description: salon.description,
-                        distance: null, // No distance when not searching by location
-                        providers: salon.providers,
-                        services: salon.services
-                    }))
-                };
+                // Return salons without distance info
+                return salons.map((salon) => ({
+                    id: salon.id,
+                    name: salon.name,
+                    address: salon.address,
+                    description: salon.description,
+                    distance: null,
+                    providers: salon.providers,
+                    services: salon.services
+                }));
             } else {
                 console.error('Search failed:', data.message);
-                return { type: 'salons', results: [] };
+                return [];
             }
         }
 
         // ==========================================
         // No filters - return empty (user should enter something)
         // ==========================================
-        console.log('No filters applied');
-        return { type: 'salons', results: [] };
+        return [];
 
     } catch (error) {
         console.error('Search error:', error);
-        return { type: 'salons', results: [] };
+        return [];
     }
 }

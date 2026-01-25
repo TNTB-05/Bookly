@@ -67,17 +67,23 @@ router.post('/nearby', async (req, res) => {
             })
         );
 
-        // Szűrés szolgáltatás neve alapján, ha meg van adva
+        // Szűrés szolgáltatás neve vagy szalon típusa alapján, ha meg van adva
         let filteredSalons = salonsWithDetails;
         if (service_name) {
             const searchTerm = service_name.toLowerCase().trim();
             filteredSalons = salonsWithDetails.filter((salon) => {
-                return salon.services.some(
+                // Check if salon type matches
+                const typeMatches = salon.type && salon.type.toLowerCase().includes(searchTerm);
+                
+                // Check if any service name matches
+                const serviceMatches = salon.services.some(
                     (service) =>
                         service.name.toLowerCase().includes(searchTerm) ||
                         (service.description &&
                             service.description.toLowerCase().includes(searchTerm))
                 );
+                
+                return typeMatches || serviceMatches;
             });
         }
 
@@ -96,7 +102,7 @@ router.post('/nearby', async (req, res) => {
         console.error('Search nearby error:', error);
         return res.status(500).json({
             success: false,
-            message: 'problem merult fel a kozeli szalonok keresese soran',
+            message: 'problema merult fel a kozeli szalonok keresese soran',
             error: error.message
         });
     }
@@ -125,7 +131,7 @@ router.post('/geocode', async (req, res) => {
         console.error('Geocode error:', error);
         return res.status(400).json({
             success: false,
-            message: 'problem merult fel a hely geokodolasa soran',
+            message: 'problema merult fel a hely geokodolasa soran',
             error: error.message
         });
     }
@@ -144,7 +150,38 @@ router.get('/types', async (req, res) => {
         console.error('Get types error:', error);
         return res.status(500).json({
             success: false,
-            message: 'problem merult fel a salon tipusok lekerese soran',
+            message: 'problema merult fel a salon tipusok lekerese soran',
+            error: error.message
+        });
+    }
+});
+
+// Get top-rated salons
+router.get('/top-rated', async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 10;
+        const salons = await database.getTopRatedSalons(limit);
+        
+        // Get providers for each salon
+        const salonsWithProviders = await Promise.all(
+            salons.map(async (salon) => {
+                const providers = await database.getProvidersBySalonId(salon.id);
+                return {
+                    ...salon,
+                    providers
+                };
+            })
+        );
+        
+        return res.status(200).json({
+            success: true,
+            salons: salonsWithProviders
+        });
+    } catch (error) {
+        console.error('Get top-rated salons error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'problema merult fel a legjobb szalonok lekerese soran',
             error: error.message
         });
     }
