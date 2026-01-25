@@ -469,8 +469,8 @@ router.delete('/appointments/:id', async (request, response) => {
 
         // Update status to canceled
         await pool.query(
-            'UPDATE appointments SET status = ? WHERE id = ?',
-            ['canceled', appointmentId]
+            'DELETE from appointments WHERE id = ?',
+            [appointmentId]
         );
 
         response.status(200).json({

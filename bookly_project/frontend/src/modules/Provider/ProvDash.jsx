@@ -653,7 +653,7 @@ const CalendarSection = () => {
             </div>
 
             {/* Appointment Detail Modal */}
-            {showModal && selectedAppointment && (
+            {showModal && selectedAppointment && createPortal(
                 <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
                     {/* Backdrop */}
                     <div 
@@ -783,7 +783,8 @@ const CalendarSection = () => {
                             </div>
                         )}
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Create Appointment Modal */}
