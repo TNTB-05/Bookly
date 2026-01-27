@@ -26,10 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
   `role` ENUM('user', 'employee', 'admin', 'customer') DEFAULT 'user',
   `last_login` DATETIME,
   `password_hash` VARCHAR(255) NOT NULL,
-  `access_token` TEXT,
-  `refresh_token_id` INT,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (refresh_token_id) REFERENCES RefTokens(id)
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 

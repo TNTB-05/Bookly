@@ -26,9 +26,37 @@ const addUser=async (name, email, hashedPassword, role) => {
     return result.insertId;
 };
 
+const updateUserProfile = async (userId, { name, email, phone, address, status }) => {
+    const query = 'UPDATE users SET name = ?, email = ?, phone = ?, address = ?, status = ? WHERE id = ?';
+    const [result] = await pool.execute(query, [name, email, phone, address, status, userId]);
+    return result.affectedRows > 0;
+};
+
+const updateUserPassword = async (userId, hashedPassword) => {
+    const query = 'UPDATE users SET password_hash = ? WHERE id = ?';
+    const [result] = await pool.execute(query, [hashedPassword, userId]);
+    return result.affectedRows > 0;
+};
+
+const getUserPasswordHash = async (userId) => {
+    const query = 'SELECT password_hash FROM users WHERE id = ?';
+    const [rows] = await pool.execute(query, [userId]);
+    return rows[0]?.password_hash;
+};
+
+const checkEmailExists = async (email, excludeUserId) => {
+    const query = 'SELECT id FROM users WHERE email = ? AND id != ?';
+    const [rows] = await pool.execute(query, [email, excludeUserId]);
+    return rows.length > 0;
+};
+
 module.exports = {
     getUserById,
     getUserByEmail,
     addUser,
-    getUsers
+    getUsers,
+    updateUserProfile,
+    updateUserPassword,
+    getUserPasswordHash,
+    checkEmailExists
 };

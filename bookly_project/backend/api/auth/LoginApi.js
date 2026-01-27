@@ -152,22 +152,17 @@ router.post('/login', async (request, response) => {
         const { accessToken, refreshToken } = generateTokens(email, user.id, user.name);
 
         // Store refresh token in database (user_id for customers)
-        const [tokenResult] = await pool.query(
-            'INSERT INTO RefTokens (user_id, refresh_token) VALUES (?, ?)',
-            [user.userId, refreshToken]
-        );
-
-        // Link refresh token to user
         await pool.query(
-            'UPDATE users SET refresh_token_id = ? WHERE id = ?',
-            [tokenResult.insertId, user.userId]
+            'INSERT INTO RefTokens (user_id, refresh_token) VALUES (?, ?)',
+            [user.id, refreshToken]
         );
 
         // Send refresh token as HTTP-only cookie
         response.cookie('refreshToken', refreshToken, {
-            httpOnly: true,      // Not accessible from JavaScript
-            secure: process.env.NODE_ENV === 'production', // Only HTTPS in production
-            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',  // CSRF protection
+            httpOnly: true,      
+            secure: false,  
+            sameSite: 'lax',  
+            path: '/',
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
 
@@ -315,10 +310,23 @@ router.post('/refresh', async (request, response) => {
 router.post('/logout', async (request, response) => {
     const refreshToken = request.cookies.refreshToken;
     
+    console.log('=== LOGOUT ===');
+    console.log('Cookie received:', !!refreshToken);
+    
     // Remove token from database
     if (refreshToken) {
         try {
-            await pool.query('DELETE FROM RefTokens WHERE refresh_token = ?', [refreshToken]);
+            // Decode token to get user/provider ID
+            const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+            
+            // Clear the foreign key reference in providers table if applicable
+            if (decoded.role === 'provider') {
+                await pool.query('UPDATE providers SET refresh_token_id = NULL WHERE id = ?', [decoded.userId]);
+            }
+            
+            // Delete the token from RefTokens table
+            const [result] = await pool.query('DELETE FROM RefTokens WHERE refresh_token = ?', [refreshToken]);
+            console.log('Deleted rows:', result.affectedRows);
         } catch (error) {
             console.error('Error deleting refresh token:', error);
         }
@@ -326,8 +334,9 @@ router.post('/logout', async (request, response) => {
     
     response.clearCookie('refreshToken', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
+        secure: false,
+        sameSite: 'lax',
+        path: '/'
     });
     
     response.status(200).json({
