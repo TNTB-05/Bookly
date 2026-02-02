@@ -55,6 +55,8 @@ const userApi = require('./api/userApi.js');
 app.use('/api/user', userApi);
 const calendarApi = require('./api/calendarApi.js');
 app.use('/api/provider/calendar', calendarApi);
+const salonApi = require('./api/salonApi.js');
+app.use('/api/salon', salonApi);
 
 
 //!Szerver futtatása

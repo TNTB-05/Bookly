@@ -159,6 +159,27 @@ async function getSavedSalonIds(userId) {
     return rows.map(row => row.salon_id);
 }
 
+async function updateSalon(salonId, updateData) {
+    const fields = Object.keys(updateData);
+    const values = Object.values(updateData);
+    
+    const setClause = fields.map(field => `${field} = ?`).join(', ');
+    const query = `UPDATE salons SET ${setClause} WHERE id = ?`;
+    
+    const [result] = await pool.execute(query, [...values, salonId]);
+    return result;
+}
+
+async function getProviderById(providerId) {
+    const query = `
+        SELECT id, salon_id, name, email, phone, description, status, role, isManager, created_at
+        FROM providers
+        WHERE id = ?
+    `;
+    const [rows] = await pool.execute(query, [providerId]);
+    return rows.length > 0 ? rows[0] : null;
+}
+
 //!Export
 module.exports = {
     pool,
@@ -174,5 +195,7 @@ module.exports = {
     saveSalon,
     unsaveSalon,
     isSalonSaved,
-    getSavedSalonIds
+    getSavedSalonIds,
+    updateSalon,
+    getProviderById
 };

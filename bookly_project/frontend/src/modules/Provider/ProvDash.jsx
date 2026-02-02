@@ -7,6 +7,9 @@ import { authApi } from '../auth/auth';
 import OverviewIcon from '../../icons/OverviewIcon';
 import CalendarIcon from '../../icons/CalendarIcon';
 import ServicesIcon from '../../icons/ServicesIcon';
+import SalonIcon from '../../icons/SalonIcon';
+import SalonManagement from './SalonManagement';
+import { getUserFromToken } from '../auth/auth';
 
 // Section Components
 const OverviewSection = () => {
@@ -1348,7 +1351,7 @@ const UserDropdown = ({ isOpen, onLogout }) => {
     if (!isOpen) return null;
     
     return (
-        <div className="absolute top-14 right-4 w-52 bg-white/60 backdrop-blur-xl border border-white/50 rounded-2xl shadow-xl overflow-hidden animate-fade-in z-50">
+        <div className="absolute top-14 right-4 w-52 bg-white/60 backdrop-blur-md border border-white/50 rounded-2xl shadow-xl overflow-hidden animate-fade-in z-50">
             <div className="p-4 border-b border-gray-100">
                 <p className="text-sm font-bold text-gray-900">Minta Szolgáltató</p>
                 <p className="text-xs text-gray-500 truncate">info@mintaszolgaltato.hu</p>
@@ -1388,6 +1391,7 @@ export default function ProvDash() {
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
     const { setIsAuthenticated } = useAuth();
+    const user = getUserFromToken();
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -1413,6 +1417,7 @@ export default function ProvDash() {
             case 'overview': return <OverviewSection />;
             case 'calendar': return <CalendarSection />;
             case 'services': return <ServicesSection />;
+            case 'salon': return <SalonManagement />;
             default: return <OverviewSection />;
         }
     };
@@ -1431,7 +1436,7 @@ export default function ProvDash() {
                         className="flex items-center gap-3 focus:outline-none group"
                     >
                         <span className="hidden sm:block text-sm font-medium text-gray-700 group-hover:text-dark-blue transition-colors">
-                            Üdv, Szolgáltató!
+                            Üdv, {user ? user.name : 'Szolgáltató'}
                         </span>
                         <div className="w-10 h-10 rounded-full bg-linear-to-br from-dark-blue to-blue-500 text-white flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 transition-all text-sm font-bold border-2 border-white/50 cursor-pointer">
                             Sz
@@ -1470,6 +1475,13 @@ export default function ProvDash() {
                         icon={<ServicesIcon />} 
                         onClick={setActiveTab} 
                     />
+                    <NavButton 
+                        activeTab={activeTab} 
+                        tabId="salon" 
+                        label="Szalon kezelés" 
+                        icon={<SalonIcon />} 
+                        onClick={setActiveTab} 
+                    />
                 </aside>
 
                 {/* Main Content Area */}
@@ -1502,6 +1514,14 @@ export default function ProvDash() {
                         tabId="services" 
                         label="Szolgáltatások" 
                         icon={<ServicesIcon />} 
+                        onClick={setActiveTab} 
+                        isMobile={true}
+                    />
+                    <NavButton 
+                        activeTab={activeTab} 
+                        tabId="salon" 
+                        label="Szalon" 
+                        icon={<SalonIcon />} 
                         onClick={setActiveTab} 
                         isMobile={true}
                     />

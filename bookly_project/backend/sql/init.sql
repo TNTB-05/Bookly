@@ -186,7 +186,7 @@ INSERT INTO appointments (user_id, provider_id, service_id, appointment_start, a
   (1, 4, 4, '2026-01-27 13:00:00', '2026-01-27 14:15:00', 'Anti-aging facial treatment', 9500, 'scheduled');
 
 -- Insert test ratings
-INSERT INTO ratings (user_id, provider_id, rating, comment, active) VALUES 
+INSERT INTO ratings (user_id, salon_id, rating, comment, active) VALUES 
   (1, 1, 5, 'Excellent service! Very professional and friendly staff. Highly recommend!', TRUE),
   (2, 1, 4, 'Great haircut, but had to wait a bit longer than expected.', TRUE),
   (1, 2, 5, 'Amazing massage experience. Anna is very skilled and the atmosphere was perfect.', TRUE),
