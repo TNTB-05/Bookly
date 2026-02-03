@@ -26,10 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
   `role` ENUM('user', 'employee', 'admin', 'customer') DEFAULT 'user',
   `last_login` DATETIME,
   `password_hash` VARCHAR(255) NOT NULL,
-  `access_token` TEXT,
-  `refresh_token_id` INT,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (refresh_token_id) REFERENCES RefTokens(id)
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 
@@ -51,6 +48,8 @@ CREATE TABLE IF NOT EXISTS salons (
   `longitude` DECIMAL(9, 6) NOT NULL,
   `sharecode` VARCHAR(100) UNIQUE,
   `status` ENUM('open', 'closed', 'renovation') DEFAULT 'open',
+  `banner_color` VARCHAR(7) DEFAULT '#3B82F6',
+  `logo_url` VARCHAR(500) DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
@@ -135,21 +134,21 @@ CREATE TABLE IF NOT EXISTS saved_salons(
 -- Optional: Insert sample data (seed)
 
 -- Insert test salons
-INSERT INTO salons (name, address, phone, email, type, description, latitude, longitude, sharecode, status) VALUES 
-  ('Premium Hair Salon', '100 Beauty Blvd, Budapest', '2012345678', 'contact@premiumhair.com', 'fodrász', 'Top-rated hair salon with expert stylists', 47.4979, 19.0402, 'HAIR01', 'open'),
-  ('Wellness Spa Center', '200 Relaxation St, Budapest', '2098765432', 'info@wellnessspa.com', 'szépségszalon', 'Full-service spa offering massage and beauty treatments', 47.5103, 19.0560, 'SPA001', 'open'),
-  ('Tech Repair Pro', '300 Tech Ave, Budapest', '2011223344', 'support@techrepair.com', 'javítószerviz', 'Professional electronics repair service', 47.4850, 19.0780, 'TECH01', 'open'),
-  ('Glamour Studio', 'Andrássy út 45, Budapest', '2013456789', 'hello@glamourstudio.hu', 'fodrász', 'Modern hair studio with creative stylists', 47.5050, 19.0620, 'GLAM01', 'open'),
-  ('Zen Wellness', 'Váci utca 12, Budapest', '2014567890', 'booking@zenwellness.hu', 'szépségszalon', 'Relaxing spa with traditional and modern treatments', 47.4920, 19.0550, 'ZEN001', 'open'),
-  ('QuickFix Electronics', 'Üllői út 89, Budapest', '2015678901', 'fix@quickfix.hu', 'javítószerviz', 'Fast and reliable electronics repair', 47.4750, 19.0890, 'QFIX01', 'open'),
-  ('Bella Hair Design', 'Nagymező utca 22, Budapest', '2016789012', 'info@bellahair.hu', 'fodrász', 'Elegant hair salon specializing in bridal styling', 47.5030, 19.0580, 'BELLA1', 'open'),
-  ('Serenity Spa', 'Margit körút 15, Budapest', '2017890123', 'relax@serenityspa.hu', 'szépségszalon', 'Luxury spa experience with premium products', 47.5150, 19.0350, 'SEREN1', 'open'),
-  ('TechMaster Service', 'Rákóczi út 50, Budapest', '2018901234', 'service@techmaster.hu', 'javítószerviz', 'Expert computer and phone repair services', 47.4950, 19.0700, 'TECH02', 'open'),
-  ('Chic Salon', 'Király utca 33, Budapest', '2019012345', 'style@chicsalon.hu', 'fodrász', 'Trendy salon with award-winning stylists', 47.5010, 19.0610, 'CHIC01', 'open'),
-  ('Harmony Beauty', 'Bajcsy-Zsilinszky út 8, Budapest', '2020123456', 'hello@harmonybeauty.hu', 'szépségszalon', 'Complete beauty treatments for body and soul', 47.5000, 19.0530, 'HARM01', 'open'),
-  ('Digital Doctors', 'Teréz körút 28, Budapest', '2021234567', 'help@digitaldoctors.hu', 'javítószerviz', 'Specialists in smartphone and tablet repairs', 47.5080, 19.0650, 'DIGI01', 'open'),
-  ('Elegance Hair Lounge', 'Oktogon tér 2, Budapest', '2022345678', 'book@elegancelounge.hu', 'fodrász', 'Premium hair care in the heart of Budapest', 47.5055, 19.0635, 'ELEG01', 'open'),
-  ('Pure Bliss Spa', 'Vörösmarty tér 5, Budapest', '2023456789', 'spa@purebliss.hu', 'szépségszalon', 'Escape to tranquility with our signature treatments', 47.4960, 19.0510, 'PURE01', 'open');
+INSERT INTO salons (name, address, phone, email, type, description, latitude, longitude, sharecode, status, banner_color, logo_url) VALUES 
+  ('Premium Hair Salon', '100 Beauty Blvd, Budapest', '2012345678', 'contact@premiumhair.com', 'fodrász', 'Top-rated hair salon with expert stylists', 47.4979, 19.0402, 'HAIR01', 'open', '#8B5CF6', NULL),
+  ('Wellness Spa Center', '200 Relaxation St, Budapest', '2098765432', 'info@wellnessspa.com', 'szépségszalon', 'Full-service spa offering massage and beauty treatments', 47.5103, 19.0560, 'SPA001', 'open', '#10B981', NULL),
+  ('Tech Repair Pro', '300 Tech Ave, Budapest', '2011223344', 'support@techrepair.com', 'javítószerviz', 'Professional electronics repair service', 47.4850, 19.0780, 'TECH01', 'open', '#EF4444', NULL),
+  ('Glamour Studio', 'Andrássy út 45, Budapest', '2013456789', 'hello@glamourstudio.hu', 'fodrász', 'Modern hair studio with creative stylists', 47.5050, 19.0620, 'GLAM01', 'open', '#EC4899', NULL),
+  ('Zen Wellness', 'Váci utca 12, Budapest', '2014567890', 'booking@zenwellness.hu', 'szépségszalon', 'Relaxing spa with traditional and modern treatments', 47.4920, 19.0550, 'ZEN001', 'open', '#06B6D4', NULL),
+  ('QuickFix Electronics', 'Üllői út 89, Budapest', '2015678901', 'fix@quickfix.hu', 'javítószerviz', 'Fast and reliable electronics repair', 47.4750, 19.0890, 'QFIX01', 'open', '#F59E0B', NULL),
+  ('Bella Hair Design', 'Nagymező utca 22, Budapest', '2016789012', 'info@bellahair.hu', 'fodrász', 'Elegant hair salon specializing in bridal styling', 47.5030, 19.0580, 'BELLA1', 'open', '#F97316', NULL),
+  ('Serenity Spa', 'Margit körút 15, Budapest', '2017890123', 'relax@serenityspa.hu', 'szépségszalon', 'Luxury spa experience with premium products', 47.5150, 19.0350, 'SEREN1', 'open', '#A855F7', NULL),
+  ('TechMaster Service', 'Rákóczi út 50, Budapest', '2018901234', 'service@techmaster.hu', 'javítószerviz', 'Expert computer and phone repair services', 47.4950, 19.0700, 'TECH02', 'open', '#6366F1', NULL),
+  ('Chic Salon', 'Király utca 33, Budapest', '2019012345', 'style@chicsalon.hu', 'fodrász', 'Trendy salon with award-winning stylists', 47.5010, 19.0610, 'CHIC01', 'open', '#14B8A6', NULL),
+  ('Harmony Beauty', 'Bajcsy-Zsilinszky út 8, Budapest', '2020123456', 'hello@harmonybeauty.hu', 'szépségszalon', 'Complete beauty treatments for body and soul', 47.5000, 19.0530, 'HARM01', 'open', '#84CC16', NULL),
+  ('Digital Doctors', 'Teréz körút 28, Budapest', '2021234567', 'help@digitaldoctors.hu', 'javítószerviz', 'Specialists in smartphone and tablet repairs', 47.5080, 19.0650, 'DIGI01', 'open', '#0EA5E9', NULL),
+  ('Elegance Hair Lounge', 'Oktogon tér 2, Budapest', '2022345678', 'book@elegancelounge.hu', 'fodrász', 'Premium hair care in the heart of Budapest', 47.5055, 19.0635, 'ELEG01', 'open', '#D946EF', NULL),
+  ('Pure Bliss Spa', 'Vörösmarty tér 5, Budapest', '2023456789', 'spa@purebliss.hu', 'szépségszalon', 'Escape to tranquility with our signature treatments', 47.4960, 19.0510, 'PURE01', 'open', '#22C55E', NULL);
 
 -- Insert test users
 INSERT INTO users (name, email, phone, address, status, role, password_hash) VALUES 

@@ -1,3 +1,4 @@
+// Navigációs elem - támogatja a desktop és mobil nézetet
 export default function NavItem({ tab, label, icon, activeTab, setActiveTab, setIsMobileMenuOpen, isMobile }) {
     return (
         <button
