@@ -50,6 +50,12 @@ const checkEmailExists = async (email, excludeUserId) => {
     return rows.length > 0;
 };
 
+const deleteUser = async (userId) => {
+    const query = 'DELETE FROM users WHERE id = ?';
+    const [result] = await pool.execute(query, [userId]);
+    return result.affectedRows > 0;
+};
+
 module.exports = {
     getUserById,
     getUserByEmail,
@@ -58,5 +64,6 @@ module.exports = {
     updateUserProfile,
     updateUserPassword,
     getUserPasswordHash,
-    checkEmailExists
+    checkEmailExists,
+    deleteUser
 };

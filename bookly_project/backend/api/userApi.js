@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const AuthMiddleware = require('./auth/AuthMiddleware');
-const { getUserById, updateUserProfile, updateUserPassword, getUserPasswordHash, checkEmailExists } = require('../sql/users');
+const { getUserById, updateUserProfile, updateUserPassword, getUserPasswordHash, checkEmailExists, deleteUser } = require('../sql/users');
 const { getSavedSalonsByUserId, saveSalon, unsaveSalon, getSavedSalonIds, getProvidersBySalonId } = require('../sql/database');
 
 // Get current user's profile
@@ -103,8 +103,8 @@ router.put('/profile', AuthMiddleware, async (req, res) => {
         const trimmedPhone = phone?.trim() || null;
         const trimmedAddress = address?.trim() || null;
 
-        // Check if profile is complete (all fields filled)
-        const isProfileComplete = trimmedName && trimmedEmail && trimmedPhone && trimmedAddress;
+        // Check if profile is complete (name, email, and phone required for activation)
+        const isProfileComplete = trimmedName && trimmedEmail && trimmedPhone;
         const newStatus = isProfileComplete ? 'active' : 'inactive';
 
         // Update the user profile
@@ -330,6 +330,67 @@ router.delete('/saved-salons/:salonId', AuthMiddleware, async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server error while removing saved salon'
+        });
+    }
+});
+
+// Delete user account
+router.delete('/account', AuthMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { password } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: 'User ID not found in token'
+            });
+        }
+
+        // Validate password is provided
+        if (!password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password is required to delete account'
+            });
+        }
+
+        // Get current password hash
+        const currentHash = await getUserPasswordHash(userId);
+        if (!currentHash) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        // Verify password
+        const passwordMatch = await bcrypt.compare(password, currentHash);
+        if (!passwordMatch) {
+            return res.status(400).json({
+                success: false,
+                message: 'Incorrect password'
+            });
+        }
+
+        // Delete the user
+        const deleted = await deleteUser(userId);
+        if (!deleted) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to delete account'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Account deleted successfully'
+        });
+    } catch (error) {
+        console.error('Delete account error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while deleting account'
         });
     }
 });

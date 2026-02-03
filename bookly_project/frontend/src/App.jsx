@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react'
 import { AuthContext, getUserFromToken } from './modules/auth/auth'
 import Dashboard from './modules/costumer/Dashboard/Dashboard'
 import DashboardTest from './modules/costumer/Dashboard/DashboardTest';
+import SalonModal from './modules/costumer/Dashboard/SalonModal';
 import ProtectedRoute from './modules/auth/ProtectedRoute'
 
 function App() {
@@ -74,6 +75,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['customer']}>
               <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/salon/:salonId" 
+          element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <SalonModal />
             </ProtectedRoute>
           } 
         />

@@ -3,18 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { logout } from '../../auth/auth';
 import NavItem from './NavItem';
 import Logo from '../../Logo';
+
+// Ikonok
 import ProfileIcon from '../../../icons/ProfileIcon';
 import ExitIcon from '../../../icons/ExitIcon';
 import SettingsIcon from '../../../icons/SettingsIcon';
 
+// Navigációs sáv komponens - desktop és mobil nézet
 export default function DashboardNavbar({ activeTab, setActiveTab, user }) {
+    // UseState változók a menü kezeléséhez
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const desktopDropdownRef = useRef(null);
     const mobileDropdownRef = useRef(null);
     const navigate = useNavigate();
 
-    // Close dropdown when clicking outside
+    // Legördülő menü bezárása kívüli kattintásra
     useEffect(() => {
         function handleClickOutside(event) {
             const clickedOutsideDesktop = desktopDropdownRef.current && !desktopDropdownRef.current.contains(event.target);
@@ -30,6 +34,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user }) {
         };
     }, []);
 
+    // Kijelentkezés kezelése
     async function handleLogout() {
         await logout();
         localStorage.removeItem('accessToken');

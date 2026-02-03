@@ -187,4 +187,61 @@ router.get('/top-rated', async (req, res) => {
     }
 });
 
+// Get salon details with providers and services
+router.get('/salon/:id', async (req, res) => {
+    try {
+        const salonId = parseInt(req.params.id);
+        
+        if (!salonId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Salon ID szukseges'
+            });
+        }
+        
+        // Get salon details
+        const salon = await database.getSalonById(salonId);
+        
+        if (!salon) {
+            return res.status(404).json({
+                success: false,
+                message: 'Salon nem talalhato'
+            });
+        }
+        
+        // Get providers for the salon
+        const providers = await database.getProvidersBySalonId(salonId);
+        
+        // Get services for each provider
+        const providersWithServices = await Promise.all(
+            providers.map(async (provider) => {
+                const services = await database.getServicesByProviderId(provider.id);
+                return {
+                    ...provider,
+                    services
+                };
+            })
+        );
+        
+        // Get salon services
+        const services = await database.getServicesBySalonId(salonId);
+        
+        return res.status(200).json({
+            success: true,
+            salon: {
+                ...salon,
+                providers: providersWithServices,
+                services
+            }
+        });
+    } catch (error) {
+        console.error('Get salon details error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'problema merult fel a salon reszleteinek lekerese soran',
+            error: error.message
+        });
+    }
+});
+
 module.exports = router;
