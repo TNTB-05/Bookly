@@ -2,14 +2,18 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // Szolgáltató kártya komponens - szolgáltató adatainak megjelenítése
-export default function ProviderCard({ provider, salonId }) {
+export default function ProviderCard({ provider, salonId, onBookService }) {
     const navigate = useNavigate();
     const [showServices, setShowServices] = useState(false);
 
-    // Foglalás gomb kezelése
-    function handleBooking() {
-        // TODO: Navigálás a foglalási oldalra a szolgáltató és szalon ID-vel
-        navigate(`/dashboard/booking/${salonId}/${provider.id}`);
+    // Foglalás gomb kezelése - ha van callback, azt használjuk
+    function handleBookService(service) {
+        if (onBookService) {
+            onBookService(provider, service);
+        } else {
+            // Fallback: navigate to booking page
+            navigate(`/dashboard/booking/${salonId}/${provider.id}`);
+        }
     }
 
     return (
@@ -99,6 +103,12 @@ export default function ProviderCard({ provider, salonId }) {
                                                 <p className="text-xs text-gray-500">
                                                     {service.duration_minutes} perc
                                                 </p>
+                                                <button
+                                                    onClick={() => handleBookService(service)}
+                                                    className="mt-2 px-3 py-1 text-xs bg-dark-blue text-white rounded-lg hover:bg-blue-800 transition-colors"
+                                                >
+                                                    Foglalás
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -108,13 +118,15 @@ export default function ProviderCard({ provider, salonId }) {
                     </div>
                 )}
 
-                {/* Foglalás gomb */}
-                <button
-                    onClick={handleBooking}
-                    className="w-full py-2.5 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors mt-4 shadow-sm hover:shadow-md"
-                >
-                    Foglalás
-                </button>
+                {/* Foglalás gomb - ha van szolgáltatás, mutatjuk a szolgáltatásokat először */}
+                {(!provider.services || provider.services.length === 0) && (
+                    <button
+                        onClick={() => handleBookService(null)}
+                        className="w-full py-2.5 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors mt-4 shadow-sm hover:shadow-md"
+                    >
+                        Foglalás
+                    </button>
+                )}
             </div>
         </div>
     );

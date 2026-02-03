@@ -3,7 +3,19 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const AuthMiddleware = require('./auth/AuthMiddleware');
 const { getUserById, updateUserProfile, updateUserPassword, getUserPasswordHash, checkEmailExists, deleteUser } = require('../sql/users');
-const { getSavedSalonsByUserId, saveSalon, unsaveSalon, getSavedSalonIds, getProvidersBySalonId } = require('../sql/database');
+const { 
+    getSavedSalonsByUserId, 
+    saveSalon, 
+    unsaveSalon, 
+    getSavedSalonIds, 
+    getProvidersBySalonId,
+    pool,
+    getUserAppointments,
+    getServiceById,
+    getAvailableTimeSlots,
+    getAppointmentById,
+    getProviderById
+} = require('../sql/database');
 
 // Get current user's profile
 router.get('/profile', AuthMiddleware, async (req, res) => {
@@ -391,6 +403,316 @@ router.delete('/account', AuthMiddleware, async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server error while deleting account'
+        });
+    }
+});
+
+// ==================== APPOINTMENT ENDPOINTS ====================
+
+// Helper function to format date to MySQL datetime in local timezone (not UTC)
+function formatDateTimeLocal(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+// Get user's appointments
+router.get('/appointments', AuthMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const appointments = await getUserAppointments(userId);
+        
+        res.status(200).json({
+            success: true,
+            appointments
+        });
+    } catch (error) {
+        console.error('Get appointments error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Hiba történt a foglalások lekérdezésekor'
+        });
+    }
+});
+
+// Create new appointment (customer booking)
+router.post('/appointments', AuthMiddleware, async (req, res) => {
+    const connection = await pool.getConnection();
+    
+    try {
+        const userId = req.user.userId;
+        const { provider_id, service_id, appointment_date, appointment_time, comment } = req.body;
+
+        // Validation
+        if (!provider_id || !service_id || !appointment_date || !appointment_time) {
+            return res.status(400).json({
+                success: false,
+                message: 'Szolgáltató, szolgáltatás, dátum és időpont megadása kötelező'
+            });
+        }
+
+        // Get service details
+        const service = await getServiceById(service_id);
+        if (!service) {
+            return res.status(404).json({
+                success: false,
+                message: 'A szolgáltatás nem található'
+            });
+        }
+
+        // Verify service belongs to the specified provider
+        if (service.provider_id !== parseInt(provider_id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'A szolgáltatás nem tartozik ehhez a szolgáltatóhoz'
+            });
+        }
+
+        // Verify provider exists and is active
+        const provider = await getProviderById(provider_id);
+        if (!provider || provider.status !== 'active') {
+            return res.status(404).json({
+                success: false,
+                message: 'A szolgáltató nem található vagy nem elérhető'
+            });
+        }
+
+        // Parse appointment datetime
+        const appointmentStart = new Date(`${appointment_date}T${appointment_time}`);
+        const appointmentEnd = new Date(appointmentStart.getTime() + service.duration_minutes * 60000);
+
+        // Validate appointment is in the future
+        if (appointmentStart <= new Date()) {
+            return res.status(400).json({
+                success: false,
+                message: 'A foglalás időpontja nem lehet a múltban'
+            });
+        }
+
+        // Check if within salon hours
+        const openingHour = service.opening_hours || 8;
+        const closingHour = service.closing_hours || 20;
+        const startHour = appointmentStart.getHours();
+        const endHour = appointmentEnd.getHours();
+        const endMinute = appointmentEnd.getMinutes();
+
+        if (startHour < openingHour || (endHour > closingHour) || (endHour === closingHour && endMinute > 0)) {
+            return res.status(400).json({
+                success: false,
+                message: 'A foglalás kívül esik a nyitvatartási időn'
+            });
+        }
+
+        // Start transaction for race condition prevention
+        await connection.beginTransaction();
+
+        try {
+            // Check for conflicts with row-level locking
+            const [conflicts] = await connection.query(
+                `SELECT id FROM appointments 
+                 WHERE provider_id = ? 
+                 AND status = 'scheduled'
+                 AND (
+                     (appointment_start < ? AND appointment_end > ?)
+                     OR (appointment_start < ? AND appointment_end > ?)
+                     OR (appointment_start >= ? AND appointment_end <= ?)
+                 )
+                 FOR UPDATE`,
+                [
+                    provider_id,
+                    formatDateTimeLocal(appointmentEnd),
+                    formatDateTimeLocal(appointmentStart),
+                    formatDateTimeLocal(appointmentEnd),
+                    formatDateTimeLocal(appointmentStart),
+                    formatDateTimeLocal(appointmentStart),
+                    formatDateTimeLocal(appointmentEnd)
+                ]
+            );
+
+            if (conflicts.length > 0) {
+                await connection.rollback();
+                return res.status(409).json({
+                    success: false,
+                    message: 'Ez az időpont már foglalt. Kérjük, válasszon másik időpontot.'
+                });
+            }
+
+            // Create appointment
+            const [result] = await connection.query(
+                `INSERT INTO appointments (
+                    user_id, provider_id, service_id, 
+                    appointment_start, appointment_end, 
+                    comment, price, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'scheduled')`,
+                [
+                    userId,
+                    provider_id,
+                    service_id,
+                    formatDateTimeLocal(appointmentStart),
+                    formatDateTimeLocal(appointmentEnd),
+                    comment || null,
+                    service.price
+                ]
+            );
+
+            await connection.commit();
+
+            // Get the created appointment details
+            const [newAppointment] = await pool.query(
+                `SELECT 
+                    a.id, a.appointment_start, a.appointment_end, 
+                    a.comment, a.price, a.status, a.created_at,
+                    p.name as provider_name,
+                    s.name as service_name,
+                    sal.name as salon_name
+                FROM appointments a
+                JOIN providers p ON a.provider_id = p.id
+                JOIN services s ON a.service_id = s.id
+                JOIN salons sal ON p.salon_id = sal.id
+                WHERE a.id = ?`,
+                [result.insertId]
+            );
+
+            res.status(201).json({
+                success: true,
+                message: 'Foglalás sikeresen létrehozva',
+                appointment: newAppointment[0]
+            });
+
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        }
+
+    } catch (error) {
+        console.error('Create appointment error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Hiba történt a foglalás létrehozásakor'
+        });
+    } finally {
+        connection.release();
+    }
+});
+
+// Cancel user's appointment
+router.delete('/appointments/:id', AuthMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const appointmentId = parseInt(req.params.id);
+
+        if (!appointmentId || isNaN(appointmentId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Érvénytelen foglalás azonosító'
+            });
+        }
+
+        // Get appointment and verify ownership
+        const appointment = await getAppointmentById(appointmentId);
+        
+        if (!appointment) {
+            return res.status(404).json({
+                success: false,
+                message: 'A foglalás nem található'
+            });
+        }
+
+        if (appointment.user_id !== userId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Nincs jogosultságod törölni ezt a foglalást'
+            });
+        }
+
+        if (appointment.status !== 'scheduled') {
+            return res.status(400).json({
+                success: false,
+                message: 'Csak aktív foglalás mondható le'
+            });
+        }
+
+        // Update appointment status to canceled
+        await pool.query(
+            `UPDATE appointments SET status = 'canceled' WHERE id = ?`,
+            [appointmentId]
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Foglalás sikeresen lemondva'
+        });
+
+    } catch (error) {
+        console.error('Cancel appointment error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Hiba történt a foglalás lemondásakor'
+        });
+    }
+});
+
+// Get available time slots for a provider on a specific date
+router.get('/provider/:providerId/availability', async (req, res) => {
+    try {
+        const providerId = parseInt(req.params.providerId);
+        const { date, serviceDuration } = req.query;
+
+        if (!providerId || isNaN(providerId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Érvénytelen szolgáltató azonosító'
+            });
+        }
+
+        if (!date) {
+            return res.status(400).json({
+                success: false,
+                message: 'Dátum megadása kötelező'
+            });
+        }
+
+        const duration = parseInt(serviceDuration) || 60; // Default to 60 minutes
+
+        // Validate date format
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(date)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Érvénytelen dátum formátum (YYYY-MM-DD)'
+            });
+        }
+
+        // Check if date is not in the past
+        const requestedDate = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (requestedDate < today) {
+            return res.status(400).json({
+                success: false,
+                message: 'Múltbeli dátumra nem lehet foglalni'
+            });
+        }
+
+        const slots = await getAvailableTimeSlots(providerId, date, duration);
+
+        res.status(200).json({
+            success: true,
+            date,
+            serviceDuration: duration,
+            slots
+        });
+
+    } catch (error) {
+        console.error('Get availability error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Hiba történt az időpontok lekérdezésekor'
         });
     }
 });

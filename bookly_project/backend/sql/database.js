@@ -180,6 +180,164 @@ async function getProviderById(providerId) {
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Get user's appointments with full details
+async function getUserAppointments(userId) {
+    const query = `
+        SELECT 
+            a.id,
+            a.appointment_start,
+            a.appointment_end,
+            a.comment,
+            a.price,
+            a.status,
+            a.created_at,
+            p.id as provider_id,
+            p.name as provider_name,
+            p.email as provider_email,
+            p.phone as provider_phone,
+            s.id as service_id,
+            s.name as service_name,
+            s.duration_minutes,
+            sal.id as salon_id,
+            sal.name as salon_name,
+            sal.address as salon_address
+        FROM appointments a
+        JOIN providers p ON a.provider_id = p.id
+        JOIN services s ON a.service_id = s.id
+        JOIN salons sal ON p.salon_id = sal.id
+        WHERE a.user_id = ?
+        ORDER BY a.appointment_start DESC
+    `;
+    const [rows] = await pool.execute(query, [userId]);
+    return rows;
+}
+
+// Get service by ID with provider and salon info
+async function getServiceById(serviceId) {
+    const query = `
+        SELECT 
+            s.id, s.provider_id, s.name, s.description, 
+            s.duration_minutes, s.price, s.status,
+            p.salon_id,
+            sal.opening_hours, sal.closing_hours
+        FROM services s
+        JOIN providers p ON s.provider_id = p.id
+        JOIN salons sal ON p.salon_id = sal.id
+        WHERE s.id = ?
+    `;
+    const [rows] = await pool.execute(query, [serviceId]);
+    return rows.length > 0 ? rows[0] : null;
+}
+
+// Get provider's appointments for a specific date
+async function getProviderAppointmentsForDate(providerId, date) {
+    const query = `
+        SELECT 
+            id, appointment_start, appointment_end, status
+        FROM appointments
+        WHERE provider_id = ?
+        AND DATE(appointment_start) = ?
+        AND status = 'scheduled'
+        ORDER BY appointment_start ASC
+    `;
+    const [rows] = await pool.execute(query, [providerId, date]);
+    return rows;
+}
+
+// Get salon hours by provider ID
+async function getSalonHoursByProviderId(providerId) {
+    const query = `
+        SELECT sal.opening_hours, sal.closing_hours
+        FROM salons sal
+        JOIN providers p ON p.salon_id = sal.id
+        WHERE p.id = ?
+    `;
+    const [rows] = await pool.execute(query, [providerId]);
+    return rows.length > 0 ? rows[0] : null;
+}
+
+// Calculate available time slots for a provider on a given date
+async function getAvailableTimeSlots(providerId, date, serviceDurationMinutes) {
+    // Get salon hours
+    const salonHours = await getSalonHoursByProviderId(providerId);
+    if (!salonHours) {
+        return [];
+    }
+
+    const openingHour = salonHours.opening_hours || 8;
+    const closingHour = salonHours.closing_hours || 20;
+
+    // Get existing appointments for the day
+    const existingAppointments = await getProviderAppointmentsForDate(providerId, date);
+
+    // Generate all possible 15-minute slots
+    const slots = [];
+    const slotInterval = 15; // minutes
+
+    // Parse the date
+    const dateObj = new Date(date);
+    const now = new Date();
+    const isToday = dateObj.toDateString() === now.toDateString();
+
+    for (let hour = openingHour; hour < closingHour; hour++) {
+        for (let minute = 0; minute < 60; minute += slotInterval) {
+            const slotStart = new Date(dateObj);
+            slotStart.setHours(hour, minute, 0, 0);
+
+            const slotEnd = new Date(slotStart.getTime() + serviceDurationMinutes * 60000);
+
+            // Skip if slot ends after closing time
+            const closingTime = new Date(dateObj);
+            closingTime.setHours(closingHour, 0, 0, 0);
+            if (slotEnd > closingTime) {
+                continue;
+            }
+
+            // Skip past times if today
+            if (isToday && slotStart <= now) {
+                continue;
+            }
+
+            // Check for conflicts with existing appointments
+            let hasConflict = false;
+            for (const apt of existingAppointments) {
+                const aptStart = new Date(apt.appointment_start);
+                const aptEnd = new Date(apt.appointment_end);
+
+                // Check if the new slot overlaps with existing appointment
+                if (
+                    (slotStart < aptEnd && slotEnd > aptStart)
+                ) {
+                    hasConflict = true;
+                    break;
+                }
+            }
+
+            if (!hasConflict) {
+                // Format time as HH:MM
+                const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                slots.push(timeStr);
+            }
+        }
+    }
+
+    return slots;
+}
+
+// Get appointment by ID with ownership check
+async function getAppointmentById(appointmentId) {
+    const query = `
+        SELECT 
+            a.id, a.user_id, a.provider_id, a.service_id,
+            a.appointment_start, a.appointment_end,
+            a.comment, a.price, a.status, a.created_at
+        FROM appointments a
+        WHERE a.id = ?
+    `;
+    const [rows] = await pool.execute(query, [appointmentId]);
+    return rows.length > 0 ? rows[0] : null;
+}
+
 //!Export
 module.exports = {
     pool,
@@ -197,5 +355,11 @@ module.exports = {
     isSalonSaved,
     getSavedSalonIds,
     updateSalon,
-    getProviderById
+    getProviderById,
+    getUserAppointments,
+    getServiceById,
+    getProviderAppointmentsForDate,
+    getSalonHoursByProviderId,
+    getAvailableTimeSlots,
+    getAppointmentById
 };
