@@ -209,6 +209,23 @@ export default function AppointmentsTab({ user, setActiveTab }) {
                                             </svg>
                                             {formatDate(apt.appointment_start)}
                                         </div>
+                                        <div className="flex items-center text-gray-600 mt-1 text-sm">
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                className="h-4 w-4 mr-1 text-gray-500"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                                                />
+                                            </svg>
+                                            Időtartam: {apt.duration_minutes} perc
+                                        </div>
                                         {apt.comment && <p className="text-gray-500 text-sm mt-1 italic">"{apt.comment}"</p>}
                                     </div>
                                 </div>

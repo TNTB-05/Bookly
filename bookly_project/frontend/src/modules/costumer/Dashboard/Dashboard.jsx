@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import DashboardNavbar from './DashboardNavbar';
 import './Dashboard.css';
 import { getUserFromToken } from '../../auth/auth';
@@ -12,15 +13,29 @@ import ProfileTab from './tabs/ProfileTab';
 
 // Fő irányítópult komponens - kezeli a tabokat és az adatbetöltést
 export default function Dashboard() {
+    const location = useLocation();
+    const navigate = useNavigate();
+    
+    // URL paraméterből activeTab beállítása
+    const urlParams = new URLSearchParams(location.search);
+    const tabFromUrl = urlParams.get('tab') || 'overview';
+    
     // Állapotok
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('overview');
+    const [activeTab, setActiveTab] = useState(tabFromUrl);
     const [serviceTypes, setServiceTypes] = useState([]);
     const [topRatedSalons, setTopRatedSalons] = useState([]);
     const [userProfile, setUserProfile] = useState(null);
     const [savedSalonIds, setSavedSalonIds] = useState([]);
     const [savedSalons, setSavedSalons] = useState([]);
+
+    // URL paraméter változás figyelése
+    useEffect(() => {
+        const urlParams = new URLSearchParams(location.search);
+        const tabFromUrl = urlParams.get('tab') || 'overview';
+        setActiveTab(tabFromUrl);
+    }, [location.search]);
 
     // Kezdeti adatok betöltése
     useEffect(() => {

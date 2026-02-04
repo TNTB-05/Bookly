@@ -15,12 +15,12 @@ export default function SalonCard({ salon, savedSalonIds, toggleSaveSalon, showD
     }
 
     return (
-        <div className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+        <div className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col">
             {/* Kártya fejléc */}
-            <div className="h-24 bg-linear-to-r from-blue-500 to-dark-blue relative">
+            <div className="h-24 bg-linear-to-r from-blue-500 to-dark-blue relative shrink-0">
                 {/* Szalon kezdőbetű */}
-                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
-                    <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-md">
+                <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 z-10">
+                    <div className="w-20 h-20 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-lg">
                         {salon.name.charAt(0).toUpperCase()}
                     </div>
                 </div>
@@ -50,22 +50,39 @@ export default function SalonCard({ salon, savedSalonIds, toggleSaveSalon, showD
             </div>
 
             {/* Kártya tartalom */}
-            <div className="pt-10 p-4 text-center">
-                <h3 className="text-lg font-bold text-gray-900 mb-1">{salon.name}</h3>
-                <p className="text-xs text-gray-500 mb-1">{salon.address}</p>
+            <div className="pt-12 px-4 pb-4 text-center flex flex-col flex-1">
+                {/* Szalon név - 2 soros */}
+                <div className="mb-3">
+                    <h3 className="text-lg font-bold text-gray-900 line-clamp-2 leading-snug min-h-14 px-2">
+                        {salon.name}
+                    </h3>
+                </div>
                 
-                {/* Szolgáltatók száma */}
-                {salon.providers && salon.providers.length > 0 && (
-                    <p className="text-xs text-gray-400 mb-2">{salon.providers.length} szolgáltató</p>
-                )}
+                {/* Cím - 1 soros */}
+                <div className="mb-3">
+                    <p className="text-xs text-gray-500 line-clamp-1 min-h-5">
+                        {salon.address}
+                    </p>
+                </div>
                 
-                {/* Értékelés csillagokkal */}
-                <div className="flex items-center justify-center text-yellow-400 text-sm mb-2">
+                {/* Szolgáltatók száma - mindig látható */}
+                <div className="mb-3">
+                    <p className="text-xs text-gray-400 min-h-5">
+                        {salon.providers && salon.providers.length > 0 
+                            ? `${salon.providers.length} szolgáltató` 
+                            : '0 szolgáltató'}
+                    </p>
+                </div>
+                
+                {/* Értékelés csillagokkal - mindig látható */}
+                <div className="flex items-center justify-center text-yellow-400 text-base mb-4 min-h-7">
                     {salon.average_rating > 0 ? (
                         <>
-                            {'★'.repeat(Math.round(salon.average_rating))}
-                            {'☆'.repeat(5 - Math.round(salon.average_rating))}
-                            <span className="text-gray-400 text-xs ml-1">
+                            <span className="tracking-wide">
+                                {'★'.repeat(Math.round(salon.average_rating))}
+                                {'☆'.repeat(5 - Math.round(salon.average_rating))}
+                            </span>
+                            <span className="text-gray-400 text-xs ml-2">
                                 ({salon.rating_count})
                             </span>
                         </>
@@ -74,10 +91,13 @@ export default function SalonCard({ salon, savedSalonIds, toggleSaveSalon, showD
                     )}
                 </div>
                 
-                {/* Megnézem gomb */}
+                {/* Spacer - pushes button to bottom */}
+                <div className="flex-1"></div>
+                
+                {/* Megnézem gomb - mindig alul */}
                 <button
                     onClick={handleViewDetails}
-                    className="w-full py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors"
+                    className="w-full py-2.5 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors shadow-sm"
                 >
                     Megnézem
                 </button>

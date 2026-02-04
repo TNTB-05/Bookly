@@ -669,7 +669,7 @@ export default function SalonModal() {
 
                     {/* STEP: Success */}
                     {currentStep === STEPS.SUCCESS && bookingResult && (
-                        <div className="p-6 flex items-center justify-center min-h-[400px]">
+                        <div className="p-6 flex items-center justify-center min-h-100">
                             <div className="text-center max-w-md">
                                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                                     <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -706,7 +706,7 @@ export default function SalonModal() {
 
                                 <div className="space-y-3">
                                     <button
-                                        onClick={() => navigate('/dashboard/appointments')}
+                                        onClick={() => navigate('/dashboard?tab=appointments')}
                                         className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
                                     >
                                         Foglalásaim megtekintése

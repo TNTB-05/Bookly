@@ -14,8 +14,19 @@ const {
     getServiceById,
     getAvailableTimeSlots,
     getAppointmentById,
-    getProviderById
+    getProviderById,
+    getSalonById
 } = require('../sql/database');
+const { calculateDistance } = require('../services/locationService');
+
+// Utazási idő számítása távolság alapján (percben)
+function calculateTravelBuffer(distanceKm) {
+    if (distanceKm < 1) return 5;        // < 1 km: 5 perc (gyaloglás)
+    if (distanceKm < 5) return 15;       // 1-5 km: 15 perc (rövid utazás)
+    if (distanceKm < 15) return 30;      // 5-15 km: 30 perc (városi utazás)
+    if (distanceKm < 30) return 45;      // 15-30 km: 45 perc (külvárosi utazás)
+    return 60;                            // > 30 km: 60 perc (hosszabb út)
+}
 
 // Get current user's profile
 router.get('/profile', AuthMiddleware, async (req, res) => {
@@ -511,7 +522,75 @@ router.post('/appointments', AuthMiddleware, async (req, res) => {
         await connection.beginTransaction();
 
         try {
-            // Check for conflicts with row-level locking
+            // Get the target salon for this appointment
+            const targetSalon = await getSalonById(provider.salon_id);
+
+            // Check for user's own conflicting appointments with distance-based buffer
+            const [userAppointments] = await connection.query(
+                `SELECT a.id, a.appointment_start, a.appointment_end, 
+                        sal.id as salon_id, sal.name as salon_name, 
+                        sal.latitude, sal.longitude
+                 FROM appointments a
+                 JOIN providers p ON a.provider_id = p.id
+                 JOIN salons sal ON p.salon_id = sal.id
+                 WHERE a.user_id = ? 
+                 AND a.status = 'scheduled'
+                 AND DATE(a.appointment_start) = ?
+                 FOR UPDATE`,
+                [userId, appointment_date]
+            );
+
+            // Check each existing appointment for conflicts with travel buffer
+            for (const existingAppt of userAppointments) {
+                const existingStart = new Date(existingAppt.appointment_start);
+                const existingEnd = new Date(existingAppt.appointment_end);
+                
+                // Calculate distance between salons
+                let bufferMinutes = 0;
+                const isSameSalon = existingAppt.salon_id === provider.salon_id;
+                
+                if (!isSameSalon && targetSalon.latitude && targetSalon.longitude && 
+                    existingAppt.latitude && existingAppt.longitude) {
+                    // Calculate distance and required travel buffer
+                    const distance = calculateDistance(
+                        parseFloat(targetSalon.latitude),
+                        parseFloat(targetSalon.longitude),
+                        parseFloat(existingAppt.latitude),
+                        parseFloat(existingAppt.longitude)
+                    );
+                    bufferMinutes = calculateTravelBuffer(distance);
+                } else if (!isSameSalon) {
+                    // No coordinates available, use default 30 min buffer for different salons
+                    bufferMinutes = 30;
+                }
+                // Same salon = 0 buffer (back-to-back allowed)
+
+                // Adjust existing appointment times with buffer
+                const existingStartWithBuffer = new Date(existingStart.getTime() - bufferMinutes * 60000);
+                const existingEndWithBuffer = new Date(existingEnd.getTime() + bufferMinutes * 60000);
+
+                // Check for overlap with buffer
+                const hasConflict = (
+                    (appointmentStart < existingEndWithBuffer && appointmentEnd > existingStart) ||
+                    (appointmentStart < existingEnd && appointmentEnd > existingStartWithBuffer)
+                );
+
+                if (hasConflict) {
+                    await connection.rollback();
+                    
+                    let message = `Önnek már van foglalása erre az időpontra (${existingAppt.salon_name}).`;
+                    if (bufferMinutes > 0) {
+                        message = `A foglalások között ${bufferMinutes} perc utazási idő szükséges (${existingAppt.salon_name}). Kérjük, válasszon másik időpontot.`;
+                    }
+                    
+                    return res.status(409).json({
+                        success: false,
+                        message
+                    });
+                }
+            }
+
+            // Check for conflicts with row-level locking (provider availability)
             const [conflicts] = await connection.query(
                 `SELECT id FROM appointments 
                  WHERE provider_id = ? 

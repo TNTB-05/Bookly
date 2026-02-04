@@ -5,6 +5,7 @@ const fs = require('fs/promises');
 const bcrypt = require('bcryptjs'); //?npm install bcrypt
 const jwt = require('jsonwebtoken'); //?npm install jsonwebtoken
 const crypto = require('crypto');
+const locationService = require('../../services/locationService.js');
 
 
 
@@ -193,16 +194,30 @@ router.post('/register', async (request, response) => {
                 }
             }
 
-            // Create new salon
+            // Geocode the address to get coordinates
+            let latitude = null;
+            let longitude = null;
+            try {
+                const coords = await locationService.placeToCoordinate(salon.address.trim());
+                latitude = coords.latitude;
+                longitude = coords.longitude;
+            } catch (geocodeError) {
+                console.warn('Geocoding failed for address:', salon.address, geocodeError.message);
+                // Continue without coordinates - they can be added later
+            }
+
+            // Create new salon with coordinates
             const [salonResult] = await connection.query(
-                `INSERT INTO salons (name, address, description, sharecode, status, type) 
-                 VALUES (?, ?, ?, ?, 'open', ?)`,
+                `INSERT INTO salons (name, address, description, sharecode, status, type, latitude, longitude) 
+                 VALUES (?, ?, ?, ?, 'open', ?, ?, ?)`,
                 [
                     salon.companyName.trim(),
                     salon.address.trim(),
                     salon.description.trim(),
                     shareCode,
-                    salon.salonType.trim()
+                    salon.salonType.trim(),
+                    latitude,
+                    longitude
                 ]
             );
 
