@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react';
-import { searchSalons } from '../../../../services/searchService';
+import { useState, useRef, useEffect } from 'react';
+import { searchSalons, getSuggestions } from '../../../../services/searchService';
+import { useDebounce } from '../../../../hooks/useDebounce';
 
 // Ikonok
 import SearchIcon from '../../../../icons/SearchIcon';
@@ -10,6 +11,7 @@ import RightArrowIcon from '../../../../icons/RightArrowIcon';
 
 // Komponensek
 import SalonCard from '../SalonCard';
+import SearchSuggestions from './SearchSuggestions';
 
 // Áttekintés tab - keresés, kiemelt szalonok és szolgáltatások
 export default function OverviewTab({
@@ -30,6 +32,48 @@ export default function OverviewTab({
     const [showAllFeatured, setShowAllFeatured] = useState(false);
     const [salonLimit, setSalonLimit] = useState(12);
     const carouselRef = useRef(null);
+    
+    // Suggestions state
+    const [suggestions, setSuggestions] = useState({ salons: [], serviceTypes: [] });
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const searchContainerRef = useRef(null);
+    
+    // Debounce search query for suggestions
+    const debouncedSearchQuery = useDebounce(searchQuery, 300);
+    
+    // Fetch suggestions when debounced search query changes
+    useEffect(() => {
+        async function fetchSuggestions() {
+            if (debouncedSearchQuery && debouncedSearchQuery.trim().length >= 2) {
+                const results = await getSuggestions(debouncedSearchQuery);
+                setSuggestions(results);
+                setShowSuggestions(true);
+            } else {
+                setSuggestions({ salons: [], serviceTypes: [] });
+                setShowSuggestions(false);
+            }
+        }
+
+        fetchSuggestions();
+    }, [debouncedSearchQuery]);
+    
+    // Handle selecting a salon suggestion
+    function handleSelectSalon(salon) {
+        setSearchQuery(salon.name);
+        setShowSuggestions(false);
+    }
+
+    // Handle selecting a service type suggestion
+    function handleSelectServiceType(type) {
+        setServiceFilter(type);
+        setSearchQuery(''); // Clear search input when selecting a service type
+        setShowSuggestions(false);
+    }
+
+    // Close suggestions dropdown
+    function handleCloseSuggestions() {
+        setShowSuggestions(false);
+    }
 
     // Szalonok keresése a megadott feltételek alapján
     async function handleSearch() {
@@ -155,18 +199,39 @@ export default function OverviewTab({
                         <div className="max-w-4xl mx-auto space-y-3">
                             {/* First Line: Search Bar + Service Filter */}
                             <div className="flex flex-col sm:flex-row gap-3">
-                                {/* Search Bar */}
-                                <div className="flex-1 flex items-center bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 overflow-hidden">
-                                    <div className="pl-4">
-                                        <SearchIcon />
+                                {/* Search Bar with Suggestions */}
+                                <div ref={searchContainerRef} className="flex-1 relative">
+                                    <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 overflow-hidden">
+                                        <div className="pl-4">
+                                            <SearchIcon />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            placeholder="Keress szolgáltatót vagy szolgáltatást..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            onKeyPress={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    handleSearch();
+                                                    setShowSuggestions(false);
+                                                }
+                                            }}
+                                            onFocus={() => {
+                                                if (suggestions.salons.length > 0 || suggestions.serviceTypes.length > 0) {
+                                                    setShowSuggestions(true);
+                                                }
+                                            }}
+                                            className="flex-1 px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none bg-transparent"
+                                        />
                                     </div>
-                                    <input
-                                        type="text"
-                                        placeholder="Keress szolgáltatót vagy szolgáltatást..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                                        className="flex-1 px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none bg-transparent"
+                                    
+                                    {/* Search Suggestions Dropdown */}
+                                    <SearchSuggestions
+                                        suggestions={suggestions}
+                                        onSelectSalon={handleSelectSalon}
+                                        onSelectServiceType={handleSelectServiceType}
+                                        onClose={handleCloseSuggestions}
+                                        isVisible={showSuggestions}
                                     />
                                 </div>
 

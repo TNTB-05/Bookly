@@ -431,6 +431,66 @@ function formatDateTimeLocal(date) {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
+// Get user's visited salons (from past appointments)
+router.get('/visited-salons', AuthMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        
+        // Get unique salons from user's appointments
+        const query = `
+            SELECT 
+                sal.id,
+                sal.name,
+                sal.address,
+                sal.type,
+                sal.description,
+                sal.latitude,
+                sal.longitude,
+                MAX(a.appointment_start) as last_visit,
+                COUNT(DISTINCT a.id) as visit_count,
+                (
+                    SELECT COALESCE(AVG(r.rating), 0)
+                    FROM ratings r
+                    WHERE r.salon_id = sal.id AND r.active = TRUE
+                ) as average_rating,
+                (
+                    SELECT COUNT(r.id)
+                    FROM ratings r
+                    WHERE r.salon_id = sal.id AND r.active = TRUE
+                ) as rating_count
+            FROM appointments a
+            JOIN providers p ON a.provider_id = p.id
+            JOIN salons sal ON p.salon_id = sal.id
+            WHERE a.user_id = ? AND a.status IN ('completed', 'scheduled')
+            GROUP BY sal.id
+            ORDER BY last_visit DESC
+        `;
+        const [salons] = await pool.execute(query, [userId]);
+        
+        // Get providers for each salon
+        const salonsWithProviders = await Promise.all(
+            salons.map(async (salon) => {
+                const providers = await getProvidersBySalonId(salon.id);
+                return {
+                    ...salon,
+                    providers
+                };
+            })
+        );
+        
+        res.status(200).json({
+            success: true,
+            salons: salonsWithProviders
+        });
+    } catch (error) {
+        console.error('Get visited salons error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Hiba történt a meglátogatott szalonok lekérdezésekor'
+        });
+    }
+});
+
 // Get user's appointments
 router.get('/appointments', AuthMiddleware, async (req, res) => {
     try {

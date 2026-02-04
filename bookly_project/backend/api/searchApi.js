@@ -18,6 +18,7 @@ router.post('/nearby', async (req, res) => {
                 latitude = coords.latitude;
                 longitude = coords.longitude;
             } catch (geocodeError) {
+                console.error(`Geocoding failed for place: "${place}"`, geocodeError.message);
                 return res.status(400).json({
                     success: false,
                     message: 'Ez a hely nem talalhato',
@@ -182,6 +183,59 @@ router.get('/top-rated', async (req, res) => {
         return res.status(500).json({
             success: false,
             message: 'problema merult fel a legjobb szalonok lekerese soran',
+            error: error.message
+        });
+    }
+});
+
+// Get search suggestions for autocomplete
+router.get('/suggestions', async (req, res) => {
+    try {
+        const { query } = req.query;
+
+        if (!query || query.trim().length < 2) {
+            return res.status(200).json({
+                success: true,
+                salons: [],
+                serviceTypes: []
+            });
+        }
+
+        const searchTerm = query.trim().toLowerCase();
+
+        // Get matching salon names
+        const salonQuery = `
+            SELECT DISTINCT id, name, address, type
+            FROM salons
+            WHERE status != 'closed' 
+            AND LOWER(name) LIKE ?
+            LIMIT 5
+        `;
+        const [salons] = await database.pool.execute(salonQuery, [`%${searchTerm}%`]);
+
+        // Get matching service types
+        const typeQuery = `
+            SELECT DISTINCT type
+            FROM salons
+            WHERE status != 'closed' 
+            AND type IS NOT NULL 
+            AND type != ''
+            AND LOWER(type) LIKE ?
+            LIMIT 3
+        `;
+        const [types] = await database.pool.execute(typeQuery, [`%${searchTerm}%`]);
+        const serviceTypes = types.map(row => row.type);
+
+        return res.status(200).json({
+            success: true,
+            salons: salons,
+            serviceTypes: serviceTypes
+        });
+    } catch (error) {
+        console.error('Get suggestions error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'problema merult fel a javaslatok lekerese soran',
             error: error.message
         });
     }

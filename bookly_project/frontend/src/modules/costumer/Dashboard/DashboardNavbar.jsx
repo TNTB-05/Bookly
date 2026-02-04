@@ -70,7 +70,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user }) {
                             />
                             <NavItem
                                 tab="book"
-                                label="Mentett helyek"
+                                label="Helyeim"
                                 activeTab={activeTab}
                                 setActiveTab={setActiveTab}
                                 setIsMobileMenuOpen={setIsMobileMenuOpen}
@@ -238,7 +238,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user }) {
                 />
                 <NavItem
                     tab="book"
-                    label="Mentett"
+                    label="Helyeim"
                     icon="➕"
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}

@@ -23,14 +23,24 @@ function parseAddress(addressString) {
     }
     
     // Try to identify city (common Hungarian cities)
-    const cityPattern = /budapest|debrecen|szeged|miskolc|pécs|győr/i;
+    const cityPattern = /budapest|debrecen|szeged|miskolc|pécs|győr|veszprém|kaposvár|sopron|kecskemét|nyíregyháza|szolnok|tatabánya|érd|hódmezővásárhely/i;
     const cityPart = parts.find(p => cityPattern.test(p));
     if (cityPart) {
         city = cityPart.replace(/\d{4}/, '').trim(); // Remove postal code if included
     }
     
-    // Remaining part is likely the street
-    const streetPart = parts.find(p => !cityPattern.test(p) && !/^\d{4}$/.test(p.trim()));
+    // Street is the part that contains both letters and numbers (house number)
+    // but is NOT just a 4-digit postal code and NOT the city name
+    const streetPart = parts.find(p => {
+        const trimmed = p.replace(/\d{4}/, '').trim(); // Remove postal if embedded
+        // Must contain at least one digit (house number) and one letter (street name)
+        // Must not be just the postal code
+        // Must not be the city
+        return /\d/.test(trimmed) && /[a-záéíóöőúüű]/i.test(trimmed) && 
+               !/^\d{4}$/.test(p.trim()) && 
+               !cityPattern.test(p);
+    });
+    
     if (streetPart) {
         street = streetPart.replace(/\d{4}/, '').trim(); // Remove postal code if included
     }
@@ -42,6 +52,7 @@ function parseAddress(addressString) {
 async function placeToCoordinate(placeName) {
     try {
         let url;
+        let data;
         
         // Check if the input looks like a structured address (contains comma and possibly postal code)
         if (placeName.includes(',') || /\d{4}/.test(placeName)) {
@@ -57,25 +68,55 @@ async function placeToCoordinate(placeName) {
             params.append('limit', '1');
             
             url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
+            
+            const response1 = await fetch(url, {
+                headers: {
+                    'User-Agent': 'Bookly-App/1.0'
+                }
+            });
+
+            if (!response1.ok) {
+                throw new Error(`Geocoding hiba: ${response1.statusText}`);
+            }
+
+            data = await response1.json();
+            
+            // If structured query fails, try simple query as fallback
+            if (!data || data.length === 0) {
+                console.log(`Structured query failed for "${placeName}", trying simple query...`);
+                url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(placeName + ', Hungary')}&limit=1`;
+                
+                const response2 = await fetch(url, {
+                    headers: {
+                        'User-Agent': 'Bookly-App/1.0'
+                    }
+                });
+
+                if (!response2.ok) {
+                    throw new Error(`Geocoding hiba: ${response2.statusText}`);
+                }
+
+                data = await response2.json();
+            }
         } else {
             // Use simple query for city names or simple searches
-            url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(placeName)}&limit=1`;
-        }
+            url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(placeName + ', Hungary')}&limit=1`;
+            
+            const response = await fetch(url, {
+                headers: {
+                    'User-Agent': 'Bookly-App/1.0'
+                }
+            });
 
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'Bookly-App/1.0'
+            if (!response.ok) {
+                throw new Error(`Geocoding hiba: ${response.statusText}`);
             }
-        });
 
-        if (!response.ok) {
-            throw new Error(`Geocoding hiba: ${response.statusText}`);
+            data = await response.json();
         }
-
-        const data = await response.json();
 
         if (!data || data.length === 0) {
-            throw new Error('Hely nem talalhato');
+            throw new Error('Hely nem található. Próbáld meg pontosabban: város, utca házszám, irányítószám (pl. Budapest, Istvánmezei út 3, 1146)');
         }
 
         return {

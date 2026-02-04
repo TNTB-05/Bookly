@@ -138,3 +138,39 @@ export async function searchSalons({ searchQuery, locationSearch, serviceFilter,
         return [];
     }
 }
+
+/**
+ * Get search suggestions for autocomplete
+ * @param {string} query - Search query (minimum 2 characters)
+ * @returns {Promise<Object>} - Object with salons and serviceTypes arrays
+ */
+export async function getSuggestions(query) {
+    if (!query || query.trim().length < 2) {
+        return { salons: [], serviceTypes: [] };
+    }
+
+    try {
+        const response = await fetch(
+            `${API_BASE_URL}/api/search/suggestions?query=${encodeURIComponent(query.trim())}`,
+            {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            }
+        );
+
+        const data = await response.json();
+
+        if (data.success) {
+            return {
+                salons: data.salons || [],
+                serviceTypes: data.serviceTypes || []
+            };
+        } else {
+            console.error('Get suggestions failed:', data.message);
+            return { salons: [], serviceTypes: [] };
+        }
+    } catch (error) {
+        console.error('Get suggestions error:', error);
+        return { salons: [], serviceTypes: [] };
+    }
+}

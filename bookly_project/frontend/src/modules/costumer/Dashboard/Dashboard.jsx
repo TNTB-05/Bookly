@@ -184,6 +184,7 @@ export default function Dashboard() {
                     {activeTab === 'book' && (
                         <SavedSalonsTab
                             savedSalons={savedSalons}
+                            savedSalonIds={savedSalonIds}
                             toggleSaveSalon={toggleSaveSalon}
                             setActiveTab={setActiveTab}
                         />
