@@ -17,11 +17,22 @@ export default function SalonCard({ salon, savedSalonIds, toggleSaveSalon, showD
     return (
         <div className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col">
             {/* Kártya fejléc */}
-            <div className="h-24 bg-linear-to-r from-blue-500 to-dark-blue relative shrink-0">
-                {/* Szalon kezdőbetű */}
+            <div
+                className="h-24 relative shrink-0"
+                style={
+                    salon.banner_image_url
+                        ? { backgroundImage: `url(${(import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.banner_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                        : { background: `linear-gradient(135deg, ${salon.banner_color || '#3B82F6'} 0%, ${salon.banner_color || '#3B82F6'}dd 100%)` }
+                }
+            >
+                {/* Szalon logo / kezdőbetű */}
                 <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 z-10">
-                    <div className="w-20 h-20 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-lg">
-                        {salon.name.charAt(0).toUpperCase()}
+                    <div className="w-20 h-20 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-lg overflow-hidden">
+                        {salon.logo_url ? (
+                            <img src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.logo_url} alt={salon.name} className="w-full h-full object-cover" />
+                        ) : (
+                            salon.name.charAt(0).toUpperCase()
+                        )}
                     </div>
                 </div>
 

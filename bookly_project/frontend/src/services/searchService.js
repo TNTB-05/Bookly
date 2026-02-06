@@ -69,6 +69,9 @@ export async function searchSalons({ searchQuery, locationSearch, serviceFilter,
                     address: salon.address,
                     description: salon.description,
                     distance: salon.distance,
+                    banner_color: salon.banner_color,
+                    logo_url: salon.logo_url,
+                    banner_image_url: salon.banner_image_url,
                     providers: salon.providers,
                     services: salon.services
                 }));
@@ -119,6 +122,9 @@ export async function searchSalons({ searchQuery, locationSearch, serviceFilter,
                     address: salon.address,
                     description: salon.description,
                     distance: null,
+                    banner_color: salon.banner_color,
+                    logo_url: salon.logo_url,
+                    banner_image_url: salon.banner_image_url,
                     providers: salon.providers,
                     services: salon.services
                 }));

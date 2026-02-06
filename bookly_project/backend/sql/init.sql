@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS salons (
   `status` ENUM('open', 'closed', 'renovation') DEFAULT 'open',
   `banner_color` VARCHAR(7) DEFAULT '#3B82F6',
   `logo_url` VARCHAR(500) DEFAULT NULL,
+  `banner_image_url` VARCHAR(500) DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 

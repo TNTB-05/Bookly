@@ -20,10 +20,14 @@ export default function ProviderCard({ provider, salonId, onBookService }) {
         <div className="bg-white border-2 border-gray-200 rounded-2xl shadow-sm overflow-hidden hover:shadow-lg hover:border-dark-blue transition-all duration-300">
             {/* Kártya fejléc */}
             <div className="h-20 bg-linear-to-r from-blue-500 to-dark-blue relative">
-                {/* Szolgáltató kezdőbetű */}
+                {/* Szolgáltató profilkép / kezdőbetű */}
                 <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
-                    <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-md">
-                        {provider.name.charAt(0).toUpperCase()}
+                    <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-md overflow-hidden">
+                        {provider.profile_picture_url ? (
+                            <img src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + provider.profile_picture_url} alt={provider.name} className="w-full h-full object-cover" />
+                        ) : (
+                            provider.name.charAt(0).toUpperCase()
+                        )}
                     </div>
                 </div>
 

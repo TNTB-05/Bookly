@@ -1,5 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { authApi } from '../auth/auth';
+
+const PRESET_COLORS = [
+    '#3B82F6', '#1E40AF', '#6366F1', '#8B5CF6', '#A855F7',
+    '#EC4899', '#EF4444', '#F97316', '#EAB308', '#22C55E',
+    '#14B8A6', '#06B6D4', '#0EA5E9', '#64748B', '#1E293B',
+];
 
 const SalonManagement = () => {
     const [salon, setSalon] = useState(null);
@@ -10,6 +16,19 @@ const SalonManagement = () => {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [isManager, setIsManager] = useState(false);
+
+    // Branding state
+    const [brandingColor, setBrandingColor] = useState('#3B82F6');
+    const [logoFile, setLogoFile] = useState(null);
+    const [logoPreview, setLogoPreview] = useState(null);
+    const [bannerFile, setBannerFile] = useState(null);
+    const [bannerPreview, setBannerPreview] = useState(null);
+    const [bannerAspectWarning, setBannerAspectWarning] = useState(false);
+    const [brandingLoading, setBrandingLoading] = useState(false);
+    const [brandingError, setBrandingError] = useState(null);
+    const [brandingSuccess, setBrandingSuccess] = useState(null);
+    const logoInputRef = useRef(null);
+    const bannerInputRef = useRef(null);
 
     useEffect(() => {
         fetchSalonData();
@@ -25,6 +44,7 @@ const SalonManagement = () => {
             if (data.success) {
                 setSalon(data.salon);
                 setFormData(data.salon);
+                setBrandingColor(data.salon.banner_color || '#3B82F6');
                 // Set manager status from the API response
                 if (data.provider && data.provider.isManager !== undefined) {
                     setIsManager(data.provider.isManager);
@@ -89,6 +109,118 @@ const SalonManagement = () => {
         setFormData(salon);
         setEditMode(false);
         setError(null);
+    };
+
+    // --- Branding handlers ---
+    const validateImageFile = (file) => {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            return 'Csak JPG, PNG és WebP fájlok engedélyezettek.';
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            return 'A fájl mérete nem lehet nagyobb 5MB-nál.';
+        }
+        return null;
+    };
+
+    const handleLogoSelect = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const err = validateImageFile(file);
+        if (err) { setBrandingError(err); return; }
+        setBrandingError(null);
+        setLogoFile(file);
+        setLogoPreview(URL.createObjectURL(file));
+    };
+
+    const handleBannerSelect = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const err = validateImageFile(file);
+        if (err) { setBrandingError(err); return; }
+        setBrandingError(null);
+        setBannerFile(file);
+        const previewUrl = URL.createObjectURL(file);
+        setBannerPreview(previewUrl);
+
+        // Check aspect ratio and warn
+        const img = new Image();
+        img.onload = () => {
+            const ratio = img.width / img.height;
+            // Ideal is 4:1 (1200x300). Warn if outside 2.5:1 – 5:1
+            if (ratio < 2.5 || ratio > 5) {
+                setBannerAspectWarning(true);
+            } else {
+                setBannerAspectWarning(false);
+            }
+        };
+        img.src = previewUrl;
+    };
+
+    const handleRemoveBannerImage = async () => {
+        if (!salon.banner_image_url) return;
+        try {
+            setBrandingLoading(true);
+            const response = await authApi.post('/api/salon/branding/remove-banner');
+            const data = await response.json();
+            if (data.success) {
+                setSalon(prev => ({ ...prev, banner_image_url: null }));
+                setBannerPreview(null);
+                setBannerFile(null);
+                setBrandingSuccess('Banner kép eltávolítva');
+                setTimeout(() => setBrandingSuccess(null), 3000);
+            } else {
+                setBrandingError(data.message);
+            }
+        } catch (err) {
+            console.error('Remove banner error:', err);
+            setBrandingError('Hiba a banner kép eltávolítása során');
+        } finally {
+            setBrandingLoading(false);
+        }
+    };
+
+    const handleBrandingSave = async () => {
+        if (!logoFile && !bannerFile && brandingColor === (salon.banner_color || '#3B82F6')) {
+            setBrandingError('Nincs módosítandó adat.');
+            return;
+        }
+
+        try {
+            setBrandingLoading(true);
+            setBrandingError(null);
+            setBrandingSuccess(null);
+
+            const formDataObj = new FormData();
+            if (logoFile) formDataObj.append('logo', logoFile);
+            if (bannerFile) formDataObj.append('banner', bannerFile);
+            if (brandingColor !== (salon.banner_color || '#3B82F6')) {
+                formDataObj.append('banner_color', brandingColor);
+            }
+
+            const response = await authApi.upload('/api/salon/branding', formDataObj);
+            const data = await response.json();
+
+            if (data.success) {
+                setSalon(data.salon);
+                setFormData(data.salon);
+                setBrandingColor(data.salon.banner_color || '#3B82F6');
+                setLogoFile(null);
+                setLogoPreview(null);
+                setBannerFile(null);
+                setBannerPreview(null);
+                setBannerAspectWarning(false);
+                setBrandingSuccess('Arculat sikeresen frissítve!');
+                setTimeout(() => setBrandingSuccess(null), 4000);
+            } else {
+                setBrandingError(data.message);
+            }
+        } catch (err) {
+            console.error('Branding save error:', err);
+            setBrandingError('Hiba az arculat mentése során');
+        } finally {
+            setBrandingLoading(false);
+        }
     };
 
     const handleProviderStatusChange = async (providerId, newStatus) => {
@@ -410,6 +542,194 @@ const SalonManagement = () => {
                     </div>
                 )}
             </div>
+
+            {/* Salon Branding Section */}
+            {isManager && (
+                <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
+                    <div className="mb-5 pb-4 border-b-2 border-gray-100">
+                        <h3 className="text-xl font-semibold text-gray-800">Salon Branding</h3>
+                        <p className="text-sm text-gray-500 mt-1">Customize your salon's logo, banner, and color theme</p>
+                    </div>
+
+                    {brandingError && <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-4">{brandingError}</div>}
+                    {brandingSuccess && <div className="bg-green-50 text-green-700 p-3 rounded-lg mb-4">{brandingSuccess}</div>}
+
+                    {/* Live Preview */}
+                    <div className="mb-6">
+                        <label className="block font-medium text-gray-700 mb-2">Preview</label>
+                        <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                            <div
+                                className="h-28 relative"
+                                style={
+                                    bannerPreview || salon.banner_image_url
+                                        ? { backgroundImage: `url(${bannerPreview || (import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.banner_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                                        : { background: `linear-gradient(135deg, ${brandingColor} 0%, ${brandingColor}dd 100%)` }
+                                }
+                            >
+                                <div className="absolute -bottom-8 left-4">
+                                    <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center shadow-md overflow-hidden">
+                                        {logoPreview || salon.logo_url ? (
+                                            <img
+                                                src={logoPreview || (import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.logo_url}
+                                                alt="Logo"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <span className="text-2xl font-bold text-gray-600">{salon.name?.charAt(0).toUpperCase()}</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="pt-10 pb-3 px-4">
+                                <p className="font-semibold text-gray-800">{salon.name}</p>
+                                <p className="text-xs text-gray-500">{salon.address}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Banner Color Swatches */}
+                    <div className="mb-6">
+                        <label className="block font-medium text-gray-700 mb-2">Banner Color</label>
+                        <p className="text-xs text-gray-500 mb-3">Select a preset color for the gradient banner background</p>
+                        <div className="flex flex-wrap gap-2">
+                            {PRESET_COLORS.map(color => (
+                                <button
+                                    key={color}
+                                    type="button"
+                                    onClick={() => { setBrandingColor(color); setBrandingError(null); }}
+                                    className={`w-9 h-9 rounded-full border-2 transition-all hover:scale-110 ${
+                                        brandingColor === color
+                                            ? 'border-gray-800 ring-2 ring-gray-400 scale-110'
+                                            : 'border-white shadow-sm'
+                                    }`}
+                                    style={{ backgroundColor: color }}
+                                    title={color}
+                                    disabled={brandingLoading}
+                                />
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Logo Upload */}
+                    <div className="mb-6">
+                        <label className="block font-medium text-gray-700 mb-2">Salon Logo</label>
+                        <p className="text-xs text-gray-500 mb-3">Recommended: square image, at least 200×200px (JPG, PNG, WebP, max 5MB)</p>
+                        <input
+                            ref={logoInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={handleLogoSelect}
+                            className="hidden"
+                            disabled={brandingLoading}
+                        />
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50">
+                                {logoPreview || salon.logo_url ? (
+                                    <img
+                                        src={logoPreview || (import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.logo_url}
+                                        alt="Logo preview"
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <span className="text-gray-400 text-xs text-center">No logo</span>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => logoInputRef.current?.click()}
+                                disabled={brandingLoading}
+                                className="px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50"
+                            >
+                                {salon.logo_url || logoPreview ? 'Change Logo' : 'Upload Logo'}
+                            </button>
+                            {logoPreview && (
+                                <button
+                                    type="button"
+                                    onClick={() => { setLogoFile(null); setLogoPreview(null); }}
+                                    className="text-sm text-red-500 hover:text-red-700"
+                                >
+                                    Cancel
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Banner Image Upload */}
+                    <div className="mb-6">
+                        <label className="block font-medium text-gray-700 mb-2">Banner Image (Optional)</label>
+                        <p className="text-xs text-gray-500 mb-3">Upload a banner image to override the color gradient. Recommended: 1200×300px (4:1 ratio)</p>
+                        <input
+                            ref={bannerInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={handleBannerSelect}
+                            className="hidden"
+                            disabled={brandingLoading}
+                        />
+                        <div className="flex flex-col gap-3">
+                            {(bannerPreview || salon.banner_image_url) && (
+                                <div className="w-full h-20 rounded-lg overflow-hidden border border-gray-200">
+                                    <img
+                                        src={bannerPreview || (import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.banner_image_url}
+                                        alt="Banner preview"
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                            )}
+                            {bannerAspectWarning && (
+                                <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-2 rounded-lg text-xs">
+                                    <span>⚠️</span>
+                                    <span>The image aspect ratio is not ideal (4:1 recommended). It will be cropped to fit.</span>
+                                </div>
+                            )}
+                            <div className="flex items-center gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => bannerInputRef.current?.click()}
+                                    disabled={brandingLoading}
+                                    className="px-4 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50"
+                                >
+                                    {salon.banner_image_url || bannerPreview ? 'Change Banner' : 'Upload Banner'}
+                                </button>
+                                {bannerPreview && (
+                                    <button
+                                        type="button"
+                                        onClick={() => { setBannerFile(null); setBannerPreview(null); setBannerAspectWarning(false); }}
+                                        className="text-sm text-red-500 hover:text-red-700"
+                                    >
+                                        Cancel
+                                    </button>
+                                )}
+                                {!bannerPreview && salon.banner_image_url && (
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveBannerImage}
+                                        disabled={brandingLoading}
+                                        className="text-sm text-red-500 hover:text-red-700 disabled:opacity-50"
+                                    >
+                                        Remove Banner Image
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Save Button */}
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={handleBrandingSave}
+                            disabled={brandingLoading || (!logoFile && !bannerFile && brandingColor === (salon.banner_color || '#3B82F6'))}
+                            className="px-6 py-2.5 rounded-md bg-blue-500 text-white font-medium hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                            {brandingLoading && (
+                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                            )}
+                            {brandingLoading ? 'Saving...' : 'Save Branding'}
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Providers Section */}
             <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">

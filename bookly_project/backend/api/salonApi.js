@@ -3,7 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { pool } = require('../sql/database.js');
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
-const { upload, processAndSaveImage, deleteOldImage } = require('../middleware/uploadMiddleware');
+const { upload, processAndSaveImage, deleteOldImage, processSalonLogo, processSalonBanner, deleteOldSalonImage } = require('../middleware/uploadMiddleware');
 
 // Middleware to check if provider is a manager
 const isManagerMiddleware = async (req, res, next) => {
@@ -64,7 +64,7 @@ router.get('/my-salon', AuthMiddleware, async (req, res) => {
 
         const [salons] = await pool.query(
             `SELECT id, name, address, phone, email, type, opening_hours, closing_hours, 
-                    description, latitude, longitude, sharecode, status, created_at
+                    description, latitude, longitude, sharecode, status, banner_color, logo_url, banner_image_url, created_at
              FROM salons WHERE id = ?`,
             [salonId]
         );
@@ -563,6 +563,105 @@ router.put('/me/password', AuthMiddleware, async (req, res) => {
     } catch (error) {
         console.error('Change provider password error:', error);
         res.status(500).json({ success: false, message: 'Szerverhiba a jelszó módosítása során' });
+    }
+});
+
+// POST /api/salon/branding - Update salon logo, banner image, and/or banner color (managers only)
+router.post('/branding', AuthMiddleware, isManagerMiddleware, upload.fields([
+    { name: 'logo', maxCount: 1 },
+    { name: 'banner', maxCount: 1 }
+]), async (req, res) => {
+    try {
+        const salonId = req.salonId;
+        const { banner_color } = req.body;
+
+        // Get current salon data for old image cleanup
+        const [currentSalon] = await pool.query(
+            'SELECT logo_url, banner_image_url, banner_color FROM salons WHERE id = ?',
+            [salonId]
+        );
+        if (currentSalon.length === 0) {
+            return res.status(404).json({ success: false, message: 'Salon not found' });
+        }
+
+        const updates = [];
+        const values = [];
+
+        // Process logo if provided
+        if (req.files && req.files.logo && req.files.logo[0]) {
+            const logoUrl = await processSalonLogo(req.files.logo[0].buffer, salonId);
+            deleteOldSalonImage(currentSalon[0].logo_url);
+            updates.push('logo_url = ?');
+            values.push(logoUrl);
+        }
+
+        // Process banner image if provided
+        if (req.files && req.files.banner && req.files.banner[0]) {
+            const bannerUrl = await processSalonBanner(req.files.banner[0].buffer, salonId);
+            deleteOldSalonImage(currentSalon[0].banner_image_url);
+            updates.push('banner_image_url = ?');
+            values.push(bannerUrl);
+        }
+
+        // Update banner color if provided
+        if (banner_color) {
+            const colorRegex = /^#[0-9A-Fa-f]{6}$/;
+            if (!colorRegex.test(banner_color)) {
+                return res.status(400).json({ success: false, message: 'Érvénytelen szín formátum. Használjon #RRGGBB formátumot.' });
+            }
+            updates.push('banner_color = ?');
+            values.push(banner_color);
+        }
+
+        if (updates.length === 0) {
+            return res.status(400).json({ success: false, message: 'Nincs frissítendő adat' });
+        }
+
+        values.push(salonId);
+        await pool.query(
+            `UPDATE salons SET ${updates.join(', ')} WHERE id = ?`,
+            values
+        );
+
+        // Return updated salon data
+        const [updatedSalon] = await pool.query(
+            `SELECT id, name, address, phone, email, type, opening_hours, closing_hours,
+                    description, latitude, longitude, sharecode, status, banner_color, logo_url, banner_image_url, created_at
+             FROM salons WHERE id = ?`,
+            [salonId]
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Szalon arculat sikeresen frissítve',
+            salon: updatedSalon[0]
+        });
+    } catch (error) {
+        console.error('Salon branding update error:', error);
+        res.status(500).json({ success: false, message: 'Szerverhiba az arculat frissítése során' });
+    }
+});
+
+// POST /api/salon/branding/remove-banner - Remove banner image (managers only)
+router.post('/branding/remove-banner', AuthMiddleware, isManagerMiddleware, async (req, res) => {
+    try {
+        const salonId = req.salonId;
+
+        const [currentSalon] = await pool.query(
+            'SELECT banner_image_url FROM salons WHERE id = ?',
+            [salonId]
+        );
+
+        if (currentSalon.length > 0 && currentSalon[0].banner_image_url) {
+            deleteOldSalonImage(currentSalon[0].banner_image_url);
+        }
+
+        await pool.query('UPDATE salons SET banner_image_url = NULL WHERE id = ?', [salonId]);
+
+        res.status(200).json({ success: true, message: 'Banner kép eltávolítva' });
+    } catch (error) {
+        console.error('Remove banner error:', error);
+        res.status(500).json({ success: false, message: 'Szerverhiba' });
     }
 });
 

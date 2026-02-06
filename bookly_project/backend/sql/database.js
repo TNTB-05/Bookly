@@ -20,7 +20,7 @@ async function selectall() {
 
 async function getAllSalons() {
     const query = `
-        SELECT id, name, address, phone, email, type, description, latitude, longitude, status, created_at
+        SELECT id, name, address, phone, email, type, description, latitude, longitude, status, banner_color, logo_url, banner_image_url, created_at
         FROM salons
         WHERE status != 'closed'
     `;
@@ -30,7 +30,7 @@ async function getAllSalons() {
 
 async function getSalonById(salonId) {
     const query = `
-        SELECT id, name, address, phone, email, type, description, latitude, longitude, status, created_at
+        SELECT id, name, address, phone, email, type, description, latitude, longitude, status, banner_color, logo_url, banner_image_url, created_at
         FROM salons
         WHERE id = ?
     `;
@@ -40,7 +40,7 @@ async function getSalonById(salonId) {
 
 async function getProvidersBySalonId(salonId) {
     const query = `
-        SELECT id, salon_id, name, email, phone, description, status, role, isManager, created_at
+        SELECT id, salon_id, name, email, phone, description, status, role, isManager, profile_picture_url, created_at
         FROM providers
         WHERE salon_id = ? AND status = 'active'
     `;
@@ -90,6 +90,9 @@ async function getTopRatedSalons(limit = 10) {
             s.address,
             s.type,
             s.description,
+            s.banner_color,
+            s.logo_url,
+            s.banner_image_url,
             COALESCE(AVG(r.rating), 0) as average_rating,
             COUNT(r.id) as rating_count
         FROM salons s
@@ -107,7 +110,7 @@ async function getTopRatedSalons(limit = 10) {
 async function getSavedSalonsByUserId(userId) {
     const query = `
         SELECT s.id, s.name, s.address, s.phone, s.email, s.type, s.description, 
-               s.latitude, s.longitude, s.status, s.created_at,
+               s.latitude, s.longitude, s.status, s.banner_color, s.logo_url, s.banner_image_url, s.created_at,
                ss.created_at as saved_at,
                COALESCE(AVG(r.rating), 0) as average_rating,
                COUNT(DISTINCT r.id) as rating_count

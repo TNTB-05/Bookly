@@ -360,16 +360,20 @@ export default function SalonModal() {
                             <div className="relative">
                                 <div 
                                     className="h-32 rounded-2xl relative"
-                                    style={{ 
-                                        background: salon.banner_color 
-                                            ? `linear-gradient(135deg, ${salon.banner_color} 0%, ${salon.banner_color}dd 100%)` 
-                                            : 'linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%)'
-                                    }}
+                                    style={
+                                        salon.banner_image_url
+                                            ? { backgroundImage: `url(${(import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.banner_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '1rem' }
+                                            : { 
+                                                background: salon.banner_color 
+                                                    ? `linear-gradient(135deg, ${salon.banner_color} 0%, ${salon.banner_color}dd 100%)` 
+                                                    : 'linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%)'
+                                              }
+                                    }
                                 >
                                     <div className="absolute -bottom-10 left-6">
                                         <div className="w-20 h-20 rounded-full border-4 border-white bg-white flex items-center justify-center shadow-lg overflow-hidden">
                                             {salon.logo_url ? (
-                                                <img src={salon.logo_url} alt={salon.name} className="w-full h-full object-cover" />
+                                                <img src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.logo_url} alt={salon.name} className="w-full h-full object-cover" />
                                             ) : (
                                                 <span className="text-3xl font-bold text-dark-blue">{salon.name.charAt(0).toUpperCase()}</span>
                                             )}
@@ -433,10 +437,14 @@ export default function SalonModal() {
                                     {salon.providers?.slice(0, 5).map((provider) => (
                                         <div 
                                             key={provider.id}
-                                            className="w-10 h-10 rounded-full border-2 border-white bg-indigo-100 flex items-center justify-center text-sm font-semibold text-indigo-600"
+                                            className="w-10 h-10 rounded-full border-2 border-white bg-indigo-100 flex items-center justify-center text-sm font-semibold text-indigo-600 overflow-hidden"
                                             title={provider.name}
                                         >
-                                            {provider.name.charAt(0).toUpperCase()}
+                                            {provider.profile_picture_url ? (
+                                                <img src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + provider.profile_picture_url} alt={provider.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                provider.name.charAt(0).toUpperCase()
+                                            )}
                                         </div>
                                     ))}
                                     {salon.providers?.length > 5 && (
@@ -460,8 +468,12 @@ export default function SalonModal() {
                                         className="text-left p-4 bg-white border-2 border-gray-200 rounded-xl hover:border-indigo-400 hover:bg-indigo-50 transition-all group"
                                     >
                                         <div className="flex items-center gap-4">
-                                            <div className="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center text-xl font-bold text-indigo-600 group-hover:bg-indigo-200 transition-colors">
-                                                {provider.name.charAt(0).toUpperCase()}
+                                            <div className="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center text-xl font-bold text-indigo-600 group-hover:bg-indigo-200 transition-colors overflow-hidden">
+                                                {provider.profile_picture_url ? (
+                                                    <img src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + provider.profile_picture_url} alt={provider.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    provider.name.charAt(0).toUpperCase()
+                                                )}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <h4 className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
@@ -492,8 +504,12 @@ export default function SalonModal() {
                         <div className="p-6">
                             {/* Selected provider info */}
                             <div className="flex items-center gap-3 mb-6 p-3 bg-indigo-50 rounded-xl">
-                                <div className="w-10 h-10 rounded-full bg-indigo-200 flex items-center justify-center font-bold text-indigo-700">
-                                    {selectedProvider.name.charAt(0).toUpperCase()}
+                                <div className="w-10 h-10 rounded-full bg-indigo-200 flex items-center justify-center font-bold text-indigo-700 overflow-hidden">
+                                    {selectedProvider.profile_picture_url ? (
+                                        <img src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + selectedProvider.profile_picture_url} alt={selectedProvider.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        selectedProvider.name.charAt(0).toUpperCase()
+                                    )}
                                 </div>
                                 <div>
                                     <p className="font-medium text-gray-900">{selectedProvider.name}</p>
@@ -541,8 +557,12 @@ export default function SalonModal() {
                         <div className="p-6">
                             {/* Selected info */}
                             <div className="flex items-center gap-3 mb-6 p-3 bg-indigo-50 rounded-xl">
-                                <div className="w-10 h-10 rounded-full bg-indigo-200 flex items-center justify-center font-bold text-indigo-700">
-                                    {selectedProvider.name.charAt(0).toUpperCase()}
+                                <div className="w-10 h-10 rounded-full bg-indigo-200 flex items-center justify-center font-bold text-indigo-700 overflow-hidden">
+                                    {selectedProvider.profile_picture_url ? (
+                                        <img src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + selectedProvider.profile_picture_url} alt={selectedProvider.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        selectedProvider.name.charAt(0).toUpperCase()
+                                    )}
                                 </div>
                                 <div className="flex-1">
                                     <p className="font-medium text-gray-900">{selectedService.name}</p>
