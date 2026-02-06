@@ -1347,17 +1347,17 @@ const NavButton = ({ activeTab, tabId, label, icon, onClick, isMobile }) => (
     </button>
 );
 
-const UserDropdown = ({ isOpen, onLogout }) => {
+const UserDropdown = ({ isOpen, onLogout, onProfileEdit, providerProfile }) => {
     if (!isOpen) return null;
     
     return (
         <div className="absolute top-14 right-4 w-52 bg-white/60 backdrop-blur-md border border-white/50 rounded-2xl shadow-xl overflow-hidden animate-fade-in z-50">
             <div className="p-4 border-b border-gray-100">
-                <p className="text-sm font-bold text-gray-900">Minta Szolgáltató</p>
-                <p className="text-xs text-gray-500 truncate">info@mintaszolgaltato.hu</p>
+                <p className="text-sm font-bold text-gray-900">{providerProfile?.name || 'Szolgáltató'}</p>
+                <p className="text-xs text-gray-500 truncate">{providerProfile?.email || ''}</p>
             </div>
             <div className="p-2 space-y-1">
-                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-white/50 rounded-lg transition-colors flex items-center gap-2">
+                <button onClick={onProfileEdit} className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-white/50 rounded-lg transition-colors flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                     </svg>
@@ -1392,6 +1392,148 @@ export default function ProvDash() {
     const navigate = useNavigate();
     const { setIsAuthenticated } = useAuth();
     const user = getUserFromToken();
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+    // Provider profile state
+    const [providerProfile, setProviderProfile] = useState(null);
+    const [showProfileModal, setShowProfileModal] = useState(false);
+    const [profileFormData, setProfileFormData] = useState({ name: '', phone: '', description: '' });
+    const [profileSaving, setProfileSaving] = useState(false);
+    const [profileError, setProfileError] = useState(null);
+    const [profileSuccess, setProfileSuccess] = useState(null);
+    const [pictureUploading, setPictureUploading] = useState(false);
+    const [pictureError, setPictureError] = useState(null);
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [passwordFormData, setPasswordFormData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    const [passwordSaving, setPasswordSaving] = useState(false);
+    const [passwordError, setPasswordError] = useState(null);
+    const [passwordSuccess, setPasswordSuccess] = useState(null);
+
+    // Fetch provider profile on mount
+    useEffect(() => {
+        fetchProviderProfile();
+    }, []);
+
+    const fetchProviderProfile = async () => {
+        try {
+            const response = await authApi.get('/api/salon/me');
+            const data = await response.json();
+            if (data.success) setProviderProfile(data.provider);
+        } catch (error) {
+            console.error('Error fetching provider profile:', error);
+        }
+    };
+
+    const getProviderInitials = (name) => {
+        if (!name) return '?';
+        const parts = name.trim().split(' ');
+        if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+        return name.substring(0, 2).toUpperCase();
+    };
+
+    const openProfileModal = () => {
+        if (providerProfile) {
+            setProfileFormData({
+                name: providerProfile.name || '',
+                phone: providerProfile.phone || '',
+                description: providerProfile.description || ''
+            });
+        }
+        setProfileError(null);
+        setProfileSuccess(null);
+        setPictureError(null);
+        setShowProfileModal(true);
+        setIsDropdownOpen(false);
+    };
+
+    const handleProviderProfileSave = async () => {
+        if (!profileFormData.name.trim()) { setProfileError('A név megadása kötelező'); return; }
+        if (!profileFormData.phone.trim()) { setProfileError('A telefonszám megadása kötelező'); return; }
+        const phoneRegex = /^[\d\s+()-]+$/;
+        if (!phoneRegex.test(profileFormData.phone.trim())) { setProfileError('Érvénytelen telefonszám formátum'); return; }
+
+        setProfileSaving(true);
+        setProfileError(null);
+        try {
+            const response = await authApi.put('/api/salon/me', {
+                name: profileFormData.name.trim(),
+                phone: profileFormData.phone.trim(),
+                description: profileFormData.description.trim() || null
+            });
+            const data = await response.json();
+            if (data.success) {
+                setProviderProfile(data.provider);
+                setProfileSuccess('Profil sikeresen frissítve!');
+                setTimeout(() => setProfileSuccess(null), 3000);
+            } else {
+                setProfileError(data.message || 'Hiba történt a mentés során');
+            }
+        } catch (error) {
+            setProfileError('Hiba történt a mentés során');
+        } finally {
+            setProfileSaving(false);
+        }
+    };
+
+    const handleProviderPictureUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) { setPictureError('Csak JPG, PNG és WebP fájlok engedélyezettek'); return; }
+        if (file.size > 5 * 1024 * 1024) { setPictureError('A fájl mérete nem haladhatja meg az 5MB-ot'); return; }
+
+        setPictureUploading(true);
+        setPictureError(null);
+        try {
+            const formData = new FormData();
+            formData.append('profilePicture', file);
+            const response = await authApi.upload('/api/salon/me/picture', formData);
+            const data = await response.json();
+            if (data.success) {
+                setProviderProfile(prev => ({ ...prev, profile_picture_url: data.profile_picture_url }));
+                setProfileSuccess('Profilkép sikeresen frissítve!');
+                setTimeout(() => setProfileSuccess(null), 3000);
+            } else {
+                setPictureError(data.message || 'Hiba történt a kép feltöltésekor');
+            }
+        } catch (error) {
+            setPictureError('Hiba történt a kép feltöltésekor');
+        } finally {
+            setPictureUploading(false);
+            e.target.value = '';
+        }
+    };
+
+    const openPasswordModal = () => {
+        setPasswordFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        setPasswordError(null);
+        setPasswordSuccess(null);
+        setShowPasswordModal(true);
+    };
+
+    const handleProviderPasswordChange = async () => {
+        if (!passwordFormData.currentPassword || !passwordFormData.newPassword || !passwordFormData.confirmPassword) { setPasswordError('Minden mező kitöltése kötelező'); return; }
+        if (passwordFormData.newPassword.length < 6) { setPasswordError('Az új jelszónak legalább 6 karakter hosszúnak kell lennie'); return; }
+        if (passwordFormData.newPassword !== passwordFormData.confirmPassword) { setPasswordError('Az új jelszavak nem egyeznek'); return; }
+
+        setPasswordSaving(true);
+        setPasswordError(null);
+        try {
+            const response = await authApi.put('/api/salon/me/password', passwordFormData);
+            const data = await response.json();
+            if (data.success) {
+                setPasswordSuccess('Jelszó sikeresen megváltoztatva!');
+                setPasswordFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                setTimeout(() => { setShowPasswordModal(false); setPasswordSuccess(null); }, 2000);
+            } else {
+                setPasswordError(data.message || 'Hiba történt a jelszó módosítása során');
+            }
+        } catch (error) {
+            setPasswordError('Hiba történt a jelszó módosítása során');
+        } finally {
+            setPasswordSaving(false);
+        }
+    };
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -1436,16 +1578,22 @@ export default function ProvDash() {
                         className="flex items-center gap-3 focus:outline-none group"
                     >
                         <span className="hidden sm:block text-sm font-medium text-gray-700 group-hover:text-dark-blue transition-colors">
-                            Üdv, {user ? user.name : 'Szolgáltató'}
+                            Üdv, {providerProfile?.name || user?.name || 'Szolgáltató'}
                         </span>
-                        <div className="w-10 h-10 rounded-full bg-linear-to-br from-dark-blue to-blue-500 text-white flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 transition-all text-sm font-bold border-2 border-white/50 cursor-pointer">
-                            Sz
-                        </div>
+                        {providerProfile?.profile_picture_url ? (
+                            <img src={`${apiUrl}${providerProfile.profile_picture_url}`} alt="Profil" className="w-10 h-10 rounded-full object-cover shadow-lg hover:shadow-xl hover:scale-105 transition-all border-2 border-white/50 cursor-pointer" />
+                        ) : (
+                            <div className="w-10 h-10 rounded-full bg-linear-to-br from-dark-blue to-blue-500 text-white flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 transition-all text-sm font-bold border-2 border-white/50 cursor-pointer">
+                                {getProviderInitials(providerProfile?.name || user?.name)}
+                            </div>
+                        )}
                     </button>
 
                     <UserDropdown 
                         isOpen={isDropdownOpen} 
                         onLogout={handleLogout}
+                        onProfileEdit={openProfileModal}
+                        providerProfile={providerProfile}
                     />
                 </div>
             </header>
@@ -1527,6 +1675,134 @@ export default function ProvDash() {
                     />
                 </nav>
             </div>
+
+            {/* Profile Edit Modal */}
+            {showProfileModal && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowProfileModal(false)}></div>
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md my-8 max-h-[calc(100vh-4rem)] overflow-y-auto">
+                        <div className="p-6 border-b border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xl font-bold text-dark-blue">Profil szerkesztése</h3>
+                                <button onClick={() => setShowProfileModal(false)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-6 space-y-5">
+                            {profileSuccess && (
+                                <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    {profileSuccess}
+                                </div>
+                            )}
+                            {/* Avatar section */}
+                            <div className="flex flex-col items-center gap-3">
+                                <div className="relative">
+                                    {providerProfile?.profile_picture_url ? (
+                                        <img src={`${apiUrl}${providerProfile.profile_picture_url}`} alt="Profil" className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg" />
+                                    ) : (
+                                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-dark-blue to-blue-500 text-white flex items-center justify-center text-2xl font-bold border-4 border-white shadow-lg">
+                                            {getProviderInitials(providerProfile?.name)}
+                                        </div>
+                                    )}
+                                    {pictureUploading && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent"></div>
+                                        </div>
+                                    )}
+                                </div>
+                                <label className={`cursor-pointer px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors ${pictureUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                                    {pictureUploading ? 'Feltöltés...' : 'Kép módosítása'}
+                                    <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleProviderPictureUpload} disabled={pictureUploading} />
+                                </label>
+                                {pictureError && <p className="text-red-500 text-xs">{pictureError}</p>}
+                                <p className="text-xs text-gray-400">Max 5MB • JPG, PNG, WebP</p>
+                            </div>
+                            {profileError && (<div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{profileError}</div>)}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Név *</label>
+                                <input type="text" value={profileFormData.name} onChange={(e) => setProfileFormData({...profileFormData, name: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent" placeholder="Teljes név" disabled={profileSaving} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input type="email" value={providerProfile?.email || ''} className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed" disabled />
+                                <p className="text-xs text-gray-400 mt-1">Az email cím nem módosítható</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Telefonszám *</label>
+                                <input type="tel" value={profileFormData.phone} onChange={(e) => setProfileFormData({...profileFormData, phone: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent" placeholder="+36 20 123 4567" disabled={profileSaving} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Bemutatkozás</label>
+                                <textarea value={profileFormData.description} onChange={(e) => setProfileFormData({...profileFormData, description: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent resize-none" rows={3} placeholder="Rövid bemutatkozás..." disabled={profileSaving} />
+                            </div>
+                            <div className="pt-2 border-t border-gray-200">
+                                <button onClick={openPasswordModal} className="w-full text-left px-3 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-between">
+                                    <span className="flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+                                        Jelszó módosítása
+                                    </span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-3">
+                            <button onClick={() => setShowProfileModal(false)} className="flex-1 py-2.5 px-4 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-100 transition-colors" disabled={profileSaving}>Mégse</button>
+                            <button onClick={handleProviderProfileSave} disabled={profileSaving} className="flex-1 py-2.5 px-4 bg-dark-blue text-white font-medium rounded-xl hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                                {profileSaving ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div> : 'Mentés'}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Password Change Modal */}
+            {showPasswordModal && createPortal(
+                <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowPasswordModal(false)}></div>
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md my-8 max-h-[calc(100vh-4rem)] overflow-y-auto">
+                        <div className="p-6 border-b border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xl font-bold text-dark-blue">Jelszó módosítása</h3>
+                                <button onClick={() => setShowPasswordModal(false)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            {passwordError && (<div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{passwordError}</div>)}
+                            {passwordSuccess && (
+                                <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    {passwordSuccess}
+                                </div>
+                            )}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Jelenlegi jelszó *</label>
+                                <input type="password" value={passwordFormData.currentPassword} onChange={(e) => setPasswordFormData({...passwordFormData, currentPassword: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent" placeholder="••••••••" disabled={passwordSaving} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Új jelszó *</label>
+                                <input type="password" value={passwordFormData.newPassword} onChange={(e) => setPasswordFormData({...passwordFormData, newPassword: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent" placeholder="••••••••" disabled={passwordSaving} />
+                                <p className="text-xs text-gray-500 mt-1">Legalább 6 karakter hosszú legyen</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Új jelszó megerősítése *</label>
+                                <input type="password" value={passwordFormData.confirmPassword} onChange={(e) => setPasswordFormData({...passwordFormData, confirmPassword: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent" placeholder="••••••••" disabled={passwordSaving} />
+                            </div>
+                        </div>
+                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-3">
+                            <button onClick={() => setShowPasswordModal(false)} className="flex-1 py-2.5 px-4 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-100 transition-colors" disabled={passwordSaving}>Mégse</button>
+                            <button onClick={handleProviderPasswordChange} disabled={passwordSaving || !!passwordSuccess} className="flex-1 py-2.5 px-4 bg-dark-blue text-white font-medium rounded-xl hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                                {passwordSaving ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div> : 'Jelszó módosítása'}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 }

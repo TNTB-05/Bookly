@@ -4,7 +4,7 @@ const mysql = require('mysql2/promise');
 
 
 const getUserById=async (userId) => {
-    const query = 'SELECT id, name, email, phone, address, role, status, created_at FROM users WHERE id = ?';
+    const query = 'SELECT id, name, email, phone, address, role, status, profile_picture_url, created_at FROM users WHERE id = ?';
     const [rows] = await pool.execute(query, [userId]);
     return rows[0];
 };

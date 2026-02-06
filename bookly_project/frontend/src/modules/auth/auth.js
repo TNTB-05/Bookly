@@ -101,8 +101,10 @@ export async function authFetch(url, options={}){
     
     const headers={
         ...options.headers,
-        'Content-Type': 'application/json',
     };
+    if (!(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+    }
 
     if(accessToken){
         headers['Authorization']=`Bearer ${accessToken}`;
@@ -179,6 +181,11 @@ export const authApi ={
     }),
     delete: (url , options={})=> authFetch(url,{
         method: 'DELETE',
+        ...options
+    }),
+    upload: (url, formData, options={})=> authFetch(url,{
+        method: 'POST',
+        body: formData,
         ...options
     }),
 }

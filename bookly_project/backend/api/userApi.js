@@ -18,6 +18,7 @@ const {
     getSalonById
 } = require('../sql/database');
 const { calculateDistance } = require('../services/locationService');
+const { upload, processAndSaveImage, deleteOldImage } = require('../middleware/uploadMiddleware');
 
 // Utazási idő számítása távolság alapján (percben)
 function calculateTravelBuffer(distanceKm) {
@@ -61,6 +62,7 @@ router.get('/profile', AuthMiddleware, async (req, res) => {
                 address: user.address,
                 role: user.role,
                 status: user.status,
+                profile_picture_url: user.profile_picture_url,
                 created_at: user.created_at
             }
         });
@@ -160,6 +162,7 @@ router.put('/profile', AuthMiddleware, async (req, res) => {
                 address: user.address,
                 role: user.role,
                 status: user.status,
+                profile_picture_url: user.profile_picture_url,
                 created_at: user.created_at
             }
         });
@@ -249,6 +252,56 @@ router.put('/password', AuthMiddleware, async (req, res) => {
             success: false,
             message: 'Server error while changing password'
         });
+    }
+});
+
+// Upload profile picture
+router.post('/profile/picture', AuthMiddleware, (req, res, next) => {
+    upload.single('profilePicture')(req, res, (err) => {
+        if (err) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.status(400).json({ success: false, message: 'A fájl mérete nem haladhatja meg az 5MB-ot' });
+            }
+            if (err.message) {
+                return res.status(400).json({ success: false, message: err.message });
+            }
+            return res.status(400).json({ success: false, message: 'Hiba a fájl feltöltésekor' });
+        }
+        next();
+    });
+}, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'Nincs feltöltött kép. Kérjük válasszon egy JPG, PNG vagy WebP fájlt.' });
+        }
+
+        // Get current picture for deletion
+        const [rows] = await pool.query('SELECT profile_picture_url FROM users WHERE id = ?', [userId]);
+        if (rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Felhasználó nem található' });
+        }
+
+        const oldUrl = rows[0].profile_picture_url;
+
+        // Process and save new image
+        const imageUrl = await processAndSaveImage(req.file.buffer, 'user', userId);
+
+        // Update database
+        await pool.query('UPDATE users SET profile_picture_url = ? WHERE id = ?', [imageUrl, userId]);
+
+        // Delete old image
+        deleteOldImage(oldUrl);
+
+        res.status(200).json({
+            success: true,
+            message: 'Profilkép sikeresen feltöltve',
+            profile_picture_url: imageUrl
+        });
+    } catch (error) {
+        console.error('Upload profile picture error:', error);
+        res.status(500).json({ success: false, message: 'Hiba történt a kép feltöltésekor. Kérjük próbálja újra.' });
     }
 });
 

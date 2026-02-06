@@ -10,7 +10,7 @@ import ExitIcon from '../../../icons/ExitIcon';
 import SettingsIcon from '../../../icons/SettingsIcon';
 
 // Navigációs sáv komponens - desktop és mobil nézet
-export default function DashboardNavbar({ activeTab, setActiveTab, user }) {
+export default function DashboardNavbar({ activeTab, setActiveTab, user, userProfile }) {
     // UseState változók a menü kezeléséhez
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -86,9 +86,13 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user }) {
                                 <span className="text-sm font-medium text-gray-700 group-hover:text-dark-blue transition-colors">
                                     {user?.name || 'Felhasználó'}
                                 </span>
-                                <div className="w-10 h-10 rounded-full bg-dark-blue text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all text-sm font-bold">
-                                    {user?.name?.charAt(0).toUpperCase() || 'U'}
-                                </div>
+                                {userProfile?.profile_picture_url ? (
+                                    <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${userProfile.profile_picture_url}`} alt="Profil" className="w-10 h-10 rounded-full object-cover shadow-lg hover:shadow-xl transition-all" />
+                                ) : (
+                                    <div className="w-10 h-10 rounded-full bg-dark-blue text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all text-sm font-bold">
+                                        {user?.name?.charAt(0).toUpperCase() || 'U'}
+                                    </div>
+                                )}
                             </button>
 
                             {/* Dropdown Menu */}
@@ -156,9 +160,15 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user }) {
                         <div className="relative" ref={mobileDropdownRef}>
                             <button
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className="w-10 h-10 rounded-full bg-dark-blue text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all text-sm font-bold"
+                                className="w-10 h-10 rounded-full overflow-hidden shadow-lg hover:shadow-xl transition-all"
                             >
-                                {user?.name?.charAt(0).toUpperCase() || 'U'}
+                                {userProfile?.profile_picture_url ? (
+                                    <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${userProfile.profile_picture_url}`} alt="Profil" className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full bg-dark-blue text-white flex items-center justify-center text-sm font-bold">
+                                        {user?.name?.charAt(0).toUpperCase() || 'U'}
+                                    </div>
+                                )}
                             </button>
 
                             {/* Dropdown Menu */}

@@ -44,6 +44,53 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
     const [deleteError, setDeleteError] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
 
+    // Profilkép állapotok
+    const [avatarUploading, setAvatarUploading] = useState(false);
+    const [avatarError, setAvatarError] = useState(null);
+    const [avatarSuccess, setAvatarSuccess] = useState(null);
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+    // Profilkép feltöltés
+    async function handleAvatarUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            setAvatarError('Csak JPG, PNG és WebP fájlok engedélyezettek');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setAvatarError('A fájl mérete nem haladhatja meg az 5MB-ot');
+            return;
+        }
+
+        setAvatarUploading(true);
+        setAvatarError(null);
+        setAvatarSuccess(null);
+
+        try {
+            const formData = new FormData();
+            formData.append('profilePicture', file);
+
+            const response = await authApi.upload('/api/user/profile/picture', formData);
+            const data = await response.json();
+
+            if (data.success) {
+                setUserProfile(prev => ({ ...prev, profile_picture_url: data.profile_picture_url }));
+                setAvatarSuccess('Profilkép sikeresen frissítve!');
+                setTimeout(() => setAvatarSuccess(null), 3000);
+            } else {
+                setAvatarError(data.message || 'Hiba történt a kép feltöltésekor');
+            }
+        } catch (error) {
+            setAvatarError('Hiba történt a kép feltöltésekor');
+        } finally {
+            setAvatarUploading(false);
+            e.target.value = '';
+        }
+    }
+
     // Dátum formázása magyar formátumra
     function formatProfileDate(dateString) {
         if (!dateString) return 'N/A';
@@ -286,6 +333,40 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
             <h1 className="text-3xl font-bold text-gray-900">Profilom</h1>
             
+            {/* Avatar Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden max-w-3xl">
+                <div className="p-6 flex items-center gap-6">
+                    <div className="relative shrink-0">
+                        {userProfile?.profile_picture_url ? (
+                            <img
+                                src={`${apiUrl}${userProfile.profile_picture_url}`}
+                                alt="Profilkép"
+                                className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
+                            />
+                        ) : (
+                            <div className="w-20 h-20 rounded-full bg-indigo-600 text-white flex items-center justify-center text-2xl font-bold border-4 border-white shadow-lg">
+                                {userProfile?.name?.charAt(0).toUpperCase() || 'U'}
+                            </div>
+                        )}
+                        {avatarUploading && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+                                <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+                            </div>
+                        )}
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-medium text-gray-800">Profilkép</h2>
+                        <p className="text-sm text-gray-500 mb-2">Max 5MB • JPG, PNG, WebP</p>
+                        <label className={`inline-block cursor-pointer px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors ${avatarUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                            {avatarUploading ? 'Feltöltés...' : 'Kép módosítása'}
+                            <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarUpload} disabled={avatarUploading} />
+                        </label>
+                        {avatarError && <p className="text-red-500 text-xs mt-2">{avatarError}</p>}
+                        {avatarSuccess && <p className="text-green-600 text-xs mt-2">{avatarSuccess}</p>}
+                    </div>
+                </div>
+            </div>
+
             {/* Personal Data Section */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden max-w-3xl">
                 <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
@@ -462,15 +543,15 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Email *
+                                    Email
                                 </label>
                                 <input
                                     type="email"
                                     value={profileFormData.email}
-                                    onChange={(e) => setProfileFormData({ ...profileFormData, email: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                    placeholder="pelda@email.hu"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                                    disabled
                                 />
+                                <p className="text-xs text-gray-400 mt-1">Az email cím nem módosítható</p>
                             </div>
 
                             <div>

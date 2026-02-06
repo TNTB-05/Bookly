@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs');
 const { pool } = require('../sql/database.js');
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
+const { upload, processAndSaveImage, deleteOldImage } = require('../middleware/uploadMiddleware');
 
 // Middleware to check if provider is a manager
 const isManagerMiddleware = async (req, res, next) => {
@@ -421,6 +423,146 @@ router.put('/status', AuthMiddleware, isManagerMiddleware, async (req, res) => {
             success: false,
             message: 'Server error'
         });
+    }
+});
+
+// ==================== PROVIDER SELF-PROFILE ENDPOINTS ====================
+
+// GET /api/salon/me - Get current provider's own profile
+router.get('/me', AuthMiddleware, async (req, res) => {
+    try {
+        const providerId = req.user.userId;
+
+        const [providers] = await pool.query(
+            `SELECT id, salon_id, name, email, phone, description, status, role, isManager, profile_picture_url, created_at
+             FROM providers WHERE id = ?`,
+            [providerId]
+        );
+
+        if (providers.length === 0) {
+            return res.status(404).json({ success: false, message: 'Szolgáltató nem található' });
+        }
+
+        res.status(200).json({ success: true, provider: providers[0] });
+    } catch (error) {
+        console.error('Get provider profile error:', error);
+        res.status(500).json({ success: false, message: 'Szerverhiba' });
+    }
+});
+
+// PUT /api/salon/me - Update current provider's own profile (name, phone, description only)
+router.put('/me', AuthMiddleware, async (req, res) => {
+    try {
+        const providerId = req.user.userId;
+        const { name, phone, description } = req.body;
+
+        if (!name || !name.trim()) {
+            return res.status(400).json({ success: false, message: 'A név megadása kötelező' });
+        }
+        if (!phone || !phone.trim()) {
+            return res.status(400).json({ success: false, message: 'A telefonszám megadása kötelező' });
+        }
+
+        await pool.query(
+            'UPDATE providers SET name = ?, phone = ?, description = ? WHERE id = ?',
+            [name.trim(), phone.trim(), description ? description.trim() : null, providerId]
+        );
+
+        const [updated] = await pool.query(
+            `SELECT id, salon_id, name, email, phone, description, status, role, isManager, profile_picture_url, created_at
+             FROM providers WHERE id = ?`,
+            [providerId]
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Profil sikeresen frissítve',
+            provider: updated[0]
+        });
+    } catch (error) {
+        console.error('Update provider profile error:', error);
+        res.status(500).json({ success: false, message: 'Szerverhiba' });
+    }
+});
+
+// POST /api/salon/me/picture - Upload provider's own profile picture
+router.post('/me/picture', AuthMiddleware, (req, res, next) => {
+    upload.single('profilePicture')(req, res, (err) => {
+        if (err) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.status(400).json({ success: false, message: 'A fájl mérete nem haladhatja meg az 5MB-ot' });
+            }
+            if (err.message) {
+                return res.status(400).json({ success: false, message: err.message });
+            }
+            return res.status(400).json({ success: false, message: 'Hiba a fájl feltöltésekor' });
+        }
+        next();
+    });
+}, async (req, res) => {
+    try {
+        const providerId = req.user.userId;
+
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'Nincs feltöltött kép. Kérjük válasszon egy JPG, PNG vagy WebP fájlt.' });
+        }
+
+        const [rows] = await pool.query('SELECT profile_picture_url FROM providers WHERE id = ?', [providerId]);
+        if (rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Szolgáltató nem található' });
+        }
+
+        const oldUrl = rows[0].profile_picture_url;
+        const imageUrl = await processAndSaveImage(req.file.buffer, 'provider', providerId);
+
+        await pool.query('UPDATE providers SET profile_picture_url = ? WHERE id = ?', [imageUrl, providerId]);
+
+        deleteOldImage(oldUrl);
+
+        res.status(200).json({
+            success: true,
+            message: 'Profilkép sikeresen feltöltve',
+            profile_picture_url: imageUrl
+        });
+    } catch (error) {
+        console.error('Upload provider picture error:', error);
+        res.status(500).json({ success: false, message: 'Hiba történt a kép feltöltésekor. Kérjük próbálja újra.' });
+    }
+});
+
+// PUT /api/salon/me/password - Change provider's own password
+router.put('/me/password', AuthMiddleware, async (req, res) => {
+    try {
+        const providerId = req.user.userId;
+        const { currentPassword, newPassword, confirmPassword } = req.body;
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            return res.status(400).json({ success: false, message: 'Minden jelszó mező kitöltése kötelező' });
+        }
+        if (newPassword.length < 6) {
+            return res.status(400).json({ success: false, message: 'Az új jelszónak legalább 6 karakter hosszúnak kell lennie' });
+        }
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ success: false, message: 'Az új jelszavak nem egyeznek' });
+        }
+
+        const [rows] = await pool.query('SELECT password_hash FROM providers WHERE id = ?', [providerId]);
+        if (rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Szolgáltató nem található' });
+        }
+
+        const passwordMatch = await bcrypt.compare(currentPassword, rows[0].password_hash);
+        if (!passwordMatch) {
+            return res.status(400).json({ success: false, message: 'A jelenlegi jelszó helytelen' });
+        }
+
+        const newHash = await bcrypt.hash(newPassword, 10);
+        await pool.query('UPDATE providers SET password_hash = ? WHERE id = ?', [newHash, providerId]);
+
+        res.status(200).json({ success: true, message: 'Jelszó sikeresen megváltoztatva' });
+    } catch (error) {
+        console.error('Change provider password error:', error);
+        res.status(500).json({ success: false, message: 'Szerverhiba a jelszó módosítása során' });
     }
 });
 

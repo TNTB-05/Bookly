@@ -155,7 +155,7 @@ export default function Dashboard() {
     return (
         <div className="min-h-screen bg-base-blue font-sans text-gray-900">
             {/* Navbar */}
-            <DashboardNavbar activeTab={activeTab} setActiveTab={setActiveTab} user={user} />
+            <DashboardNavbar activeTab={activeTab} setActiveTab={setActiveTab} user={user} userProfile={userProfile} />
             
             {/* Főoldal */}
             <main className="pt-16 pb-24 md:pb-12">
