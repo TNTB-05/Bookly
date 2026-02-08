@@ -82,7 +82,10 @@ export default function SalonCard({ salon, savedSalonIds, toggleSaveSalon, showD
                                 {'★'.repeat(Math.round(salon.average_rating))}
                                 {'☆'.repeat(5 - Math.round(salon.average_rating))}
                             </span>
-                            <span className="text-gray-400 text-xs ml-2">
+                            <span className="text-gray-700 text-sm ml-2 font-medium">
+                                {Number(salon.average_rating).toFixed(2)}
+                            </span>
+                            <span className="text-gray-400 text-xs ml-1">
                                 ({salon.rating_count})
                             </span>
                         </>

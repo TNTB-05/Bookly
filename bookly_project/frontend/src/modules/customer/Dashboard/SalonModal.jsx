@@ -495,6 +495,22 @@ export default function SalonModal() {
                                                 {provider.role && (
                                                     <p className="text-sm text-gray-500">{provider.role}</p>
                                                 )}
+                                                {provider.average_rating > 0 ? (
+                                                    <div className="flex items-center text-yellow-400 text-sm mt-1">
+                                                        <span className="tracking-wide">
+                                                            {'★'.repeat(Math.round(provider.average_rating))}
+                                                            {'☆'.repeat(5 - Math.round(provider.average_rating))}
+                                                        </span>
+                                                        <span className="text-gray-700 text-xs ml-1 font-medium">
+                                                            {Number(provider.average_rating).toFixed(2)}
+                                                        </span>
+                                                        <span className="text-gray-400 text-xs ml-1">
+                                                            ({provider.rating_count})
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-gray-400 mt-1">Még nincs értékelés</p>
+                                                )}
                                                 <p className="text-sm text-indigo-600 mt-1">
                                                     {provider.services?.length || 0} szolgáltatás
                                                 </p>

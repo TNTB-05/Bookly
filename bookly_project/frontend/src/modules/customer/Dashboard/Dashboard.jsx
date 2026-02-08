@@ -234,6 +234,7 @@ export default function Dashboard() {
                         <AppointmentsTab
                             user={user}
                             setActiveTab={setActiveTab}
+                            loadTopRatedSalons={loadTopRatedSalons}
                         />
                     )}
 

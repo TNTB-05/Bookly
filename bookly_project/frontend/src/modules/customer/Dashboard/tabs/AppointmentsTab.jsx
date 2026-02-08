@@ -6,14 +6,16 @@ import TickIcon from '../../../../icons/TickIcon';
 import PlusIcon from '../../../../icons/PlusIcon';
 import DiaryIcon from '../../../../icons/DiaryIcon';
 import { authApi } from '../../../auth/auth';
+import RatingModal from '../RatingModal';
 
 // Foglalások tab - megjeleníti a felhasználó foglalásait
-export default function AppointmentsTab({ user, setActiveTab }) {
+export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons }) {
     // Foglalások listája
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [cancelingId, setCancelingId] = useState(null);
+    const [ratingAppointment, setRatingAppointment] = useState(null);
 
     // Foglalások betöltése
     useEffect(() => {
@@ -77,10 +79,30 @@ export default function AppointmentsTab({ user, setActiveTab }) {
     }
 
     // Státusz jelvny megjelenítése színekkel
-    function getStatusBadge(status) {
+    function getStatusBadge(status, apt) {
+        if (status === 'completed') {
+            const isRated = apt.rating_id !== null;
+            if (isRated) {
+                return (
+                    <button
+                        onClick={() => setRatingAppointment(apt)}
+                        className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 hover:bg-green-200 transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                        ✓ Értékelve
+                    </button>
+                );
+            }
+            return (
+                <button
+                    onClick={() => setRatingAppointment(apt)}
+                    className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors cursor-pointer"
+                >
+                    ★ Értékelem
+                </button>
+            );
+        }
         const statusMap = {
             scheduled: { text: 'Várható', className: 'bg-blue-100 text-blue-800' },
-            completed: { text: 'Elvégezve', className: 'bg-green-100 text-green-800' },
             canceled: { text: 'Lemondva', className: 'bg-red-100 text-red-800' },
             no_show: { text: 'Nem jelent meg', className: 'bg-orange-100 text-orange-800' }
         };
@@ -230,7 +252,7 @@ export default function AppointmentsTab({ user, setActiveTab }) {
                                     </div>
                                 </div>
                                 <div className="flex flex-col items-end gap-2 mt-4 md:mt-0 w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0 border-gray-100">
-                                    {getStatusBadge(apt.status)}
+                                    {getStatusBadge(apt.status, apt)}
                                     <p className="text-xl font-bold text-gray-900">{apt.price} Ft</p>
                                     {apt.status === 'scheduled' && (
                                         <button
@@ -247,6 +269,18 @@ export default function AppointmentsTab({ user, setActiveTab }) {
                     )}
                 </div>
             </div>
+
+            {/* Rating Modal */}
+            {ratingAppointment && (
+                <RatingModal
+                    appointment={ratingAppointment}
+                    onClose={() => setRatingAppointment(null)}
+                    onSaved={() => {
+                        loadAppointments();
+                        loadTopRatedSalons?.();
+                    }}
+                />
+            )}
         </div>
     );
 }

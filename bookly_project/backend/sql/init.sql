@@ -111,13 +111,20 @@ CREATE TABLE IF NOT EXISTS appointments (
 CREATE TABLE IF NOT EXISTS ratings(
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
   `user_id` INT NOT NULL,
+  `appointment_id` INT NOT NULL,
   `salon_id` INT NOT NULL,
-  `rating` INT CHECK (rating >= 1 AND rating <= 5),
-  `comment` TEXT,
+  `provider_id` INT NOT NULL,
+  `salon_rating` INT CHECK (salon_rating >= 1 AND salon_rating <= 5),
+  `provider_rating` INT CHECK (provider_rating >= 1 AND provider_rating <= 5),
+  `salon_comment` TEXT,
+  `provider_comment` TEXT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `active` BOOLEAN DEFAULT TRUE,
   FOREIGN KEY (user_id) REFERENCES users(id),
-  FOREIGN KEY (salon_id) REFERENCES salons(id)
+  FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE CASCADE,
+  FOREIGN KEY (salon_id) REFERENCES salons(id),
+  FOREIGN KEY (provider_id) REFERENCES providers(id),
+  UNIQUE KEY unique_appointment_rating (appointment_id)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 CREATE TABLE IF NOT EXISTS saved_salons(

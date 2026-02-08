@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const AuthMiddleware = require('./auth/AuthMiddleware');
-const { getUserById, updateUserProfile, updateUserPassword, getUserPasswordHash, checkEmailExists, deleteUser, restoreUser, getUserDataForExport } = require('../sql/users');
+const { getUserById, updateUserProfile, updateUserPassword, getUserPasswordHash, checkEmailExists, deleteUser, restoreUser, getUserDataForExport, createRating, getRatingByAppointment } = require('../sql/users');
 const { 
     getSavedSalonsByUserId, 
     saveSalon, 
@@ -358,6 +358,60 @@ router.delete('/saved-salons/:salonId', AuthMiddleware, async (req, res) => {
     }
 });
 
+// --- Rating endpoints ---
+
+// Submit or update a rating
+router.post('/ratings', AuthMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { appointmentId, salonId, providerId, salonRating, providerRating, salonComment, providerComment } = req.body;
+
+        if (!appointmentId || !salonId || !providerId || !salonRating || !providerRating) {
+            return res.status(400).json({ success: false, message: 'Missing required fields' });
+        }
+
+        if (salonRating < 1 || salonRating > 5 || providerRating < 1 || providerRating > 5) {
+            return res.status(400).json({ success: false, message: 'Ratings must be between 1 and 5' });
+        }
+
+        // Verify the appointment belongs to this user and is completed
+        const appointment = await getAppointmentById(appointmentId);
+        if (!appointment || appointment.user_id !== userId) {
+            return res.status(403).json({ success: false, message: 'Appointment not found or not yours' });
+        }
+        if (appointment.status !== 'completed') {
+            return res.status(400).json({ success: false, message: 'Only completed appointments can be rated' });
+        }
+
+        await createRating(userId, appointmentId, salonId, providerId, salonRating, providerRating, salonComment, providerComment);
+
+        res.status(200).json({ success: true, message: 'Értékelés mentve!' });
+    } catch (error) {
+        console.error('Create rating error:', error);
+        res.status(500).json({ success: false, message: 'Server error while saving rating' });
+    }
+});
+
+// Get rating for a specific appointment
+router.get('/ratings/appointment/:appointmentId', AuthMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const appointmentId = parseInt(req.params.appointmentId);
+
+        const rating = await getRatingByAppointment(appointmentId);
+
+        // Verify rating belongs to this user
+        if (rating && rating.user_id !== userId) {
+            return res.status(403).json({ success: false, message: 'Not authorized' });
+        }
+
+        res.status(200).json({ success: true, rating: rating });
+    } catch (error) {
+        console.error('Get rating error:', error);
+        res.status(500).json({ success: false, message: 'Server error while fetching rating' });
+    }
+});
+
 // Export user data
 router.get('/export-data', AuthMiddleware, async (req, res) => {
     try {
@@ -515,7 +569,7 @@ router.get('/visited-salons', AuthMiddleware, async (req, res) => {
                 MAX(a.appointment_start) as last_visit,
                 COUNT(DISTINCT a.id) as visit_count,
                 (
-                    SELECT COALESCE(AVG(r.rating), 0)
+                    SELECT COALESCE(AVG(r.salon_rating), 0)
                     FROM ratings r
                     WHERE r.salon_id = sal.id AND r.active = TRUE
                 ) as average_rating,
