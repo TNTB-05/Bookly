@@ -19,13 +19,14 @@ CREATE TABLE IF NOT EXISTS RefTokens(
 CREATE TABLE IF NOT EXISTS users (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
   `name` VARCHAR(255),
-  `email` VARCHAR(255) UNIQUE NOT NULL,
-  `phone` VARCHAR(20) UNIQUE ,
+  `email` VARCHAR(255) UNIQUE,
+  `phone` VARCHAR(20) UNIQUE,
   `address` VARCHAR(255),
   `status` ENUM('active', 'inactive', 'deleted', 'banned') DEFAULT 'inactive',
   `role` ENUM('user', 'employee', 'admin', 'customer') DEFAULT 'user',
   `last_login` DATETIME,
-  `password_hash` VARCHAR(255) NOT NULL,
+  `password_hash` VARCHAR(255),
+  `deleted_at` TIMESTAMP NULL DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 

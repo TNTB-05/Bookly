@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const AuthMiddleware = require('./auth/AuthMiddleware');
-const { getUserById, updateUserProfile, updateUserPassword, getUserPasswordHash, checkEmailExists, deleteUser } = require('../sql/users');
+const { getUserById, updateUserProfile, updateUserPassword, getUserPasswordHash, checkEmailExists, deleteUser, restoreUser, getUserDataForExport } = require('../sql/users');
 const { 
     getSavedSalonsByUserId, 
     saveSalon, 
@@ -61,7 +61,8 @@ router.get('/profile', AuthMiddleware, async (req, res) => {
                 address: user.address,
                 role: user.role,
                 status: user.status,
-                created_at: user.created_at
+                created_at: user.created_at,
+                deleted_at: user.deleted_at || null
             }
         });
     } catch (error) {
@@ -357,6 +358,51 @@ router.delete('/saved-salons/:salonId', AuthMiddleware, async (req, res) => {
     }
 });
 
+// Export user data
+router.get('/export-data', AuthMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const userData = await getUserDataForExport(userId);
+        
+        res.status(200).json({
+            success: true,
+            data: userData
+        });
+    } catch (error) {
+        console.error('Export data error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while exporting data'
+        });
+    }
+});
+
+// Restore deleted account (within grace period)
+router.post('/restore-account', AuthMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        
+        const restored = await restoreUser(userId);
+        if (!restored) {
+            return res.status(400).json({
+                success: false,
+                message: 'Nem lehet visszaállítani a fiókot. A törlési határidő (30 nap) lejárt, vagy a fiók nem törölt állapotban van.'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Fiók sikeresen visszaállítva. Kérjük, töltsd ki a profilodat.'
+        });
+    } catch (error) {
+        console.error('Restore account error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while restoring account'
+        });
+    }
+});
+
 // Delete user account
 router.delete('/account', AuthMiddleware, async (req, res) => {
     try {
@@ -396,7 +442,27 @@ router.delete('/account', AuthMiddleware, async (req, res) => {
             });
         }
 
-        // Delete the user
+        // Cancel all scheduled appointments
+        await pool.execute(
+            `UPDATE appointments 
+             SET status = 'canceled' 
+             WHERE user_id = ? AND status = 'scheduled'`,
+            [userId]
+        );
+
+        // Delete saved salons
+        await pool.execute(
+            'DELETE FROM saved_salons WHERE user_id = ?',
+            [userId]
+        );
+
+        // Delete refresh tokens
+        await pool.execute(
+            'DELETE FROM RefTokens WHERE user_id = ?',
+            [userId]
+        );
+
+        // Soft delete the user (anonymize data)
         const deleted = await deleteUser(userId);
         if (!deleted) {
             return res.status(500).json({

@@ -9,9 +9,8 @@ import Provlanding from './modules/Provider/ProvLanding'
 import './App.css' 
 import { useState, useEffect } from 'react'
 import { AuthContext, getUserFromToken } from './modules/auth/auth'
-import Dashboard from './modules/costumer/Dashboard/Dashboard'
-import DashboardTest from './modules/costumer/Dashboard/DashboardTest';
-import SalonModal from './modules/costumer/Dashboard/SalonModal';
+import Dashboard from './modules/customer/Dashboard/Dashboard'
+import SalonModal from './modules/customer/Dashboard/SalonModal';
 import ProtectedRoute from './modules/auth/ProtectedRoute'
 
 function App() {

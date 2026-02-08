@@ -148,6 +148,14 @@ router.post('/login', async (request, response) => {
             });
         }
 
+        // Check if user account is deleted or banned
+        if (user.status === 'banned') {
+            return response.status(403).json({
+                success: false,
+                message: 'Account is no longer active'
+            });
+        }
+
         // Generate both access and refresh tokens
         const { accessToken, refreshToken } = generateTokens(email, user.id, user.name);
 
@@ -264,7 +272,7 @@ router.post('/refresh', async (request, response) => {
                 [tokenRecord.user_id]
             );
 
-            if (users.length === 0 || users[0].status === 'deleted' || users[0].status === 'banned') {
+            if (users.length === 0 || users[0].status === 'banned') {
                 // Remove invalid token
                 await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
                 response.clearCookie('refreshToken');
