@@ -86,6 +86,7 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
                 setAvatarError(data.message || 'Hiba történt a kép feltöltésekor');
             }
         } catch (error) {
+            console.error('Avatar upload error:', error);
             setAvatarError('Hiba történt a kép feltöltésekor');
         } finally {
             setAvatarUploading(false);

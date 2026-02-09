@@ -298,4 +298,75 @@ router.get('/salon/:id', async (req, res) => {
     }
 });
 
+// Search salons by name without location requirement
+router.get('/by-name', async (req, res) => {
+    try {
+        const { query, service_type } = req.query;
+
+        if (!query && !service_type) {
+            return res.status(400).json({
+                success: false,
+                message: 'query or service_type parameter required'
+            });
+        }
+
+        let salons = [];
+
+        if (query) {
+            const searchTerm = query.trim().toLowerCase();
+            const salonQuery = `
+                SELECT s.id, s.name, s.address, s.type, s.description, s.banner_color, s.logo_url, s.banner_image_url,
+                       COALESCE(AVG(r.salon_rating), 0) as average_rating,
+                       COUNT(DISTINCT r.id) as rating_count
+                FROM salons s
+                LEFT JOIN ratings r ON s.id = r.salon_id AND r.active = TRUE
+                WHERE s.status = 'open' 
+                AND LOWER(s.name) LIKE ?
+                GROUP BY s.id
+                ORDER BY average_rating DESC, rating_count DESC
+            `;
+            [salons] = await database.pool.execute(salonQuery, [`%${searchTerm}%`]);
+        } else if (service_type) {
+            const salonQuery = `
+                SELECT s.id, s.name, s.address, s.type, s.description, s.banner_color, s.logo_url, s.banner_image_url,
+                       COALESCE(AVG(r.salon_rating), 0) as average_rating,
+                       COUNT(DISTINCT r.id) as rating_count
+                FROM salons s
+                LEFT JOIN ratings r ON s.id = r.salon_id AND r.active = TRUE
+                WHERE s.status = 'open' 
+                AND s.type = ?
+                GROUP BY s.id
+                ORDER BY average_rating DESC, rating_count DESC
+            `;
+            [salons] = await database.pool.execute(salonQuery, [service_type]);
+        }
+
+        // Get providers for each salon
+        const salonsWithProviders = await Promise.all(
+            salons.map(async (salon) => {
+                const providers = await database.getProvidersBySalonId(salon.id);
+                const services = await database.getServicesBySalonId(salon.id);
+                return {
+                    ...salon,
+                    providers,
+                    services
+                };
+            })
+        );
+
+        return res.status(200).json({
+            success: true,
+            results_count: salonsWithProviders.length,
+            salons: salonsWithProviders
+        });
+    } catch (error) {
+        console.error('Search by name error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'problem searching salons by name',
+            error: error.message
+        });
+    }
+});
+
 module.exports = router;

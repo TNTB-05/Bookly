@@ -99,6 +99,26 @@ export async function authFetch(url, options={}){
     let accessToken= localStorage.getItem('accessToken');
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     
+    // Check if token is expired before sending request
+    if (accessToken) {
+        try {
+            const decoded = jwtDecode(accessToken);
+            const currentTime = Date.now() / 1000;
+            
+            if (decoded.exp < currentTime) {
+                // Token expired, refresh proactively
+                accessToken = await refreshAccessToken();
+                if (!accessToken) {
+                    window.location.href = '/login';
+                    throw new Error('Session expired. Please log in again.');
+                }
+            }
+        } catch (error) {
+            console.error('Token validation error:', error);
+            accessToken = null;
+        }
+    }
+    
     const headers={
         ...options.headers,
     };
@@ -120,12 +140,18 @@ export async function authFetch(url, options={}){
         if(!isRefreshing){
             isRefreshing=true;
             const newToken= await refreshAccessToken();
-            isRefreshing=false;
             
-        
+            // Notify queued requests before resetting flag
             if(newToken){
                 onRefresh(newToken);
-
+            } else {
+                onRefresh(null);
+            }
+            
+            // Reset flag AFTER queue is cleared to prevent race condition
+            isRefreshing=false;
+            
+            if(newToken){
                 headers['Authorization']= 'Bearer '+newToken;
 
                 response = await fetch(`${apiUrl}${url}`,{
@@ -136,7 +162,6 @@ export async function authFetch(url, options={}){
                 
             }
             else{
-                onRefresh(null);
                 window.location.href='/login';
                 throw new Error('Session expired. Please log in again.');
             }

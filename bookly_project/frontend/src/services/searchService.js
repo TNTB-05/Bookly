@@ -85,21 +85,19 @@ export async function searchSalons({ searchQuery, locationSearch, serviceFilter,
         // CASE 1, 2, 4: No location - search all salons
         // ==========================================
         if (hasSearchQuery || hasServiceFilter) {
-            // Fetch all salons (using Budapest with large radius as workaround)
-            const requestBody = {
-                place: 'Budapest, Hungary',
-                radius_km: 100 // Large radius to get all salons
-            };
-
-            // Add service filter if selected (Case 2 & 4)
+            // Use direct name/type search endpoint (no location required)
+            const params = new URLSearchParams();
+            
+            if (hasSearchQuery) {
+                params.append('query', searchQuery.trim());
+            }
             if (hasServiceFilter) {
-                requestBody.service_name = serviceFilter;
+                params.append('service_type', serviceFilter);
             }
 
-            const response = await fetch(`${API_BASE_URL}/api/search/nearby`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody)
+            const response = await fetch(`${API_BASE_URL}/api/search/by-name?${params.toString()}`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
             });
 
             const data = await response.json();
@@ -107,11 +105,12 @@ export async function searchSalons({ searchQuery, locationSearch, serviceFilter,
             if (data.success) {
                 let salons = data.salons;
 
-                // Filter by salon name if provided (Case 1 & 4)
-                if (hasSearchQuery) {
+                // If both search query and service filter are provided, filter further
+                if (hasSearchQuery && hasServiceFilter) {
                     const searchLower = searchQuery.toLowerCase();
                     salons = salons.filter((salon) => 
-                        salon.name.toLowerCase().includes(searchLower)
+                        salon.name.toLowerCase().includes(searchLower) &&
+                        salon.type === serviceFilter
                     );
                 }
 
@@ -125,6 +124,8 @@ export async function searchSalons({ searchQuery, locationSearch, serviceFilter,
                     banner_color: salon.banner_color,
                     logo_url: salon.logo_url,
                     banner_image_url: salon.banner_image_url,
+                    average_rating: salon.average_rating,
+                    rating_count: salon.rating_count,
                     providers: salon.providers,
                     services: salon.services
                 }));
