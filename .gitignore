@@ -1,3 +1,9 @@
 # macOS system files
 **/.DS_Store
 .DS_Store
+
+# Uploads folder - ignore all uploaded files
+bookly_project/backend/uploads/profiles/*
+bookly_project/backend/uploads/salons/*
+!bookly_project/backend/uploads/profiles/.gitkeep
+!bookly_project/backend/uploads/salons/.gitkeep

@@ -25,20 +25,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-//!Refresh token store (in production, use database)
-const refreshTokenStore = new Map();
-
-// Clean up expired refresh tokens every hour
-setInterval(() => {
-    const now = Date.now();
-    const sevenDays = 7 * 24 * 60 * 60 * 1000;
-    
-    for (const [token, data] of refreshTokenStore.entries()) {
-        if (now - data.createdAt > sevenDays) {
-            refreshTokenStore.delete(token);
-        }
-    }
-}, 60 * 60 * 1000); // Run every hour
 
 //!Endpoints:
 

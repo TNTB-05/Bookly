@@ -51,6 +51,7 @@ async function getProvidersBySalonId(salonId) {
             p.role, 
             p.isManager, 
             p.created_at,
+            p.profile_picture_url,
             COALESCE(AVG(r.provider_rating), 0) as average_rating,
             COUNT(r.id) as rating_count
         FROM providers p
@@ -104,13 +105,16 @@ async function getTopRatedSalons(limit = 10) {
             s.address,
             s.type,
             s.description,
+            s.banner_color,
+            s.logo_url,
+            s.banner_image_url,
             COALESCE(AVG(r.salon_rating), 0) as average_rating,
             COUNT(r.id) as rating_count
         FROM salons s
         LEFT JOIN ratings r ON s.id = r.salon_id AND r.active = TRUE
         WHERE s.status = 'open'
         GROUP BY s.id
-        ORDER BY average_rating DESC, rating_count DESC
+        ORDER BY average_rating DESC, rating_count DESC, s.created_at DESC
         LIMIT ${limitValue}
     `;
     const [rows] = await pool.query(query);
