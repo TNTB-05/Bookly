@@ -19,13 +19,14 @@ CREATE TABLE IF NOT EXISTS RefTokens(
 CREATE TABLE IF NOT EXISTS users (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
   `name` VARCHAR(255),
-  `email` VARCHAR(255) UNIQUE NOT NULL,
-  `phone` VARCHAR(20) UNIQUE ,
+  `email` VARCHAR(255) UNIQUE,
+  `phone` VARCHAR(20) UNIQUE,
   `address` VARCHAR(255),
   `status` ENUM('active', 'inactive', 'deleted', 'banned') DEFAULT 'inactive',
   `role` ENUM('user', 'employee', 'admin', 'customer') DEFAULT 'user',
   `last_login` DATETIME,
-  `password_hash` VARCHAR(255) NOT NULL,
+  `password_hash` VARCHAR(255),
+  `deleted_at` TIMESTAMP NULL DEFAULT NULL,
   `profile_picture_url` VARCHAR(500) DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
@@ -113,13 +114,20 @@ CREATE TABLE IF NOT EXISTS appointments (
 CREATE TABLE IF NOT EXISTS ratings(
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
   `user_id` INT NOT NULL,
+  `appointment_id` INT NOT NULL,
   `salon_id` INT NOT NULL,
-  `rating` INT CHECK (rating >= 1 AND rating <= 5),
-  `comment` TEXT,
+  `provider_id` INT NOT NULL,
+  `salon_rating` INT CHECK (salon_rating >= 1 AND salon_rating <= 5),
+  `provider_rating` INT CHECK (provider_rating >= 1 AND provider_rating <= 5),
+  `salon_comment` TEXT,
+  `provider_comment` TEXT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `active` BOOLEAN DEFAULT TRUE,
   FOREIGN KEY (user_id) REFERENCES users(id),
-  FOREIGN KEY (salon_id) REFERENCES salons(id)
+  FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE CASCADE,
+  FOREIGN KEY (salon_id) REFERENCES salons(id),
+  FOREIGN KEY (provider_id) REFERENCES providers(id),
+  UNIQUE KEY unique_appointment_rating (appointment_id)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 CREATE TABLE IF NOT EXISTS saved_salons(

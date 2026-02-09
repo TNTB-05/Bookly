@@ -40,9 +40,23 @@ async function getSalonById(salonId) {
 
 async function getProvidersBySalonId(salonId) {
     const query = `
-        SELECT id, salon_id, name, email, phone, description, status, role, isManager, profile_picture_url, created_at
-        FROM providers
-        WHERE salon_id = ? AND status = 'active'
+        SELECT 
+            p.id, 
+            p.salon_id, 
+            p.name, 
+            p.email, 
+            p.phone, 
+            p.description, 
+            p.status, 
+            p.role, 
+            p.isManager, 
+            p.created_at,
+            COALESCE(AVG(r.provider_rating), 0) as average_rating,
+            COUNT(r.id) as rating_count
+        FROM providers p
+        LEFT JOIN ratings r ON p.id = r.provider_id AND r.active = TRUE
+        WHERE p.salon_id = ? AND p.status = 'active'
+        GROUP BY p.id
     `;
     const [rows] = await pool.execute(query, [salonId]);
     return rows;
@@ -90,10 +104,7 @@ async function getTopRatedSalons(limit = 10) {
             s.address,
             s.type,
             s.description,
-            s.banner_color,
-            s.logo_url,
-            s.banner_image_url,
-            COALESCE(AVG(r.rating), 0) as average_rating,
+            COALESCE(AVG(r.salon_rating), 0) as average_rating,
             COUNT(r.id) as rating_count
         FROM salons s
         LEFT JOIN ratings r ON s.id = r.salon_id AND r.active = TRUE
@@ -112,7 +123,7 @@ async function getSavedSalonsByUserId(userId) {
         SELECT s.id, s.name, s.address, s.phone, s.email, s.type, s.description, 
                s.latitude, s.longitude, s.status, s.banner_color, s.logo_url, s.banner_image_url, s.created_at,
                ss.created_at as saved_at,
-               COALESCE(AVG(r.rating), 0) as average_rating,
+               COALESCE(AVG(r.salon_rating), 0) as average_rating,
                COUNT(DISTINCT r.id) as rating_count
         FROM saved_salons ss
         INNER JOIN salons s ON ss.salon_id = s.id
@@ -203,11 +214,15 @@ async function getUserAppointments(userId) {
             s.duration_minutes,
             sal.id as salon_id,
             sal.name as salon_name,
-            sal.address as salon_address
+            sal.address as salon_address,
+            r.id as rating_id,
+            r.salon_rating,
+            r.provider_rating
         FROM appointments a
         JOIN providers p ON a.provider_id = p.id
         JOIN services s ON a.service_id = s.id
         JOIN salons sal ON p.salon_id = sal.id
+        LEFT JOIN ratings r ON a.id = r.appointment_id
         WHERE a.user_id = ?
         ORDER BY a.appointment_start DESC
     `;

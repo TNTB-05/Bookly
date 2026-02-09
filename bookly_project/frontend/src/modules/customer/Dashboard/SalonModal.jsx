@@ -39,11 +39,36 @@ export default function SalonModal() {
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [booking, setBooking] = useState(false);
     const [bookingResult, setBookingResult] = useState(null);
+    const [userProfile, setUserProfile] = useState(null);
+    const [loadingUser, setLoadingUser] = useState(true);
 
     // Szalon adatok betöltése
     useEffect(() => {
         loadSalonDetails();
+        loadUserProfile();
     }, [salonId]);
+
+    // Load user profile
+    async function loadUserProfile() {
+        try {
+            setLoadingUser(true);
+            const response = await authApi.get('/api/user/profile');
+            const data = await response.json();
+            if (data.success) {
+                setUserProfile(data.user);
+            }
+        } catch (error) {
+            console.error('Hiba a profil betöltésekor:', error);
+        } finally {
+            setLoadingUser(false);
+        }
+    }
+
+    // Check if user profile is complete (active)
+    function isUserActive() {
+        if (!userProfile) return false;
+        return userProfile.name && userProfile.email && userProfile.phone;
+    }
 
     // ESC billentyű kezelése
     useEffect(() => {
@@ -482,6 +507,22 @@ export default function SalonModal() {
                                                 {provider.role && (
                                                     <p className="text-sm text-gray-500">{provider.role}</p>
                                                 )}
+                                                {provider.average_rating > 0 ? (
+                                                    <div className="flex items-center text-yellow-400 text-sm mt-1">
+                                                        <span className="tracking-wide">
+                                                            {'★'.repeat(Math.round(provider.average_rating))}
+                                                            {'☆'.repeat(5 - Math.round(provider.average_rating))}
+                                                        </span>
+                                                        <span className="text-gray-700 text-xs ml-1 font-medium">
+                                                            {Number(provider.average_rating).toFixed(2)}
+                                                        </span>
+                                                        <span className="text-gray-400 text-xs ml-1">
+                                                            ({provider.rating_count})
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-gray-400 mt-1">Még nincs értékelés</p>
+                                                )}
                                                 <p className="text-sm text-indigo-600 mt-1">
                                                     {provider.services?.length || 0} szolgáltatás
                                                 </p>
@@ -752,13 +793,27 @@ export default function SalonModal() {
                 {/* Footer */}
                 <div className="shrink-0 bg-white border-t border-gray-200 px-6 py-4">
                     {currentStep === STEPS.SALON_INFO && (
-                        <button
-                            onClick={startBooking}
-                            disabled={!salon.providers || salon.providers.length === 0}
-                            className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Időpontfoglalás
-                        </button>
+                        <div className="space-y-2">
+                            {!isUserActive() && (
+                                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+                                    <p className="font-semibold mb-1">Profil kitöltése szükséges</p>
+                                    <p>Az időpontfoglaláshoz add meg a neved, email címed és telefonszámod a profilodban.</p>
+                                    <button
+                                        onClick={() => navigate('/dashboard?tab=profile')}
+                                        className="mt-2 text-indigo-600 font-medium hover:text-indigo-700 underline"
+                                    >
+                                        Profil szerkesztése →
+                                    </button>
+                                </div>
+                            )}
+                            <button
+                                onClick={startBooking}
+                                disabled={!salon.providers || salon.providers.length === 0 || !isUserActive()}
+                                className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Időpontfoglalás
+                            </button>
+                        </div>
                     )}
                     
                     {currentStep === STEPS.SELECT_DATETIME && (

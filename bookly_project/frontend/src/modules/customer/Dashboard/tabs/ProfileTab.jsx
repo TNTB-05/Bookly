@@ -41,8 +41,10 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
     // Fiók törlés modal állapotok
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deletePassword, setDeletePassword] = useState('');
+    const [deleteConfirmText, setDeleteConfirmText] = useState('');
     const [deleteError, setDeleteError] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [exportLoading, setExportLoading] = useState(false);
 
     // Profilkép állapotok
     const [avatarUploading, setAvatarUploading] = useState(false);
@@ -292,9 +294,39 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
         }
     }
 
+    // Adatok exportálása
+    async function handleExportData() {
+        setExportLoading(true);
+        try {
+            const response = await authApi.get('/api/user/export-data');
+            const data = await response.json();
+
+            if (data.success) {
+                // Create downloadable JSON file
+                const blob = new Blob([JSON.stringify(data.data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `bookly-data-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } else {
+                alert('Hiba történt az adatok exportálása során');
+            }
+        } catch (error) {
+            console.error('Export error:', error);
+            alert('Hiba történt az adatok exportálása során');
+        } finally {
+            setExportLoading(false);
+        }
+    }
+
     // Fiók törlés modal megnyitása
     function openDeleteModal() {
         setDeletePassword('');
+        setDeleteConfirmText('');
         setDeleteError(null);
         setShowDeleteModal(true);
     }
@@ -303,6 +335,11 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
     async function handleDeleteAccount() {
         if (!deletePassword) {
             setDeleteError('A jelszó megadása kötelező a fiók törléséhez');
+            return;
+        }
+
+        if (deleteConfirmText !== 'TÖRLÉS') {
+            setDeleteError('Kérjük, írd be a "TÖRLÉS" szót a megerősítéshez');
             return;
         }
 
@@ -466,12 +503,30 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
                 <div className="bg-red-50 px-6 py-4 border-b border-red-200 flex justify-between items-center">
                     <h2 className="text-lg font-medium text-red-800">Veszélyzóna</h2>
                 </div>
-                <div className="p-6">
+                <div className="p-6 space-y-4">
+                    <div className="flex items-center justify-between pb-4 border-b border-gray-200">
+                        <div>
+                            <h3 className="text-gray-900 font-medium">Adatok exportálása</h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Töltsd le az összes adatodat JSON formátumban.
+                            </p>
+                        </div>
+                        <button
+                            onClick={handleExportData}
+                            disabled={exportLoading}
+                            className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                            {exportLoading ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                            ) : null}
+                            Adatok letöltése
+                        </button>
+                    </div>
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="text-gray-900 font-medium">Fiók törlése</h3>
                             <p className="text-sm text-gray-500 mt-1">
-                                A fiók törlése végleges és nem visszavonható. Minden adat elvész.
+                                A fiók törlése után 30 napod van a visszaállításra.
                             </p>
                         </div>
                         <button
@@ -777,24 +832,42 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
                                 </div>
                             )}
 
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <div className="flex items-start gap-3">
+                                    <div className="text-blue-600 mt-0.5 shrink-0">
+                                        <AlertCircleIcon />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-blue-800 font-medium">30 napos visszaállítási időszak</h4>
+                                        <p className="text-blue-700 text-sm mt-1">
+                                            A fiók törlése után 30 napig van lehetőséged újra aktiválni azt. 
+                                            Ez idő alatt nem tudsz bejelentkezni, de az adataid megőrződnek. 
+                                            30 nap elteltével a fiók véglegesen törlődik.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                                 <div className="flex items-start gap-3">
                                     <div className="text-yellow-600 mt-0.5 shrink-0">
                                         <WarningIcon />
                                     </div>
                                     <div>
-                                        <h4 className="text-yellow-800 font-medium">Figyelmeztetés!</h4>
-                                        <p className="text-yellow-700 text-sm mt-1">
-                                            Ez a művelet véglegesen törli a fiókodat és minden kapcsolódó adatot. 
-                                            Ez a folyamat nem visszavonható!
-                                        </p>
+                                        <h4 className="text-yellow-800 font-medium">Mi történik a fiókoddal?</h4>
+                                        <ul className="text-yellow-700 text-sm mt-2 space-y-1 list-disc list-inside">
+                                            <li>Minden foglalásod automatikusan törlődik</li>
+                                            <li>Mentett helyeid törlődnek</li>
+                                            <li>Személyes adataid anonimizálódnak</li>
+                                            <li>Nem tudsz bejelentkezni 30 napig</li>
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Add meg a jelszavad a megerősítéshez *
+                                    Jelszavad *
                                 </label>
                                 <input
                                     type="password"
@@ -802,6 +875,19 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
                                     onChange={(e) => setDeletePassword(e.target.value)}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
                                     placeholder="••••••••"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Írd be a "TÖRLÉS" szót a megerősítéshez *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={deleteConfirmText}
+                                    onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                                    placeholder="TÖRLÉS"
                                 />
                             </div>
                         </div>
