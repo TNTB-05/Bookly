@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const AuthMiddleware = require('./auth/AuthMiddleware');
-const { getUserById, updateUserProfile, updateUserPassword, getUserPasswordHash, checkEmailExists, deleteUser, restoreUser, getUserDataForExport, createRating, getRatingByAppointment } = require('../sql/users');
+const { getUserById, updateUserProfile, updateUserPassword, getUserPasswordHash, checkEmailExists, deleteUser, restoreUser, createRating, getRatingByAppointment } = require('../sql/users');
 const { 
     getSavedSalonsByUserId, 
     saveSalon, 
@@ -463,25 +463,6 @@ router.get('/ratings/appointment/:appointmentId', AuthMiddleware, async (req, re
     } catch (error) {
         console.error('Get rating error:', error);
         res.status(500).json({ success: false, message: 'Server error while fetching rating' });
-    }
-});
-
-// Export user data
-router.get('/export-data', AuthMiddleware, async (req, res) => {
-    try {
-        const userId = req.user.userId;
-        const userData = await getUserDataForExport(userId);
-        
-        res.status(200).json({
-            success: true,
-            data: userData
-        });
-    } catch (error) {
-        console.error('Export data error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Server error while exporting data'
-        });
     }
 });
 

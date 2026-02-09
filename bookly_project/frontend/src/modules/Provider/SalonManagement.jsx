@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { authApi } from '../auth/auth';
+import AddressInput from './AddressInput';
 
 const PRESET_COLORS = [
     '#3B82F6', '#1E40AF', '#6366F1', '#8B5CF6', '#A855F7',
@@ -353,13 +354,12 @@ const SalonManagement = () => {
 
                         <div className="flex flex-col">
                             <label className="mb-2 font-medium text-gray-700">Address *</label>
-                            <input
-                                type="text"
-                                name="address"
-                                value={formData.address || ''}
-                                onChange={handleInputChange}
-                                required
-                                className="p-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-blue-500"
+                            <AddressInput
+                                initialAddress={formData.address || ''}
+                                initialLat={formData.latitude}
+                                initialLng={formData.longitude}
+                                onChange={(addr, lat, lng) => setFormData(prev => ({ ...prev, address: addr, latitude: lat, longitude: lng }))}
+                                required={true}
                             />
                         </div>
 

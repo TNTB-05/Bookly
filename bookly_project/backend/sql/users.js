@@ -79,40 +79,6 @@ const restoreUser = async (userId) => {
     return result.affectedRows > 0;
 };
 
-const getUserDataForExport = async (userId) => {
-    const user = await getUserById(userId);
-    
-    // Get appointments
-    const [appointments] = await pool.execute(
-        `SELECT a.appointment_start, a.appointment_end, a.comment, a.price, a.status, 
-         sal.name AS salon_name, p.name AS provider_name, s.name AS service_name 
-         FROM appointments a
-         JOIN providers p ON a.provider_id = p.id
-         JOIN services s ON a.service_id = s.id
-         JOIN salons sal ON p.salon_id = sal.id
-         WHERE a.user_id = ?
-         ORDER BY a.appointment_start DESC`,
-        [userId]
-    );
-    
-    // Get saved salons
-    const [savedSalons] = await pool.execute(
-        `SELECT s.id, s.name, s.address, s.type
-         FROM saved_salons ss
-         JOIN salons s ON ss.salon_id = s.id
-         WHERE ss.user_id = ?
-         ORDER BY ss.created_at DESC`,
-        [userId]
-    );
-    
-    return {
-        profile: user,
-        appointments: appointments,
-        savedSalons: savedSalons,
-        exportDate: new Date().toISOString()
-    };
-};
-
 const permanentlyDeleteUser = async (userId) => {
     // Hard delete user (called after grace period)
     const query = 'DELETE FROM users WHERE id = ?';
@@ -153,7 +119,6 @@ module.exports = {
     checkEmailExists,
     deleteUser,
     restoreUser,
-    getUserDataForExport,
     permanentlyDeleteUser,
     createRating,
     getRatingByAppointment

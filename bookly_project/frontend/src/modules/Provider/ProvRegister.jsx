@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AddressInput from './AddressInput';
 
 // Steps: 'choice' -> 'joinSalon' or 'createSalon' -> 'userRegistration'
 const STEPS = {
@@ -36,6 +37,8 @@ export default function ProvRegister() {
     const [salonData, setSalonData] = useState({
         companyName: '',
         address: '',
+        latitude: null,
+        longitude: null,
         description: '',
         salonType: ''
     });
@@ -68,7 +71,7 @@ export default function ProvRegister() {
     }
 
     function validateSalonData() {
-        const { companyName, address, description, salonType } = salonData;
+        const { companyName, address, description, salonType, latitude, longitude } = salonData;
         if (!companyName.trim() || !address.trim() || !description.trim() || !salonType) {
             setError('Minden mező kitöltése kötelező');
             return false;
@@ -77,8 +80,8 @@ export default function ProvRegister() {
             setError('A cégnév legalább 2 karakter hosszú kell legyen');
             return false;
         }
-        if (address.trim().length < 5) {
-            setError('Kérjük adjon meg érvényes címet');
+        if (!latitude || !longitude) {
+            setError('Kérjük, válassz egy érvényes címet a listából a pontos helymeghatározáshoz');
             return false;
         }
         if (description.trim().length < 10) {
@@ -201,7 +204,9 @@ export default function ProvRegister() {
                     companyName: salonData.companyName.trim(),
                     address: salonData.address.trim(),
                     description: salonData.description.trim(),
-                    salonType: salonData.salonType
+                    salonType: salonData.salonType,
+                    latitude: salonData.latitude,
+                    longitude: salonData.longitude
                 };
             }
 
@@ -404,16 +409,13 @@ export default function ProvRegister() {
                     <label htmlFor="address" className="block text-sm font-medium text-gray-900 mb-1.5">
                         Cím
                     </label>
-                    <input
-                        type="text"
-                        id="address"
-                        value={salonData.address}
-                        onChange={(e) => setSalonData({...salonData, address: e.target.value})}
-                        className="w-full px-4 py-2.5 bg-white/60 backdrop-blur-sm border-2 border-white/50 rounded-lg 
-                                 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent
-                                 text-gray-900 placeholder-gray-500 transition-all"
-                        placeholder="1234 Budapest, Példa utca 1."
+                    <AddressInput
+                        initialAddress={salonData.address}
+                        initialLat={salonData.latitude}
+                        initialLng={salonData.longitude}
+                        onChange={(addr, lat, lng) => setSalonData({...salonData, address: addr, latitude: lat, longitude: lng})}
                         disabled={loading}
+                        required={true}
                     />
                 </div>
 

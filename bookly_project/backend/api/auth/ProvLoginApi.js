@@ -195,15 +195,19 @@ router.post('/register', async (request, response) => {
             }
 
             // Geocode the address to get coordinates
-            let latitude = null;
-            let longitude = null;
-            try {
-                const coords = await locationService.placeToCoordinate(salon.address.trim());
-                latitude = coords.latitude;
-                longitude = coords.longitude;
-            } catch (geocodeError) {
-                console.warn('Geocoding failed for address:', salon.address, geocodeError.message);
-                // Continue without coordinates - they can be added later
+            // Use coordinates from frontend if provided, otherwise try server-side geocoding
+            let latitude = salon.latitude || null;
+            let longitude = salon.longitude || null;
+            
+            if (!latitude || !longitude) {
+                try {
+                    const coords = await locationService.placeToCoordinate(salon.address.trim());
+                    latitude = coords.latitude;
+                    longitude = coords.longitude;
+                } catch (geocodeError) {
+                    console.warn('Geocoding failed for address:', salon.address, geocodeError.message);
+                    // Continue without coordinates - they can be added later
+                }
             }
 
             // Create new salon with coordinates

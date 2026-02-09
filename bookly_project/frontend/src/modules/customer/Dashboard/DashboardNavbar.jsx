@@ -7,7 +7,7 @@ import Logo from '../../Logo';
 // Ikonok
 import ProfileIcon from '../../../icons/ProfileIcon';
 import ExitIcon from '../../../icons/ExitIcon';
-import SettingsIcon from '../../../icons/SettingsIcon';
+
 
 // Navigációs sáv komponens - desktop és mobil nézet
 export default function DashboardNavbar({ activeTab, setActiveTab, user, userProfile }) {
@@ -115,19 +115,6 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                                             </div>
                                             Profil
                                         </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setIsDropdownOpen(false);
-                                                setTimeout(() => setActiveTab('settings'), 10);
-                                            }}
-                                            className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-dark-blue rounded-lg transition-colors flex items-center gap-3"
-                                        >
-                                            <div className="w-5 h-5">
-                                                <SettingsIcon />
-                                            </div>
-                                            Beállítások
-                                        </button>
                                         <div className="border-t border-gray-200 my-1"></div>
                                         <button
                                             onClick={async (e) => {
@@ -190,19 +177,6 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                                                 <ProfileIcon />
                                             </div>
                                             Profil
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setIsDropdownOpen(false);
-                                                setTimeout(() => setActiveTab('settings'), 10);
-                                            }}
-                                            className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-dark-blue rounded-lg transition-colors flex items-center gap-3"
-                                        >
-                                            <div className="w-5 h-5">
-                                                <SettingsIcon />
-                                            </div>
-                                            Beállítások
                                         </button>
                                         <div className="border-t border-gray-200 my-1"></div>
                                         <button

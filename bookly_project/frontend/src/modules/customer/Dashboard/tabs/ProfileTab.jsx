@@ -44,7 +44,6 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
     const [deleteError, setDeleteError] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
-    const [exportLoading, setExportLoading] = useState(false);
 
     // Profilkép állapotok
     const [avatarUploading, setAvatarUploading] = useState(false);
@@ -295,35 +294,6 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
         }
     }
 
-    // Adatok exportálása
-    async function handleExportData() {
-        setExportLoading(true);
-        try {
-            const response = await authApi.get('/api/user/export-data');
-            const data = await response.json();
-
-            if (data.success) {
-                // Create downloadable JSON file
-                const blob = new Blob([JSON.stringify(data.data, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `bookly-data-${new Date().toISOString().split('T')[0]}.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            } else {
-                alert('Hiba történt az adatok exportálása során');
-            }
-        } catch (error) {
-            console.error('Export error:', error);
-            alert('Hiba történt az adatok exportálása során');
-        } finally {
-            setExportLoading(false);
-        }
-    }
-
     // Fiók törlés modal megnyitása
     function openDeleteModal() {
         setDeletePassword('');
@@ -499,30 +469,12 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
                 </div>
             </div>
 
-            {/* Delete Account Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-red-200 overflow-hidden max-w-3xl">
-                <div className="bg-red-50 px-6 py-4 border-b border-red-200 flex justify-between items-center">
-                    <h2 className="text-lg font-medium text-red-800">Veszélyzóna</h2>
+            {/* Fiók műveletek */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden max-w-3xl">
+                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 className="text-lg font-medium text-gray-800">Fiók műveletek</h2>
                 </div>
-                <div className="p-6 space-y-4">
-                    <div className="flex items-center justify-between pb-4 border-b border-gray-200">
-                        <div>
-                            <h3 className="text-gray-900 font-medium">Adatok exportálása</h3>
-                            <p className="text-sm text-gray-500 mt-1">
-                                Töltsd le az összes adatodat JSON formátumban.
-                            </p>
-                        </div>
-                        <button
-                            onClick={handleExportData}
-                            disabled={exportLoading}
-                            className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                        >
-                            {exportLoading ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                            ) : null}
-                            Adatok letöltése
-                        </button>
-                    </div>
+                <div className="p-6">
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="text-gray-900 font-medium">Fiók törlése</h3>
