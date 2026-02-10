@@ -10,6 +10,7 @@ import ServicesIcon from '../../icons/ServicesIcon';
 import SalonIcon from '../../icons/SalonIcon';
 import SalonManagement from './SalonManagement';
 import { getUserFromToken } from '../auth/auth';
+import TimeSpinner from '../../components/TimeSpinner';
 
 // Section Components
 const OverviewSection = () => {
@@ -274,6 +275,10 @@ const CalendarSection = () => {
 
     // Handle opening create modal
     const handleOpenCreateModal = () => {
+        // Create a Date object for the default time (opening hour)
+        const defaultTime = new Date();
+        defaultTime.setHours(workingHours.openingHour, 0, 0, 0);
+        
         setCreateFormData({
             is_guest: false,
             user_email: '',
@@ -302,6 +307,13 @@ const CalendarSection = () => {
 
         if (createFormData.is_guest && !createFormData.user_email && !createFormData.user_phone) {
             alert('Vendég foglaláshoz legalább email vagy telefonszám szükséges!');
+            return;
+        }
+
+        // Validate appointment time is within salon hours
+        const [hours, minutes] = createFormData.appointment_time.split(':').map(Number);
+        if (hours < workingHours.openingHour || hours >= workingHours.closingHour) {
+            alert('Az időpont a szalon nyitvatartási idején kívül esik!');
             return;
         }
 
@@ -792,12 +804,12 @@ const CalendarSection = () => {
 
             {/* Create Appointment Modal */}
             {showCreateModal && createPortal(
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                     <div 
                         className="fixed inset-0 bg-black/50 backdrop-blur-sm"
                         onClick={() => setShowCreateModal(false)}
                     ></div>
-                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md my-8 max-h-[calc(100vh-4rem)] overflow-y-auto">
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md my-8 max-h-[90vh] overflow-y-auto">
                         <div className="p-6 border-b border-gray-100">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xl font-bold text-dark-blue">Új Időpont Létrehozása</h3>
@@ -912,11 +924,11 @@ const CalendarSection = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Időpont *</label>
-                                    <input
-                                        type="time"
+                                    <TimeSpinner
                                         value={createFormData.appointment_time}
-                                        onChange={(e) => setCreateFormData({ ...createFormData, appointment_time: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dark-blue focus:border-transparent"
+                                        onChange={(timeString) => setCreateFormData({ ...createFormData, appointment_time: timeString })}
+                                        minHour={workingHours.openingHour}
+                                        maxHour={workingHours.closingHour}
                                     />
                                 </div>
                             </div>

@@ -9,5 +9,15 @@
         --color-dark-gray: #2D2D2D;
 };
 
+/* Hide scrollbar while maintaining scroll functionality */
+.scrollbar-none {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-none::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+}
+
 @import "./typography.css";
 

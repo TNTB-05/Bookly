@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../sql/database.js');
+const { pool, getSalonHoursByProviderId } = require('../sql/database.js');
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
 const { requireRole } = require('./auth/RoleMiddleware.js');
 
@@ -310,6 +310,26 @@ router.post('/appointments', async (request, response) => {
         const service = services[0];
         let userId = null;
 
+        // Fetch salon hours to validate appointment time
+        const salonHours = await getSalonHoursByProviderId(providerId);
+        const openingHour = salonHours?.opening_hours || 8;
+        const closingHour = salonHours?.closing_hours || 20;
+
+        // Parse appointment start datetime
+        const appointmentStart = new Date(`${appointment_date}T${appointment_time}`);
+        
+        // Calculate end time based on service duration
+        const appointmentEnd = new Date(appointmentStart.getTime() + service.duration_minutes * 60000);
+
+        // Validate appointment is within salon hours
+        const startHour = appointmentStart.getHours();
+        if (startHour < openingHour || startHour >= closingHour) {
+            return response.status(400).json({
+                success: false,
+                message: 'Az időpont a szalon nyitvatartási idején kívül esik'
+            });
+        }
+
         // Handle registered user vs guest
         if (is_guest) {
             // Guest booking - no user_id needed
@@ -355,12 +375,6 @@ router.post('/appointments', async (request, response) => {
                 userId = result.insertId;
             }
         }
-
-        // Parse appointment start datetime
-        const appointmentStart = new Date(`${appointment_date}T${appointment_time}`);
-        
-        // Calculate end time based on service duration
-        const appointmentEnd = new Date(appointmentStart.getTime() + service.duration_minutes * 60000);
 
         // Check for conflicts
         const [conflicts] = await pool.query(
