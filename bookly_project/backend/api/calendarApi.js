@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { pool, getSalonHoursByProviderId } = require('../sql/database.js');
+const { pool, getSalonHoursByProviderId, getExpandedTimeBlocksForDate } = require('../sql/database.js');
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
 const { requireRole } = require('./auth/RoleMiddleware.js');
 
@@ -401,6 +401,22 @@ router.post('/appointments', async (request, response) => {
             return response.status(409).json({
                 success: false,
                 message: 'Ez az időpont már foglalt'
+            });
+        }
+
+        // Check for time block conflicts
+        const dateStr = appointmentStart.toISOString().split('T')[0];
+        const timeBlocks = await getExpandedTimeBlocksForDate(providerId, dateStr);
+        const hasTimeBlockConflict = timeBlocks.some(block => {
+            const blockStart = new Date(block.start_datetime);
+            const blockEnd = new Date(block.end_datetime);
+            return appointmentStart < blockEnd && appointmentEnd > blockStart;
+        });
+
+        if (hasTimeBlockConflict) {
+            return response.status(409).json({
+                success: false,
+                message: 'Időpont foglalás ütközik a szolgáltató szünetével'
             });
         }
 

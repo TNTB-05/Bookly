@@ -8,9 +8,13 @@ import OverviewIcon from '../../icons/OverviewIcon';
 import CalendarIcon from '../../icons/CalendarIcon';
 import ServicesIcon from '../../icons/ServicesIcon';
 import SalonIcon from '../../icons/SalonIcon';
+import HourIcon from '../../icons/HourIcon';
 import SalonManagement from './SalonManagement';
+import AvailabilityManagement from './AvailabilityManagement';
 import { getUserFromToken } from '../auth/auth';
 import TimeSpinner from '../../components/TimeSpinner';
+import TimeBlockModal from './TimeBlockModal';
+import { timeBlocksService } from '../../services/timeBlocksService';
 
 // Section Components
 const OverviewSection = () => {
@@ -198,6 +202,12 @@ const CalendarSection = () => {
     // Working hours state (fetched from database)
     const [workingHours, setWorkingHours] = useState({ openingHour: 8, closingHour: 20 });
 
+    // Time blocks state
+    const [timeBlocks, setTimeBlocks] = useState([]);
+    const [showTimeBlockModal, setShowTimeBlockModal] = useState(false);
+    const [selectedTimeBlock, setSelectedTimeBlock] = useState(null);
+    const [toast, setToast] = useState(null);
+
     // Derived timeline constants
     const START_HOUR = workingHours.openingHour;
     const END_HOUR = workingHours.closingHour;
@@ -250,6 +260,25 @@ const CalendarSection = () => {
         }
     }, [currentDate]);
 
+    // Fetch time blocks for the current month
+    const fetchTimeBlocks = useCallback(async () => {
+        try {
+            const { startDate, endDate } = getMonthRange(currentDate);
+            const data = await timeBlocksService.getTimeBlocks(startDate, endDate);
+            if (data.success) {
+                setTimeBlocks(data.timeBlocks);
+            }
+        } catch (error) {
+            console.error('Error fetching time blocks:', error);
+        }
+    }, [currentDate]);
+
+    // Toast notification helper
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
     // Fetch working hours on mount
     useEffect(() => {
         fetchWorkingHours();
@@ -258,7 +287,8 @@ const CalendarSection = () => {
 
     useEffect(() => {
         fetchAppointments();
-    }, [fetchAppointments]);
+        fetchTimeBlocks();
+    }, [fetchAppointments, fetchTimeBlocks]);
 
     // Fetch services for dropdown
     const fetchServices = async () => {
@@ -342,6 +372,43 @@ const CalendarSection = () => {
             const aptDate = new Date(apt.appointment_start);
             return aptDate.toDateString() === date.toDateString();
         });
+    };
+
+    // Get time blocks for selected date
+    const getTimeBlocksForDate = (date) => {
+        return timeBlocks.filter(block => {
+            const blockDate = new Date(block.start_datetime);
+            return blockDate.toDateString() === date.toDateString();
+        });
+    };
+
+    // Calculate time block position and height for timeline (same logic as appointments)
+    const getTimeBlockStyle = (block) => {
+        const start = new Date(block.start_datetime);
+        const end = new Date(block.end_datetime);
+        
+        const startMinutes = start.getHours() * 60 + start.getMinutes();
+        const endMinutes = end.getHours() * 60 + end.getMinutes();
+        
+        const topOffset = startMinutes - (START_HOUR * 60);
+        const duration = endMinutes - startMinutes;
+        
+        return {
+            top: `${topOffset * MINUTES_PER_PIXEL}px`,
+            height: `${Math.max(duration * MINUTES_PER_PIXEL, 20)}px`,
+        };
+    };
+
+    // Handle time block click
+    const handleTimeBlockClick = (block) => {
+        setSelectedTimeBlock(block);
+        setShowTimeBlockModal(true);
+    };
+
+    // Handle time block saved
+    const handleTimeBlockSaved = () => {
+        fetchTimeBlocks();
+        showToast('Szünet sikeresen mentve');
     };
 
     // Calculate appointment position and height for timeline
@@ -476,17 +543,26 @@ const CalendarSection = () => {
 
     const calendarDays = generateCalendarDays();
     const todayAppointments = getAppointmentsForDate(selectedDate);
+    const todayTimeBlocks = getTimeBlocksForDate(selectedDate);
 
     return (
         <div className="space-y-4 sm:space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-xl sm:text-2xl font-bold text-dark-blue">Naptár</h2>
-                <button 
-                    onClick={handleOpenCreateModal}
-                    className="px-4 py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors shadow-md text-sm"
-                >
-                    + Új Időpont
-                </button>
+                <div className="flex gap-2">
+                    <button 
+                        onClick={() => { setSelectedTimeBlock(null); setShowTimeBlockModal(true); }}
+                        className="px-4 py-2 bg-gray-500 text-white rounded-xl font-medium hover:bg-gray-600 transition-colors shadow-md text-sm"
+                    >
+                        + Szünet
+                    </button>
+                    <button 
+                        onClick={handleOpenCreateModal}
+                        className="px-4 py-2 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors shadow-md text-sm"
+                    >
+                        + Új Időpont
+                    </button>
+                </div>
             </div>
             
             <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
@@ -572,6 +648,7 @@ const CalendarSection = () => {
                             </h3>
                             <p className="text-xs sm:text-sm text-gray-600 mt-1">
                                 {todayAppointments.filter(a => a.status !== 'canceled').length} foglalás
+                                {todayTimeBlocks.length > 0 && ` · ${todayTimeBlocks.length} szünet`}
                             </p>
                         </div>
 
@@ -621,12 +698,32 @@ const CalendarSection = () => {
                                         ))}
                                         
                                         {/* Appointments */}
-                                        {todayAppointments.length === 0 ? (
+                                        {todayAppointments.length === 0 && todayTimeBlocks.length === 0 ? (
                                             <div className="absolute inset-0 flex items-center justify-center">
                                                 <p className="text-gray-400 text-sm">Nincs foglalás erre a napra</p>
                                             </div>
                                         ) : (
-                                            todayAppointments.map((apt) => {
+                                            <>
+                                            {/* Time Blocks - grayed background */}
+                                            {todayTimeBlocks.map((block, index) => {
+                                                const style = getTimeBlockStyle(block);
+                                                return (
+                                                    <button
+                                                        key={`block-${block.id}-${index}`}
+                                                        onClick={() => handleTimeBlockClick(block)}
+                                                        className="absolute left-0 right-0 rounded-lg transition-all overflow-hidden hover:opacity-80 active:scale-[0.99] cursor-pointer z-[1]"
+                                                        style={style}
+                                                    >
+                                                        <div className="w-full h-full bg-gray-300/60 border border-gray-400/40 border-dashed rounded-lg flex items-center justify-center px-2">
+                                                            <p className="text-[10px] sm:text-xs text-gray-600 font-medium truncate">
+                                                                {block.notes || 'Szünet'}
+                                                            </p>
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                            {/* Appointment blocks */}
+                                            {todayAppointments.map((apt) => {
                                                 const style = getAppointmentStyle(apt);
                                                 return (
                                                     <button
@@ -657,7 +754,8 @@ const CalendarSection = () => {
                                                         </div>
                                                     </button>
                                                 );
-                                            })
+                                            })}
+                                            </>
                                         )}
                                     </div>
                                 </div>
@@ -666,6 +764,25 @@ const CalendarSection = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Toast Notification */}
+            {toast && (
+                <div className={`fixed bottom-6 right-6 z-[9999] px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white transition-all animate-fade-in ${
+                    toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+                }`}>
+                    {toast.message}
+                </div>
+            )}
+
+            {/* Time Block Modal */}
+            <TimeBlockModal
+                isOpen={showTimeBlockModal}
+                onClose={() => { setShowTimeBlockModal(false); setSelectedTimeBlock(null); }}
+                onSaved={handleTimeBlockSaved}
+                block={selectedTimeBlock}
+                workingHours={workingHours}
+                selectedDate={selectedDate}
+            />
 
             {/* Appointment Detail Modal */}
             {showModal && selectedAppointment && createPortal(
@@ -1571,6 +1688,7 @@ export default function ProvDash() {
             case 'overview': return <OverviewSection />;
             case 'calendar': return <CalendarSection />;
             case 'services': return <ServicesSection />;
+            case 'availability': return <AvailabilityManagement />;
             case 'salon': return <SalonManagement />;
             default: return <OverviewSection />;
         }
@@ -1637,6 +1755,13 @@ export default function ProvDash() {
                     />
                     <NavButton 
                         activeTab={activeTab} 
+                        tabId="availability" 
+                        label="Elérhetőség" 
+                        icon={<HourIcon />} 
+                        onClick={setActiveTab} 
+                    />
+                    <NavButton 
+                        activeTab={activeTab} 
                         tabId="salon" 
                         label="Szalon kezelés" 
                         icon={<SalonIcon />} 
@@ -1674,6 +1799,14 @@ export default function ProvDash() {
                         tabId="services" 
                         label="Szolgáltatások" 
                         icon={<ServicesIcon />} 
+                        onClick={setActiveTab} 
+                        isMobile={true}
+                    />
+                    <NavButton 
+                        activeTab={activeTab} 
+                        tabId="availability" 
+                        label="Elérhetőség" 
+                        icon={<HourIcon />} 
                         onClick={setActiveTab} 
                         isMobile={true}
                     />

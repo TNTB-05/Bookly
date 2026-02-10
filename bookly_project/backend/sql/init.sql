@@ -140,6 +140,22 @@ CREATE TABLE IF NOT EXISTS saved_salons(
   UNIQUE KEY unique_user_salon (user_id, salon_id)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
+CREATE TABLE IF NOT EXISTS provider_time_blocks(
+  `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+  `provider_id` INT NOT NULL,
+  `start_datetime` DATETIME NOT NULL,
+  `end_datetime` DATETIME NOT NULL,
+  `is_recurring` BOOLEAN DEFAULT FALSE,
+  `recurrence_pattern` ENUM('daily', 'weekly') DEFAULT NULL,
+  `recurrence_days` JSON DEFAULT NULL,
+  `recurrence_end_date` DATE DEFAULT NULL,
+  `notes` TEXT,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE CASCADE,
+  INDEX idx_provider_start (provider_id, start_datetime),
+  INDEX idx_provider_end (provider_id, end_datetime)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
+
 
 
 -- Optional: Insert sample data (seed)
