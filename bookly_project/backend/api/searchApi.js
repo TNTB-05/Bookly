@@ -310,36 +310,32 @@ router.get('/by-name', async (req, res) => {
             });
         }
 
-        let salons = [];
+        // Build WHERE conditions dynamically
+        let whereConditions = ['s.status = ?'];
+        let queryParams = ['open'];
 
         if (query) {
-            const searchTerm = query.trim().toLowerCase();
-            const salonQuery = `
-                SELECT s.id, s.name, s.address, s.type, s.description, s.banner_color, s.logo_url, s.banner_image_url,
-                       COALESCE(AVG(r.salon_rating), 0) as average_rating,
-                       COUNT(DISTINCT r.id) as rating_count
-                FROM salons s
-                LEFT JOIN ratings r ON s.id = r.salon_id AND r.active = TRUE
-                WHERE s.status = 'open' 
-                AND LOWER(s.name) LIKE ?
-                GROUP BY s.id
-                ORDER BY average_rating DESC, rating_count DESC
-            `;
-            [salons] = await database.pool.execute(salonQuery, [`%${searchTerm}%`]);
-        } else if (service_type) {
-            const salonQuery = `
-                SELECT s.id, s.name, s.address, s.type, s.description, s.banner_color, s.logo_url, s.banner_image_url,
-                       COALESCE(AVG(r.salon_rating), 0) as average_rating,
-                       COUNT(DISTINCT r.id) as rating_count
-                FROM salons s
-                LEFT JOIN ratings r ON s.id = r.salon_id AND r.active = TRUE
-                WHERE s.status = 'open' 
-                AND s.type = ?
-                GROUP BY s.id
-                ORDER BY average_rating DESC, rating_count DESC
-            `;
-            [salons] = await database.pool.execute(salonQuery, [service_type]);
+            whereConditions.push('LOWER(s.name) LIKE ?');
+            queryParams.push(`%${query.trim().toLowerCase()}%`);
         }
+
+        if (service_type) {
+            whereConditions.push('s.type = ?');
+            queryParams.push(service_type);
+        }
+
+        const salonQuery = `
+            SELECT s.id, s.name, s.address, s.type, s.description, s.banner_color, s.logo_url, s.banner_image_url,
+                   COALESCE(AVG(r.salon_rating), 0) as average_rating,
+                   COUNT(DISTINCT r.id) as rating_count
+            FROM salons s
+            LEFT JOIN ratings r ON s.id = r.salon_id AND r.active = TRUE
+            WHERE ${whereConditions.join(' AND ')}
+            GROUP BY s.id
+            ORDER BY average_rating DESC, rating_count DESC
+        `;
+
+        const [salons] = await database.pool.execute(salonQuery, queryParams);
 
         // Get providers for each salon
         const salonsWithProviders = await Promise.all(

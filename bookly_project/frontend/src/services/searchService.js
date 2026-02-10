@@ -103,19 +103,8 @@ export async function searchSalons({ searchQuery, locationSearch, serviceFilter,
             const data = await response.json();
 
             if (data.success) {
-                let salons = data.salons;
-
-                // If both search query and service filter are provided, filter further
-                if (hasSearchQuery && hasServiceFilter) {
-                    const searchLower = searchQuery.toLowerCase();
-                    salons = salons.filter((salon) => 
-                        salon.name.toLowerCase().includes(searchLower) &&
-                        salon.type === serviceFilter
-                    );
-                }
-
-                // Return salons without distance info
-                return salons.map((salon) => ({
+                // Return salons without distance info (backend already filtered by both query and service_type)
+                return data.salons.map((salon) => ({
                     id: salon.id,
                     name: salon.name,
                     address: salon.address,
