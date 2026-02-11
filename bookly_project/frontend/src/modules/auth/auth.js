@@ -152,6 +152,19 @@ export async function authFetch(url, options={}){
         credentials: 'include', // Send cookies with request
     });
 
+    // Handle 403 - banned/deleted account: force logout
+    if(response.status===403){
+        localStorage.removeItem('accessToken');
+        try {
+            const errorData = await response.clone().json();
+            if(errorData.banned){
+                alert('A fiókod le lett tiltva vagy törölve. Kijelentkeztetés...');
+            }
+        } catch(e) { /* ignore parse error */ }
+        window.location.href = '/';
+        throw new Error('Account banned or deleted');
+    }
+
     if(response.status===401){
         if(!isRefreshing){
             isRefreshing=true;

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import Logo from '../../modules/Logo';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth';
-import { authApi } from '../auth/auth';
+import { authApi, logout } from '../auth/auth';
 import OverviewIcon from '../../icons/OverviewIcon';
 import CalendarIcon from '../../icons/CalendarIcon';
 import ServicesIcon from '../../icons/ServicesIcon';
@@ -54,7 +54,8 @@ const OverviewSection = () => {
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
+            timeZone: 'Europe/Budapest'
         });
     };
 
@@ -1677,7 +1678,8 @@ export default function ProvDash() {
         };
     }, [dropdownRef]);
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        await logout();
         localStorage.removeItem('accessToken');
         setIsAuthenticated(false);
         navigate('/');

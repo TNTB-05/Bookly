@@ -136,10 +136,11 @@ router.post('/login', async (request, response) => {
         }
 
         // Check if user account is deleted or banned
-        if (user.status === 'banned') {
+        if (user.status === 'banned' || user.status === 'deleted') {
             return response.status(403).json({
                 success: false,
-                message: 'Account is no longer active'
+                message: 'A fiók le van tiltva vagy törölve',
+                banned: true
             });
         }
 
@@ -288,12 +289,12 @@ router.post('/refresh', async (request, response) => {
                 [tokenRecord.user_id]
             );
 
-            if (users.length === 0 || users[0].status === 'banned') {
+            if (users.length === 0 || users[0].status === 'banned' || users[0].status === 'deleted') {
                 await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
                 response.clearCookie('refreshToken');
                 return response.status(401).json({
                     success: false,
-                    message: 'User account is no longer active'
+                    message: 'A fiók le van tiltva vagy törölve'
                 });
             }
         }
@@ -341,11 +342,6 @@ router.post('/logout', async (request, response) => {
         try {
             // Decode token to get user/provider ID
             const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-            
-            // Clear the foreign key reference in providers table if applicable
-            if (decoded.role === 'provider') {
-                await pool.query('UPDATE providers SET refresh_token_id = NULL WHERE id = ?', [decoded.userId]);
-            }
             
             // Delete the token from RefTokens table
             const [result] = await pool.query('DELETE FROM RefTokens WHERE refresh_token = ?', [refreshToken]);
