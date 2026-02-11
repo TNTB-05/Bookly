@@ -7,12 +7,13 @@ CREATE DATABASE IF NOT EXISTS bookly_db
 
 USE bookly_db;
 
--- Create RefTokens table first (no dependencies)
-CREATE TABLE IF NOT EXISTS RefTokens(
+-- Admins table (separate from users for security)
+CREATE TABLE IF NOT EXISTS admins (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-  `user_id` INT NULL,
-  `provider_id` INT NULL,
-  `refresh_token` TEXT NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) UNIQUE NOT NULL,
+  `password_hash` VARCHAR(255) NOT NULL,
+  `last_login` DATETIME,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
@@ -23,18 +24,13 @@ CREATE TABLE IF NOT EXISTS users (
   `phone` VARCHAR(20) UNIQUE,
   `address` VARCHAR(255),
   `status` ENUM('active', 'inactive', 'deleted', 'banned') DEFAULT 'inactive',
-  `role` ENUM('user', 'employee', 'admin', 'customer') DEFAULT 'user',
+  `role` ENUM('user', 'employee', 'customer') DEFAULT 'user',
   `last_login` DATETIME,
   `password_hash` VARCHAR(255),
   `deleted_at` TIMESTAMP NULL DEFAULT NULL,
   `profile_picture_url` VARCHAR(500) DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
-
-
--- Add foreign key constraint to RefTokens after users table is created
-ALTER TABLE RefTokens ADD FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-
 
 CREATE TABLE IF NOT EXISTS salons (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -70,15 +66,9 @@ CREATE TABLE IF NOT EXISTS providers (
   `last_login` DATETIME,
   `password_hash` VARCHAR(255) NOT NULL,
   `profile_picture_url` VARCHAR(500) DEFAULT NULL,
-  `refresh_token_id` INT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  -- rating DECIMAL(2,1) DEFAULT 0.0 - consider adding later
-  FOREIGN KEY (salon_id) REFERENCES salons(id),
-  FOREIGN KEY (refresh_token_id) REFERENCES RefTokens(id)
+  FOREIGN KEY (salon_id) REFERENCES salons(id)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
-
--- Add foreign key constraint to RefTokens after providers table is created
-ALTER TABLE RefTokens ADD FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS services (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -156,9 +146,37 @@ CREATE TABLE IF NOT EXISTS provider_time_blocks(
   INDEX idx_provider_end (provider_id, end_datetime)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
+-- System logs table for audit trail
+CREATE TABLE IF NOT EXISTS system_logs (
+  `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+  `level` ENUM('INFO', 'WARN', 'CRITICAL') DEFAULT 'INFO',
+  `action` VARCHAR(100) NOT NULL,
+  `actor_type` ENUM('admin', 'user', 'provider', 'system') DEFAULT 'system',
+  `actor_id` INT NULL,
+  `target_type` VARCHAR(50) NULL,
+  `target_id` INT NULL,
+  `details` TEXT,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_action (action),
+  INDEX idx_created_at (created_at),
+  INDEX idx_level (level)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
+
+-- RefTokens table (created last to reference users, providers, and admins)
+CREATE TABLE IF NOT EXISTS RefTokens(
+  `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+  `user_id` INT NULL,
+  `provider_id` INT NULL,
+  `admin_id` INT NULL,
+  `refresh_token` TEXT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE CASCADE,
+  FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 
--- Optional: Insert sample data (seed)
+-- Insert sample data
 
 -- Insert test salons
 INSERT INTO salons (name, address, phone, email, type, description, latitude, longitude, sharecode, status, banner_color, logo_url) VALUES 
@@ -177,11 +195,16 @@ INSERT INTO salons (name, address, phone, email, type, description, latitude, lo
   ('Elegance Hair Lounge', 'Oktogon tér 2, Budapest', '2022345678', 'book@elegancelounge.hu', 'fodrász', 'Premium hair care in the heart of Budapest', 47.5055, 19.0635, 'ELEG01', 'open', '#D946EF', NULL),
   ('Pure Bliss Spa', 'Vörösmarty tér 5, Budapest', '2023456789', 'spa@purebliss.hu', 'szépségszalon', 'Escape to tranquility with our signature treatments', 47.4960, 19.0510, 'PURE01', 'open', '#22C55E', NULL);
 
+-- Insert admin user (separate table for security)
+-- Password for admin@bookly.com is: admin123
+INSERT INTO admins (name, email, password_hash) VALUES 
+  ('Admin User', 'admin@bookly.com', '$2b$10$FnPTtKtmz1H0n8YYxuvdRO0GHUd9C94yvktvThkyYwQk72f0Xsa8S');
+
 -- Insert test users
 INSERT INTO users (name, email, phone, address, status, role, password_hash) VALUES 
   ('John Doe', 'john.doe@example.com', '1234567890', '123 Main St, Budapest', 'active', 'user', '$2a$10$hashedpassword1'),
   ('Jane Smith', 'jane.smith@example.com', '0987654321', '456 Oak Ave, Budapest', 'active', 'user', '$2a$10$hashedpassword2'),
-  ('Admin User', 'admin@bookly.com', '1122334455', '789 Admin Rd, Budapest', 'active', 'admin', '$2a$10$hashedpassword3'),
+  ('Demo User', 'demo@example.com', '1122334455', '789 Demo Rd, Budapest', 'active', 'customer', '$2a$10$hashedpassword3'),
   ('Test User', 'test@example.com', '5544332211', '321 Test Ln, Budapest', 'inactive', 'user', '$2a$10$hashedpassword4');
 
 -- Insert test providers
@@ -211,15 +234,7 @@ INSERT INTO appointments (user_id, provider_id, service_id, appointment_start, a
   (2, 6, 6, '2026-01-22 16:00:00', '2026-01-22 16:30:00', 'Cracked iPhone screen', 7000, 'completed'),
   (1, 4, 4, '2026-01-27 13:00:00', '2026-01-27 14:15:00', 'Anti-aging facial treatment', 9500, 'scheduled');
 
--- Insert test ratings
-INSERT INTO ratings (user_id, salon_id, rating, comment, active) VALUES 
-  (1, 1, 5, 'Excellent service! Very professional and friendly staff. Highly recommend!', TRUE),
-  (2, 1, 4, 'Great haircut, but had to wait a bit longer than expected.', TRUE),
-  (1, 2, 5, 'Amazing massage experience. Anna is very skilled and the atmosphere was perfect.', TRUE),
-  (4, 2, 5, 'Best facial treatment I have ever had. My skin feels amazing!', TRUE),
-  (2, 3, 3, 'Service was okay, but the technician seemed rushed.', TRUE),
-  (1, 3, 4, 'Fixed my laptop quickly and explained the issue clearly. Good value.', TRUE),
-  (4, 1, 5, 'Love my new hair color! Peter did an amazing job with the highlights.', TRUE),
-  (2, 2, 4, 'Very relaxing spa experience. Will definitely come back.', TRUE),
-  (1, 1, 4, 'Good service overall. The salon is clean and modern.', TRUE),
-  (4, 3, 5, 'Eva was super helpful and fixed my phone screen perfectly!', TRUE);
+-- Insert test ratings (must match ratings table schema: appointment_id, provider_id required)
+INSERT INTO ratings (user_id, appointment_id, salon_id, provider_id, salon_rating, provider_rating, salon_comment, provider_comment, active) VALUES 
+  (4, 4, 1, 2, 5, 4, 'Love my new hair color! Peter did an amazing job.', 'Very professional and creative stylist.', TRUE),
+  (2, 5, 3, 6, 4, 5, 'Good repair service, fast turnaround.', 'Eva was super helpful and fixed my phone perfectly!', TRUE);

@@ -25,7 +25,7 @@ export function getUserFromToken() {
             email: decoded.email,
             userId: decoded.userId,
             name: decoded.name,
-            role: decoded.role // 'provider' or 'costumer'
+            role: decoded.role // 'provider', 'customer', or 'admin'
         };
     } catch (error) {
         console.error('Error decoding token:', error);
@@ -95,6 +95,22 @@ function onRefresh(newToken){
 
 }
 
+// Helper to determine correct login page based on current user role
+function getLoginRedirect() {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+        try {
+            const decoded = jwtDecode(token);
+            if (decoded.role === 'admin') return '/admin/login';
+            if (decoded.role === 'provider') return '/provider/login';
+        } catch (e) { /* ignore */ }
+    }
+    // Check current path as fallback
+    if (window.location.pathname.startsWith('/admin')) return '/admin/login';
+    if (window.location.pathname.startsWith('/Prov') || window.location.pathname.startsWith('/provider')) return '/provider/login';
+    return '/login';
+}
+
 export async function authFetch(url, options={}){
     let accessToken= localStorage.getItem('accessToken');
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -109,7 +125,7 @@ export async function authFetch(url, options={}){
                 // Token expired, refresh proactively
                 accessToken = await refreshAccessToken();
                 if (!accessToken) {
-                    window.location.href = '/login';
+                    window.location.href = getLoginRedirect();
                     throw new Error('Session expired. Please log in again.');
                 }
             }
@@ -162,7 +178,7 @@ export async function authFetch(url, options={}){
                 
             }
             else{
-                window.location.href='/login';
+                window.location.href=getLoginRedirect();
                 throw new Error('Session expired. Please log in again.');
             }
         }
@@ -182,7 +198,7 @@ export async function authFetch(url, options={}){
                 });
             }
             else{
-                window.location.href='/login';
+                window.location.href=getLoginRedirect();
                 throw new Error('Session expired. Please log in again.');
             }
         }

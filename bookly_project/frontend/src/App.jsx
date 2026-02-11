@@ -12,6 +12,8 @@ import { AuthContext, getUserFromToken } from './modules/auth/auth'
 import Dashboard from './modules/customer/Dashboard/Dashboard'
 import SalonModal from './modules/customer/Dashboard/SalonModal';
 import ProtectedRoute from './modules/auth/ProtectedRoute'
+import AdminLogin from './modules/Admin/AdminLogin'
+import AdminDashboard from './modules/Admin/AdminDashboard'
 
 function App() {
   const[isAuthenticated,setIsAuthenticated]=useState(!!localStorage.getItem('accessToken'));
@@ -67,6 +69,7 @@ function App() {
         <Route path="/provider/register" element={<ProvRegister />} />
         <Route path="/provider/login" element={<ProvLogin />} />
         <Route path='/provider/landing' element={<Provlanding />} />
+        <Route path='/admin/login' element={<AdminLogin />} />
         
         {/* Protected Customer Routes */}
         <Route 
@@ -92,6 +95,16 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['provider']}>
               <ProvDash />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Protected Admin Routes */}
+        <Route 
+          path="/admin/dashboard" 
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminDashboard />
             </ProtectedRoute>
           } 
         />
