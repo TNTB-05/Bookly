@@ -4,6 +4,7 @@ import Logo from '../../modules/Logo';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth';
 import { authApi } from '../auth/auth';
+import { logout } from '../auth/auth';
 import OverviewIcon from '../../icons/OverviewIcon';
 import CalendarIcon from '../../icons/CalendarIcon';
 import ServicesIcon from '../../icons/ServicesIcon';
@@ -1679,6 +1680,7 @@ export default function ProvDash() {
 
     const handleLogout = () => {
         localStorage.removeItem('accessToken');
+        logout();
         setIsAuthenticated(false);
         navigate('/');
     };
