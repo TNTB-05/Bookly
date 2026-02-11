@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { authApi } from '../auth/auth';
+import RefreshIcon from '../../icons/RefreshIcon';
 
 export default function AppointmentManagement() {
     const [appointments, setAppointments] = useState([]);
@@ -7,6 +8,8 @@ export default function AppointmentManagement() {
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [actionLoading, setActionLoading] = useState(false);
+    const [deleteModal, setDeleteModal] = useState(null); // { appointmentId }
+    const [deleteReason, setDeleteReason] = useState('');
 
     useEffect(() => { fetchAppointments(); }, []);
 
@@ -23,17 +26,21 @@ export default function AppointmentManagement() {
         }
     };
 
-    const handleDelete = async (appointmentId) => {
-        if (!confirm('Biztosan törölni szeretnéd ezt a foglalást? Ez a művelet nem vonható vissza!')) return;
+    const handleDelete = async () => {
+        if (!deleteModal || !deleteReason.trim()) return;
         setActionLoading(true);
         try {
-            const res = await authApi.delete(`/api/admin/appointments/${appointmentId}`);
+            const res = await authApi.delete(`/api/admin/appointments/${deleteModal.appointmentId}`, {
+                body: JSON.stringify({ reason: deleteReason.trim() })
+            });
             const data = await res.json();
             if (data.success) fetchAppointments();
         } catch (err) {
             console.error('Error deleting appointment:', err);
         } finally {
             setActionLoading(false);
+            setDeleteModal(null);
+            setDeleteReason('');
         }
     };
 
@@ -54,8 +61,9 @@ export default function AppointmentManagement() {
             completed: 'bg-green-100 text-green-700',
             canceled: 'bg-red-100 text-red-700',
             no_show: 'bg-gray-100 text-gray-700',
+            deleted: 'bg-red-200 text-red-800',
         };
-        const labels = { scheduled: 'Foglalt', completed: 'Teljesült', canceled: 'Lemondva', no_show: 'Nem jelent meg' };
+        const labels = { scheduled: 'Foglalt', completed: 'Teljesült', canceled: 'Lemondva', no_show: 'Nem jelent meg', deleted: 'Törölve' };
         return (
             <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${map[status] || 'bg-gray-100 text-gray-600'}`}>
                 {labels[status] || status}
@@ -63,7 +71,7 @@ export default function AppointmentManagement() {
         );
     };
 
-    const formatDate = (d) => d ? new Date(d).toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+    const formatDate = (d) => d ? new Date(d).toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Budapest' }) : '—';
     const formatPrice = (p) => new Intl.NumberFormat('hu-HU').format(p || 0) + ' Ft';
 
     if (loading) {
@@ -95,7 +103,15 @@ export default function AppointmentManagement() {
                     <option value="completed">Teljesült</option>
                     <option value="canceled">Lemondva</option>
                     <option value="no_show">Nem jelent meg</option>
+                    <option value="deleted">Törölve</option>
                 </select>
+                <button
+                    onClick={fetchAppointments}
+                    className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-1"
+                >
+                    <RefreshIcon className="w-4 h-4" />
+                    Frissítés
+                </button>
             </div>
 
             {/* Summary */}
@@ -135,7 +151,7 @@ export default function AppointmentManagement() {
                     </thead>
                     <tbody>
                         {filteredAppointments.map(apt => (
-                            <tr key={apt.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                            <tr key={apt.id} className={`border-b border-gray-50 transition-colors ${apt.status === 'deleted' ? 'bg-red-50/60 hover:bg-red-50' : 'hover:bg-gray-50'}`}>
                                 <td className="px-4 py-3 text-xs text-gray-700">{formatDate(apt.appointment_start)}</td>
                                 <td className="px-4 py-3 text-gray-900 font-medium">
                                     {apt.customer_name || apt.guest_name || 'Vendég'}
@@ -145,15 +161,26 @@ export default function AppointmentManagement() {
                                 <td className="px-4 py-3 text-gray-600 text-xs">{apt.salon_name}</td>
                                 <td className="px-4 py-3 text-gray-600">{apt.service_name}</td>
                                 <td className="px-4 py-3 font-medium">{formatPrice(apt.price)}</td>
-                                <td className="px-4 py-3">{statusBadge(apt.status)}</td>
                                 <td className="px-4 py-3">
-                                    <button
-                                        onClick={() => handleDelete(apt.id)}
-                                        disabled={actionLoading}
-                                        className="px-2 py-1 text-xs bg-red-50 text-red-700 rounded hover:bg-red-100 transition-colors"
-                                    >
-                                        Törlés
-                                    </button>
+                                    {statusBadge(apt.status)}
+                                    {apt.status === 'deleted' && apt.deleted_reason && (
+                                        <p className="text-xs text-red-500 mt-0.5 truncate max-w-[150px]" title={apt.deleted_reason}>
+                                            {apt.deleted_reason}
+                                        </p>
+                                    )}
+                                </td>
+                                <td className="px-4 py-3">
+                                    {apt.status !== 'deleted' ? (
+                                        <button
+                                            onClick={() => { setDeleteModal({ appointmentId: apt.id }); setDeleteReason(''); }}
+                                            disabled={actionLoading}
+                                            className="px-2 py-1 text-xs bg-red-50 text-red-700 rounded hover:bg-red-100 transition-colors"
+                                        >
+                                            Törlés
+                                        </button>
+                                    ) : (
+                                        <span className="text-xs text-gray-400">Törölve</span>
+                                    )}
                                 </td>
                             </tr>
                         ))}
@@ -163,6 +190,39 @@ export default function AppointmentManagement() {
                     <div className="p-8 text-center text-gray-400 text-sm">Nincs találat</div>
                 )}
             </div>
+
+            {/* Delete Reason Modal */}
+            {deleteModal && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Foglalás törlése</h3>
+                        <p className="text-sm text-gray-500 mb-4">Kérlek írd le a törlés okát. Ez az információ naplózásra kerül.</p>
+                        <textarea
+                            value={deleteReason}
+                            onChange={e => setDeleteReason(e.target.value)}
+                            placeholder="Törlés oka (kötelező)..."
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500 resize-none"
+                            rows={3}
+                            autoFocus
+                        />
+                        <div className="flex justify-end gap-2 mt-4">
+                            <button
+                                onClick={() => { setDeleteModal(null); setDeleteReason(''); }}
+                                className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                            >
+                                Mégse
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                disabled={!deleteReason.trim() || actionLoading}
+                                className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {actionLoading ? 'Törlés...' : 'Törlés megerősítése'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

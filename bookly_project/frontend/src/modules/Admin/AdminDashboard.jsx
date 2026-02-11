@@ -100,6 +100,7 @@ export default function AdminDashboard() {
         return new Date(dateString).toLocaleDateString('hu-HU', {
             month: 'short',
             day: 'numeric',
+            timeZone: 'Europe/Budapest',
         });
     };
 

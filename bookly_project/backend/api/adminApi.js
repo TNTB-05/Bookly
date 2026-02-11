@@ -147,6 +147,8 @@ router.post('/users/:id/ban', async (req, res) => {
     try {
         const userId = req.params.id;
         await pool.query("UPDATE users SET status = 'banned' WHERE id = ?", [userId]);
+        // Force logout by deleting all refresh tokens
+        await pool.query('DELETE FROM RefTokens WHERE user_id = ?', [userId]);
         await logEvent('WARN', 'USER_BAN', 'admin', req.user.userId, 'user', parseInt(userId), `Admin banned user #${userId}`);
         return res.json({ success: true, message: 'Felhasználó letiltva' });
     } catch (error) {
@@ -164,6 +166,44 @@ router.post('/users/:id/unban', async (req, res) => {
     } catch (error) {
         console.error('[Admin Unban] ERROR:', error);
         return res.status(500).json({ success: false, message: 'Hiba a tiltás feloldása során' });
+    }
+});
+
+// GDPR User Delete - anonymize personal data
+router.post('/users/:id/gdpr-delete', async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const [users] = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
+        if (users.length === 0) return res.status(404).json({ success: false, message: 'Felhasználó nem található' });
+
+        // Delete profile picture file if exists
+        if (users[0].profile_picture_url) {
+            const filePath = path.join(__dirname, '..', users[0].profile_picture_url);
+            try { fs.unlinkSync(filePath); } catch (e) { /* file may not exist */ }
+        }
+
+        // Anonymize user data
+        await pool.query(
+            `UPDATE users SET 
+                name = ?, email = ?, phone = NULL, address = NULL,
+                profile_picture_url = NULL, password_hash = NULL,
+                status = 'deleted'
+            WHERE id = ?`,
+            [`Törölt felhasználó #${userId}`, `deleted_${userId}@removed.local`, userId]
+        );
+
+        // Delete all refresh tokens
+        await pool.query('DELETE FROM RefTokens WHERE user_id = ?', [userId]);
+
+        // Deactivate all ratings by this user
+        await pool.query('UPDATE ratings SET active = FALSE WHERE user_id = ?', [userId]);
+
+        await logEvent('CRITICAL', 'USER_GDPR_DELETE', 'admin', req.user.userId, 'user', parseInt(userId),
+            `Admin performed GDPR deletion for user #${userId} (was: ${users[0].email})`);
+        return res.json({ success: true, message: 'Felhasználó adatai anonimizálva (GDPR törlés)' });
+    } catch (error) {
+        console.error('[Admin GDPR Delete] ERROR:', error);
+        return res.status(500).json({ success: false, message: 'Hiba a GDPR törlés során' });
     }
 });
 
@@ -283,6 +323,32 @@ router.delete('/providers/:id/picture', async (req, res) => {
     }
 });
 
+router.post('/providers/:id/ban', async (req, res) => {
+    try {
+        const providerId = req.params.id;
+        await pool.query("UPDATE providers SET status = 'banned' WHERE id = ?", [providerId]);
+        // Invalidate all refresh tokens for this provider
+        await pool.query('DELETE FROM RefTokens WHERE provider_id = ?', [providerId]);
+        await logEvent('CRITICAL', 'PROVIDER_BAN', 'admin', req.user.userId, 'provider', parseInt(providerId), `Admin banned provider #${providerId}`);
+        return res.json({ success: true, message: 'Szolgáltató letiltva' });
+    } catch (error) {
+        console.error('[Admin Ban Provider] ERROR:', error);
+        return res.status(500).json({ success: false, message: 'Hiba a tiltás során' });
+    }
+});
+
+router.post('/providers/:id/unban', async (req, res) => {
+    try {
+        const providerId = req.params.id;
+        await pool.query("UPDATE providers SET status = 'active' WHERE id = ?", [providerId]);
+        await logEvent('INFO', 'PROVIDER_UNBAN', 'admin', req.user.userId, 'provider', parseInt(providerId), `Admin unbanned provider #${providerId}`);
+        return res.json({ success: true, message: 'Szolgáltató tiltása feloldva' });
+    } catch (error) {
+        console.error('[Admin Unban Provider] ERROR:', error);
+        return res.status(500).json({ success: false, message: 'Hiba a tiltás feloldása során' });
+    }
+});
+
 // ==========================================
 // Salons Management
 // ==========================================
@@ -387,6 +453,43 @@ router.delete('/salons/:id/description', async (req, res) => {
     }
 });
 
+router.put('/salons/:id/status', async (req, res) => {
+    try {
+        const salonId = req.params.id;
+        const { status } = req.body;
+        const validStatuses = ['open', 'closed', 'renovation'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ success: false, message: 'Érvénytelen státusz' });
+        }
+        await pool.query('UPDATE salons SET status = ? WHERE id = ?', [status, salonId]);
+        await logEvent('INFO', 'SALON_STATUS_CHANGE', 'admin', req.user.userId, 'salon', parseInt(salonId), `Admin changed salon #${salonId} status to ${status}`);
+        return res.json({ success: true, message: 'Szalon státusz frissítve' });
+    } catch (error) {
+        console.error('[Admin Salon Status] ERROR:', error);
+        return res.status(500).json({ success: false, message: 'Hiba a státusz frissítése során' });
+    }
+});
+
+// ==========================================
+// Ratings Management
+// ==========================================
+router.delete('/ratings/:id', async (req, res) => {
+    try {
+        const ratingId = req.params.id;
+        const [ratings] = await pool.query('SELECT * FROM ratings WHERE id = ?', [ratingId]);
+        if (ratings.length === 0) return res.status(404).json({ success: false, message: 'Értékelés nem található' });
+        
+        // Soft delete - set active to false
+        await pool.query('UPDATE ratings SET active = FALSE WHERE id = ?', [ratingId]);
+        await logEvent('WARN', 'RATING_DEACTIVATE', 'admin', req.user.userId, 'rating', parseInt(ratingId),
+            `Admin deactivated rating #${ratingId} (salon: ${ratings[0].salon_id}, provider: ${ratings[0].provider_id})`);
+        return res.json({ success: true, message: 'Értékelés deaktiválva' });
+    } catch (error) {
+        console.error('[Admin Delete Rating] ERROR:', error);
+        return res.status(500).json({ success: false, message: 'Hiba az értékelés törlése során' });
+    }
+});
+
 // ==========================================
 // Appointments Management
 // ==========================================
@@ -395,6 +498,7 @@ router.get('/appointments', async (req, res) => {
         const [appointments] = await pool.query(`
             SELECT a.id, a.appointment_start, a.appointment_end, a.status, a.price, a.comment,
                 a.guest_name, a.guest_email, a.guest_phone, a.created_at,
+                a.deleted_reason, a.deleted_at, a.deleted_by,
                 u.name as customer_name, u.email as customer_email,
                 p.name as provider_name, s.name as salon_name, srv.name as service_name
             FROM appointments a
@@ -414,14 +518,21 @@ router.get('/appointments', async (req, res) => {
 router.delete('/appointments/:id', async (req, res) => {
     try {
         const appointmentId = req.params.id;
-        // Fetch appointment info for log before deleting
+        const { reason } = req.body;
+        if (!reason || reason.trim().length === 0) {
+            return res.status(400).json({ success: false, message: 'Törlés indoklása kötelező' });
+        }
         const [appts] = await pool.query('SELECT * FROM appointments WHERE id = ?', [appointmentId]);
         if (appts.length === 0) return res.status(404).json({ success: false, message: 'Foglalás nem található' });
+        if (appts[0].status === 'deleted') return res.status(400).json({ success: false, message: 'Ez a foglalás már törölve van' });
 
-        await pool.query('DELETE FROM appointments WHERE id = ?', [appointmentId]);
-        await logEvent('CRITICAL', 'APPOINTMENT_DELETE', 'admin', req.user.userId, 'appointment', parseInt(appointmentId),
-            `Admin deleted appointment #${appointmentId} (was: ${appts[0].status}, price: ${appts[0].price})`);
-        return res.json({ success: true, message: 'Foglalás törölve' });
+        await pool.query(
+            'UPDATE appointments SET status = ?, deleted_reason = ?, deleted_at = NOW(), deleted_by = ? WHERE id = ?',
+            ['deleted', reason.trim(), req.user.userId, appointmentId]
+        );
+        await logEvent('CRITICAL', 'APPOINTMENT_SOFT_DELETE', 'admin', req.user.userId, 'appointment', parseInt(appointmentId),
+            `Admin soft-deleted appointment #${appointmentId} (was: ${appts[0].status}, price: ${appts[0].price}). Reason: ${reason.trim()}`);
+        return res.json({ success: true, message: 'Foglalás törölve (soft delete)' });
     } catch (error) {
         console.error('[Admin Delete Appointment] ERROR:', error);
         return res.status(500).json({ success: false, message: 'Hiba a foglalás törlése során' });

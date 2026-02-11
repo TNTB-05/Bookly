@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { authApi } from '../auth/auth';
+import RefreshIcon from '../../icons/RefreshIcon';
 
 export default function UserManagement() {
     const [users, setUsers] = useState([]);
@@ -100,6 +101,51 @@ export default function UserManagement() {
         }
     };
 
+    const handleDeleteAppointment = async (appointmentId) => {
+        const reason = prompt('Kérlek add meg a törlés okát:');
+        if (!reason || !reason.trim()) return;
+        try {
+            const res = await authApi.delete(`/api/admin/appointments/${appointmentId}`, {
+                body: JSON.stringify({ reason: reason.trim() })
+            });
+            const data = await res.json();
+            if (data.success && selectedUser) fetchUserDetails(selectedUser.id);
+        } catch (err) {
+            console.error('Error deleting appointment:', err);
+        }
+    };
+
+    const handleDeleteRating = async (ratingId) => {
+        if (!confirm('Biztosan deaktiválod ezt az értékelést?')) return;
+        try {
+            const res = await authApi.delete(`/api/admin/ratings/${ratingId}`);
+            const data = await res.json();
+            if (data.success && selectedUser) fetchUserDetails(selectedUser.id);
+        } catch (err) {
+            console.error('Error deleting rating:', err);
+        }
+    };
+
+    const handleGdprDelete = async (userId) => {
+        if (!confirm('FIGYELEM! Ez a művelet véglegesen anonimizálja a felhasználó összes személyes adatát (GDPR törlés). Ez nem vonható vissza! Biztosan folytatod?')) return;
+        setActionLoading(true);
+        try {
+            const res = await authApi.post(`/api/admin/users/${userId}/gdpr-delete`);
+            const data = await res.json();
+            if (data.success) {
+                fetchUsers();
+                if (selectedUser?.id === userId) {
+                    setSelectedUser(null);
+                    setDetailData(null);
+                }
+            }
+        } catch (err) {
+            console.error('Error GDPR deleting user:', err);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const filteredUsers = users.filter(u =>
         u.name?.toLowerCase().includes(search.toLowerCase()) ||
         u.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -121,7 +167,7 @@ export default function UserManagement() {
         );
     };
 
-    const formatDate = (d) => d ? new Date(d).toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+    const formatDate = (d) => d ? new Date(d).toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Budapest' }) : '—';
     const formatPrice = (p) => new Intl.NumberFormat('hu-HU').format(p || 0) + ' Ft';
 
     if (loading) {
@@ -134,15 +180,22 @@ export default function UserManagement() {
 
     return (
         <div>
-            {/* Search */}
-            <div className="mb-4">
+            {/* Search + Refresh */}
+            <div className="flex flex-wrap gap-3 mb-4">
                 <input
                     type="text"
                     placeholder="Keresés név, email vagy telefon alapján..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="w-full max-w-md px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="flex-1 min-w-[250px] px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 />
+                <button
+                    onClick={fetchUsers}
+                    className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-1"
+                >
+                    <RefreshIcon className="w-4 h-4" />
+                    Frissítés
+                </button>
             </div>
 
             {/* Users Table */}
@@ -185,7 +238,7 @@ export default function UserManagement() {
                                     <td className="px-4 py-3">{statusBadge(user.status)}</td>
                                     <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(user.last_login)}</td>
                                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                                        <div className="flex gap-1">
+                                        <div className="flex gap-1 flex-wrap">
                                             {user.status === 'banned' ? (
                                                 <button
                                                     onClick={() => handleUnban(user.id)}
@@ -194,7 +247,7 @@ export default function UserManagement() {
                                                 >
                                                     Feloldás
                                                 </button>
-                                            ) : (
+                                            ) : user.status !== 'deleted' ? (
                                                 <button
                                                     onClick={() => handleBan(user.id)}
                                                     disabled={actionLoading}
@@ -202,7 +255,7 @@ export default function UserManagement() {
                                                 >
                                                     Tiltás
                                                 </button>
-                                            )}
+                                            ) : null}
                                             {user.profile_picture_url && (
                                                 <button
                                                     onClick={() => handleRemovePicture(user.id)}
@@ -210,6 +263,15 @@ export default function UserManagement() {
                                                     className="px-2 py-1 text-xs bg-gray-50 text-gray-700 rounded hover:bg-gray-100 transition-colors"
                                                 >
                                                     Kép törlés
+                                                </button>
+                                            )}
+                                            {user.status !== 'deleted' && (
+                                                <button
+                                                    onClick={() => handleGdprDelete(user.id)}
+                                                    disabled={actionLoading}
+                                                    className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded hover:bg-red-200 transition-colors font-medium"
+                                                >
+                                                    GDPR törlés
                                                 </button>
                                             )}
                                         </div>
@@ -260,9 +322,13 @@ export default function UserManagement() {
                                                                         <p className="text-sm font-medium text-gray-900">{apt.service_name}</p>
                                                                         <p className="text-xs text-gray-500">{apt.salon_name} — {apt.provider_name}</p>
                                                                     </div>
-                                                                    <div className="text-right">
-                                                                        <p className="text-xs text-gray-600">{formatDate(apt.appointment_start)}</p>
-                                                                        <p className="text-xs font-medium">{formatPrice(apt.price)}</p>
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="text-right">
+                                                                            <p className="text-xs text-gray-600">{formatDate(apt.appointment_start)}</p>
+                                                                            <p className="text-xs font-medium">{formatPrice(apt.price)}</p>
+                                                                        </div>
+                                                                        <button onClick={() => handleDeleteAppointment(apt.id)}
+                                                                            className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors">Törlés</button>
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -277,9 +343,11 @@ export default function UserManagement() {
                                                                 <div key={r.id} className="p-3 bg-white rounded-lg border border-gray-100">
                                                                     <div className="flex justify-between mb-1">
                                                                         <p className="text-sm font-medium text-gray-900">{r.salon_name}</p>
-                                                                        <div className="flex gap-2">
+                                                                        <div className="flex items-center gap-2">
                                                                             <span className="text-xs text-amber-600">Szalon: {'★'.repeat(r.salon_rating || 0)}</span>
                                                                             <span className="text-xs text-blue-600">Szolgáltató: {'★'.repeat(r.provider_rating || 0)}</span>
+                                                                            <button onClick={() => handleDeleteRating(r.id)}
+                                                                                className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors">Törlés</button>
                                                                         </div>
                                                                     </div>
                                                                     {r.salon_comment && <p className="text-xs text-gray-600 mt-1">Szalon: {r.salon_comment}</p>}

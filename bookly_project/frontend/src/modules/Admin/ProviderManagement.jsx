@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { authApi } from '../auth/auth';
+import RefreshIcon from '../../icons/RefreshIcon';
 
 export default function ProviderManagement() {
     const [providers, setProviders] = useState([]);
@@ -100,6 +101,64 @@ export default function ProviderManagement() {
         }
     };
 
+    const handleDeleteAppointment = async (appointmentId) => {
+        const reason = prompt('Kérlek add meg a törlés okát:');
+        if (!reason || !reason.trim()) return;
+        try {
+            const res = await authApi.delete(`/api/admin/appointments/${appointmentId}`, {
+                body: JSON.stringify({ reason: reason.trim() })
+            });
+            const data = await res.json();
+            if (data.success && selectedProvider) fetchProviderDetails(selectedProvider.id);
+        } catch (err) {
+            console.error('Error deleting appointment:', err);
+        }
+    };
+
+    const handleDeleteRating = async (ratingId) => {
+        if (!confirm('Biztosan deaktiválod ezt az értékelést?')) return;
+        try {
+            const res = await authApi.delete(`/api/admin/ratings/${ratingId}`);
+            const data = await res.json();
+            if (data.success && selectedProvider) fetchProviderDetails(selectedProvider.id);
+        } catch (err) {
+            console.error('Error deleting rating:', err);
+        }
+    };
+
+    const handleBan = async (providerId) => {
+        if (!confirm('Biztosan letiltod ezt a szolgáltatót?')) return;
+        setActionLoading(true);
+        try {
+            const res = await authApi.post(`/api/admin/providers/${providerId}/ban`);
+            const data = await res.json();
+            if (data.success) {
+                fetchProviders();
+                if (selectedProvider?.id === providerId) fetchProviderDetails(providerId);
+            }
+        } catch (err) {
+            console.error('Error banning provider:', err);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleUnban = async (providerId) => {
+        setActionLoading(true);
+        try {
+            const res = await authApi.post(`/api/admin/providers/${providerId}/unban`);
+            const data = await res.json();
+            if (data.success) {
+                fetchProviders();
+                if (selectedProvider?.id === providerId) fetchProviderDetails(providerId);
+            }
+        } catch (err) {
+            console.error('Error unbanning provider:', err);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const filteredProviders = providers.filter(p =>
         p.name?.toLowerCase().includes(search.toLowerCase()) ||
         p.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -121,7 +180,7 @@ export default function ProviderManagement() {
         );
     };
 
-    const formatDate = (d) => d ? new Date(d).toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+    const formatDate = (d) => d ? new Date(d).toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Budapest' }) : '—';
     const formatPrice = (p) => new Intl.NumberFormat('hu-HU').format(p || 0) + ' Ft';
 
     if (loading) {
@@ -134,18 +193,25 @@ export default function ProviderManagement() {
 
     return (
         <div>
-            {/* Search */}
-            <div className="mb-4">
+            {/* Search + Refresh */}
+            <div className="flex flex-wrap gap-3 mb-4">
                 <input
                     type="text"
                     placeholder="Keresés név, email vagy szalon alapján..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="w-full max-w-md px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="flex-1 min-w-[250px] px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 />
+                <button
+                    onClick={fetchProviders}
+                    className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-1"
+                >
+                    <RefreshIcon className="w-4 h-4" />
+                    Frissítés
+                </button>
             </div>
 
-            {/* Providers Table */}
+            {/* Providers Table with Accordion */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <table className="w-full text-sm">
                     <thead>
@@ -160,59 +226,181 @@ export default function ProviderManagement() {
                     </thead>
                     <tbody>
                         {filteredProviders.map(provider => (
-                            <tr
-                                key={provider.id}
-                                onClick={() => handleSelectProvider(provider)}
-                                className={`border-b border-gray-50 cursor-pointer transition-colors
-                                    ${selectedProvider?.id === provider.id ? 'bg-amber-50' : 'hover:bg-gray-50'}`}
-                            >
-                                <td className="px-4 py-3 font-medium text-gray-900">
-                                    <div className="flex items-center gap-2">
-                                        {provider.profile_picture_url ? (
-                                            <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${provider.profile_picture_url}`} className="w-7 h-7 rounded-full object-cover" />
-                                        ) : (
-                                            <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-600">
-                                                {provider.name?.charAt(0)?.toUpperCase()}
-                                            </div>
-                                        )}
-                                        {provider.name}
-                                    </div>
-                                </td>
-                                <td className="px-4 py-3 text-gray-600">{provider.email}</td>
-                                <td className="px-4 py-3 text-gray-600">{provider.salon_name}</td>
-                                <td className="px-4 py-3 text-gray-600 capitalize">{provider.role}{provider.isManager ? ' (Manager)' : ''}</td>
-                                <td className="px-4 py-3">{statusBadge(provider.status)}</td>
-                                <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                                    <div className="flex gap-1">
-                                        {provider.status === 'active' ? (
-                                            <button
-                                                onClick={() => handleDeactivate(provider.id)}
-                                                disabled={actionLoading}
-                                                className="px-2 py-1 text-xs bg-amber-50 text-amber-700 rounded hover:bg-amber-100 transition-colors"
-                                            >
-                                                Deaktiválás
-                                            </button>
-                                        ) : (
-                                            <button
-                                                onClick={() => handleActivate(provider.id)}
-                                                disabled={actionLoading}
-                                                className="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors"
-                                            >
-                                                Aktiválás
-                                            </button>
-                                        )}
-                                        {provider.profile_picture_url && (
-                                            <button
-                                                onClick={() => handleRemovePicture(provider.id)}
-                                                disabled={actionLoading}
-                                                className="px-2 py-1 text-xs bg-gray-50 text-gray-700 rounded hover:bg-gray-100 transition-colors"
-                                            >
-                                                Kép törlés
-                                            </button>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
+                            <React.Fragment key={provider.id}>
+                                <tr
+                                    onClick={() => handleSelectProvider(provider)}
+                                    className={`border-b border-gray-50 cursor-pointer transition-colors
+                                        ${selectedProvider?.id === provider.id ? 'bg-amber-50' : 'hover:bg-gray-50'}`}
+                                >
+                                    <td className="px-4 py-3 font-medium text-gray-900">
+                                        <div className="flex items-center gap-2">
+                                            {provider.profile_picture_url ? (
+                                                <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${provider.profile_picture_url}`} className="w-7 h-7 rounded-full object-cover" />
+                                            ) : (
+                                                <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-600">
+                                                    {provider.name?.charAt(0)?.toUpperCase()}
+                                                </div>
+                                            )}
+                                            {provider.name}
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3 text-gray-600">{provider.email}</td>
+                                    <td className="px-4 py-3 text-gray-600">{provider.salon_name}</td>
+                                    <td className="px-4 py-3 text-gray-600 capitalize">{provider.role}{provider.isManager ? ' (Manager)' : ''}</td>
+                                    <td className="px-4 py-3">{statusBadge(provider.status)}</td>
+                                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                                        <div className="flex gap-1 flex-wrap">
+                                            {provider.status === 'active' ? (
+                                                <button
+                                                    onClick={() => handleDeactivate(provider.id)}
+                                                    disabled={actionLoading}
+                                                    className="px-2 py-1 text-xs bg-amber-50 text-amber-700 rounded hover:bg-amber-100 transition-colors"
+                                                >
+                                                    Deaktiválás
+                                                </button>
+                                            ) : provider.status !== 'banned' && provider.status !== 'deleted' ? (
+                                                <button
+                                                    onClick={() => handleActivate(provider.id)}
+                                                    disabled={actionLoading}
+                                                    className="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors"
+                                                >
+                                                    Aktiválás
+                                                </button>
+                                            ) : null}
+                                            {provider.status !== 'banned' && provider.status !== 'deleted' ? (
+                                                <button
+                                                    onClick={() => handleBan(provider.id)}
+                                                    disabled={actionLoading}
+                                                    className="px-2 py-1 text-xs bg-red-50 text-red-700 rounded hover:bg-red-100 transition-colors"
+                                                >
+                                                    Tiltás
+                                                </button>
+                                            ) : provider.status === 'banned' ? (
+                                                <button
+                                                    onClick={() => handleUnban(provider.id)}
+                                                    disabled={actionLoading}
+                                                    className="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors"
+                                                >
+                                                    Tiltás feloldás
+                                                </button>
+                                            ) : null}
+                                            {provider.profile_picture_url && (
+                                                <button
+                                                    onClick={() => handleRemovePicture(provider.id)}
+                                                    disabled={actionLoading}
+                                                    className="px-2 py-1 text-xs bg-gray-50 text-gray-700 rounded hover:bg-gray-100 transition-colors"
+                                                >
+                                                    Kép törlés
+                                                </button>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                {/* Accordion Detail Row */}
+                                {selectedProvider?.id === provider.id && (
+                                    <tr className="bg-amber-50/30">
+                                        <td colSpan="6" className="px-4 py-4">
+                                            {detailLoading ? (
+                                                <div className="flex justify-center py-6">
+                                                    <div className="animate-spin rounded-full h-6 w-6 border-2 border-amber-500 border-t-transparent"></div>
+                                                </div>
+                                            ) : detailData && (
+                                                <>
+                                                    {/* Info Grid */}
+                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 p-3 bg-white/80 rounded-lg">
+                                                        <div><p className="text-xs text-gray-500">Email</p><p className="text-sm font-medium">{detailData.provider.email}</p></div>
+                                                        <div><p className="text-xs text-gray-500">Telefon</p><p className="text-sm font-medium">{detailData.provider.phone || '—'}</p></div>
+                                                        <div><p className="text-xs text-gray-500">Szalon</p><p className="text-sm font-medium">{detailData.provider.salon_name || '—'}</p></div>
+                                                        <div><p className="text-xs text-gray-500">Leírás</p><p className="text-sm font-medium truncate">{detailData.provider.description || '—'}</p></div>
+                                                    </div>
+
+                                                    {/* Tabs */}
+                                                    <div className="flex gap-2 mb-4 border-b border-gray-200 pb-2">
+                                                        <button onClick={() => setDetailTab('appointments')}
+                                                            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${detailTab === 'appointments' ? 'bg-amber-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
+                                                            Foglalások ({detailData.appointments?.length || 0})
+                                                        </button>
+                                                        <button onClick={() => setDetailTab('ratings')}
+                                                            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${detailTab === 'ratings' ? 'bg-amber-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
+                                                            Értékelések ({detailData.ratings?.length || 0})
+                                                        </button>
+                                                        <button onClick={() => setDetailTab('services')}
+                                                            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${detailTab === 'services' ? 'bg-amber-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
+                                                            Szolgáltatások ({detailData.services?.length || 0})
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Appointments */}
+                                                    {detailTab === 'appointments' && (
+                                                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                                                            {detailData.appointments?.length === 0 && <p className="text-sm text-gray-400">Nincsenek foglalások</p>}
+                                                            {detailData.appointments?.map(apt => (
+                                                                <div key={apt.id} className="flex items-center justify-between p-3 bg-white rounded-lg">
+                                                                    <div>
+                                                                        <p className="text-sm font-medium text-gray-900">{apt.service_name}</p>
+                                                                        <p className="text-xs text-gray-500">Ügyfél: {apt.customer_name || 'Vendég'}</p>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="text-right">
+                                                                            <p className="text-xs text-gray-600">{formatDate(apt.appointment_start)}</p>
+                                                                            <p className="text-xs font-medium">{formatPrice(apt.price)}</p>
+                                                                        </div>
+                                                                        <button onClick={() => handleDeleteAppointment(apt.id)}
+                                                                            className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors">Törlés</button>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Ratings */}
+                                                    {detailTab === 'ratings' && (
+                                                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                                                            {detailData.ratings?.length === 0 && <p className="text-sm text-gray-400">Nincsenek értékelések</p>}
+                                                            {detailData.ratings?.map(r => (
+                                                                <div key={r.id} className="p-3 bg-white rounded-lg">
+                                                                    <div className="flex justify-between mb-1">
+                                                                        <p className="text-sm font-medium">{r.user_name}</p>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-xs text-blue-600">{'★'.repeat(r.provider_rating || 0)}{'☆'.repeat(5 - (r.provider_rating || 0))}</span>
+                                                                            <button onClick={() => handleDeleteRating(r.id)}
+                                                                                className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors">Törlés</button>
+                                                                        </div>
+                                                                    </div>
+                                                                    {r.provider_comment && <p className="text-xs text-gray-600">{r.provider_comment}</p>}
+                                                                    <p className="text-xs text-gray-400 mt-1">{formatDate(r.created_at)}</p>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Services */}
+                                                    {detailTab === 'services' && (
+                                                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                                                            {detailData.services?.length === 0 && <p className="text-sm text-gray-400">Nincsenek szolgáltatások</p>}
+                                                            {detailData.services?.map(s => (
+                                                                <div key={s.id} className="flex items-center justify-between p-3 bg-white rounded-lg">
+                                                                    <div>
+                                                                        <p className="text-sm font-medium text-gray-900">{s.name}</p>
+                                                                        <p className="text-xs text-gray-500">{s.duration_minutes} perc</p>
+                                                                    </div>
+                                                                    <div className="text-right">
+                                                                        <p className="text-sm font-medium">{formatPrice(s.price)}</p>
+                                                                        <span className={`text-xs ${s.status === 'available' ? 'text-green-600' : 'text-gray-400'}`}>
+                                                                            {s.status === 'available' ? 'Elérhető' : 'Nem elérhető'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                        </td>
+                                    </tr>
+                                )}
+                            </React.Fragment>
                         ))}
                     </tbody>
                 </table>
@@ -220,112 +408,6 @@ export default function ProviderManagement() {
                     <div className="p-8 text-center text-gray-400 text-sm">Nincs találat</div>
                 )}
             </div>
-
-            {/* Detail Panel */}
-            {selectedProvider && (
-                <div className="mt-4 bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                            {selectedProvider.name} részletei
-                        </h3>
-                        <button onClick={() => { setSelectedProvider(null); setDetailData(null); }}
-                            className="text-gray-400 hover:text-gray-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    {detailLoading ? (
-                        <div className="flex justify-center py-8">
-                            <div className="animate-spin rounded-full h-6 w-6 border-2 border-amber-500 border-t-transparent"></div>
-                        </div>
-                    ) : detailData && (
-                        <>
-                            {/* Info */}
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
-                                <div><p className="text-xs text-gray-500">Email</p><p className="text-sm font-medium">{detailData.provider.email}</p></div>
-                                <div><p className="text-xs text-gray-500">Telefon</p><p className="text-sm font-medium">{detailData.provider.phone}</p></div>
-                                <div><p className="text-xs text-gray-500">Szalon</p><p className="text-sm font-medium">{detailData.provider.salon_name}</p></div>
-                                <div><p className="text-xs text-gray-500">Leírás</p><p className="text-sm font-medium truncate">{detailData.provider.description || '—'}</p></div>
-                            </div>
-
-                            {/* Tabs */}
-                            <div className="flex gap-2 mb-4 border-b border-gray-100 pb-2">
-                                <button onClick={() => setDetailTab('appointments')}
-                                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${detailTab === 'appointments' ? 'bg-amber-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
-                                    Foglalások ({detailData.appointments?.length || 0})
-                                </button>
-                                <button onClick={() => setDetailTab('ratings')}
-                                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${detailTab === 'ratings' ? 'bg-amber-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
-                                    Értékelések ({detailData.ratings?.length || 0})
-                                </button>
-                                <button onClick={() => setDetailTab('services')}
-                                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${detailTab === 'services' ? 'bg-amber-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
-                                    Szolgáltatások ({detailData.services?.length || 0})
-                                </button>
-                            </div>
-
-                            {/* Appointments */}
-                            {detailTab === 'appointments' && (
-                                <div className="space-y-2 max-h-80 overflow-y-auto">
-                                    {detailData.appointments?.length === 0 && <p className="text-sm text-gray-400">Nincsenek foglalások</p>}
-                                    {detailData.appointments?.map(apt => (
-                                        <div key={apt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-900">{apt.service_name}</p>
-                                                <p className="text-xs text-gray-500">Ügyfél: {apt.customer_name || 'Vendég'}</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-xs text-gray-600">{formatDate(apt.appointment_start)}</p>
-                                                <p className="text-xs font-medium">{formatPrice(apt.price)}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* Ratings */}
-                            {detailTab === 'ratings' && (
-                                <div className="space-y-2 max-h-80 overflow-y-auto">
-                                    {detailData.ratings?.length === 0 && <p className="text-sm text-gray-400">Nincsenek értékelések</p>}
-                                    {detailData.ratings?.map(r => (
-                                        <div key={r.id} className="p-3 bg-gray-50 rounded-lg">
-                                            <div className="flex justify-between mb-1">
-                                                <p className="text-sm font-medium">{r.user_name}</p>
-                                                <span className="text-xs text-blue-600">{'★'.repeat(r.provider_rating || 0)}{'☆'.repeat(5 - (r.provider_rating || 0))}</span>
-                                            </div>
-                                            {r.provider_comment && <p className="text-xs text-gray-600">{r.provider_comment}</p>}
-                                            <p className="text-xs text-gray-400 mt-1">{formatDate(r.created_at)}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* Services */}
-                            {detailTab === 'services' && (
-                                <div className="space-y-2 max-h-80 overflow-y-auto">
-                                    {detailData.services?.length === 0 && <p className="text-sm text-gray-400">Nincsenek szolgáltatások</p>}
-                                    {detailData.services?.map(s => (
-                                        <div key={s.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-900">{s.name}</p>
-                                                <p className="text-xs text-gray-500">{s.duration_minutes} perc</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-sm font-medium">{formatPrice(s.price)}</p>
-                                                <span className={`text-xs ${s.status === 'available' ? 'text-green-600' : 'text-gray-400'}`}>
-                                                    {s.status === 'available' ? 'Elérhető' : 'Nem elérhető'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </>
-                    )}
-                </div>
-            )}
         </div>
     );
 }

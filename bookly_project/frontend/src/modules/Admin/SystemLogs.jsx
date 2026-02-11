@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { authApi } from '../auth/auth';
+import RefreshIcon from '../../icons/RefreshIcon';
 
 export default function SystemLogs() {
     const [logs, setLogs] = useState([]);
+    const [allActions, setAllActions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [levelFilter, setLevelFilter] = useState('all');
     const [actionFilter, setActionFilter] = useState('');
@@ -17,7 +19,13 @@ export default function SystemLogs() {
             if (actionFilter) url += `&action=${actionFilter}`;
             const res = await authApi.get(url);
             const data = await res.json();
-            if (data.success) setLogs(data.logs);
+            if (data.success) {
+                setLogs(data.logs);
+                // Only update available actions list on unfiltered fetch
+                if (levelFilter === 'all' && !actionFilter) {
+                    setAllActions([...new Set(data.logs.map(l => l.action))]);
+                }
+            }
         } catch (err) {
             console.error('Error fetching logs:', err);
         } finally {
@@ -30,7 +38,7 @@ export default function SystemLogs() {
     }, [levelFilter, actionFilter]);
 
     const formatDate = (d) => d ? new Date(d).toLocaleDateString('hu-HU', {
-        year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
+        year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Europe/Budapest'
     }) : '—';
 
     const levelBadge = (level) => {
@@ -64,7 +72,7 @@ export default function SystemLogs() {
         'USER_SIGNUP': 'Felhasználó regisztráció',
     };
 
-    const uniqueActions = [...new Set(logs.map(l => l.action))];
+    const uniqueActions = allActions;
 
     if (loading) {
         return (
@@ -102,9 +110,7 @@ export default function SystemLogs() {
                     onClick={fetchLogs}
                     className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-1"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
-                    </svg>
+                    <RefreshIcon className="w-4 h-4" />
                     Frissítés
                 </button>
             </div>
