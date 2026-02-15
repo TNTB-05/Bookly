@@ -3,9 +3,11 @@ services:
     image: mysql:8.0
     container_name: bookly-db
     restart: unless-stopped
+    command: --default-time-zone='Europe/Budapest'
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
+      TZ: Europe/Budapest
     ports:
       - "3306:3306"
     volumes:

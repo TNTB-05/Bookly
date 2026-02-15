@@ -38,7 +38,7 @@ export default function SystemLogs() {
     }, [levelFilter, actionFilter]);
 
     const formatDate = (d) => d ? new Date(d).toLocaleDateString('hu-HU', {
-        year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Europe/Budapest'
+        year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
     }) : '—';
 
     const levelBadge = (level) => {

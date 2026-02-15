@@ -78,7 +78,7 @@ const AvailabilityManagement = () => {
     // Format date
     const formatDate = (dateStr) => {
         return new Date(dateStr).toLocaleDateString('hu-HU', {
-            year: 'numeric', month: 'short', day: 'numeric', timeZone: 'Europe/Budapest'
+            year: 'numeric', month: 'short', day: 'numeric'
         });
     };
 

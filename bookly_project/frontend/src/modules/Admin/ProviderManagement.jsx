@@ -180,7 +180,7 @@ export default function ProviderManagement() {
         );
     };
 
-    const formatDate = (d) => d ? new Date(d).toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Budapest' }) : '—';
+    const formatDate = (d) => d ? new Date(d).toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
     const formatPrice = (p) => new Intl.NumberFormat('hu-HU').format(p || 0) + ' Ft';
 
     if (loading) {
