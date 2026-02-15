@@ -5,7 +5,9 @@ import UserManagement from './UserManagement';
 import ProviderManagement from './ProviderManagement';
 import SalonManagement from './SalonManagement';
 import AppointmentManagement from './AppointmentManagement';
+import RatingManagement from './RatingManagement';
 import SystemLogs from './SystemLogs';
+import RefreshIcon from '../../icons/RefreshIcon';
 
 // Stat card component
 function StatCard({ title, value, icon, color = 'blue', subtitle }) {
@@ -19,14 +21,14 @@ function StatCard({ title, value, icon, color = 'blue', subtitle }) {
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
             <div className="flex items-start justify-between">
                 <div className="flex-1">
                     <p className="text-sm font-medium text-gray-500">{title}</p>
                     <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
                     {subtitle && <p className="text-xs text-gray-400 mt-1">{subtitle}</p>}
                 </div>
-                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${colorMap[color]} flex items-center justify-center flex-shrink-0`}>
+                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${colorMap[color]} flex items-center justify-center flex-shrink-0 shadow-sm`}>
                     {icon}
                 </div>
             </div>
@@ -39,10 +41,10 @@ function NavItem({ label, icon, active, onClick }) {
     return (
         <button
             onClick={onClick}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150
                 ${active
-                    ? 'bg-amber-500/10 text-amber-600'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-amber-500/10 text-amber-600 border-l-[3px] border-amber-500 pl-[9px]'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-l-[3px] border-transparent pl-[9px]'
                 }`}
         >
             <span className="w-5 h-5 flex-shrink-0">{icon}</span>
@@ -100,7 +102,7 @@ export default function AdminDashboard() {
         return new Date(dateString).toLocaleDateString('hu-HU', {
             month: 'short',
             day: 'numeric',
-            timeZone: 'Europe/Budapest',
+
         });
     };
 
@@ -197,13 +199,16 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 p-3 space-y-1">
+                <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
                     <NavItem
                         label="Áttekintés"
                         icon={icons.dashboard}
                         active={activeSection === 'dashboard'}
                         onClick={() => setActiveSection('dashboard')}
                     />
+
+                    <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Kezelés</p>
+
                     <NavItem
                         label="Felhasználók"
                         icon={icons.users}
@@ -228,6 +233,15 @@ export default function AdminDashboard() {
                         active={activeSection === 'appointments'}
                         onClick={() => setActiveSection('appointments')}
                     />
+                    <NavItem
+                        label="Értékelések"
+                        icon={icons.star}
+                        active={activeSection === 'ratings'}
+                        onClick={() => setActiveSection('ratings')}
+                    />
+
+                    <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Rendszer</p>
+
                     <NavItem
                         label="Naplók"
                         icon={icons.logs}
@@ -273,6 +287,7 @@ export default function AdminDashboard() {
                                 {activeSection === 'providers' && 'Szolgáltatók'}
                                 {activeSection === 'salons' && 'Szalonok'}
                                 {activeSection === 'appointments' && 'Foglalások'}
+                                {activeSection === 'ratings' && 'Értékelések'}
                                 {activeSection === 'logs' && 'Rendszer naplók'}
                             </h1>
                             <p className="text-sm text-gray-500">
@@ -281,6 +296,7 @@ export default function AdminDashboard() {
                                 {activeSection === 'providers' && 'Szolgáltatók kezelése és moderálása'}
                                 {activeSection === 'salons' && 'Szalonok áttekintése és moderálása'}
                                 {activeSection === 'appointments' && 'Összes foglalás kezelése'}
+                                {activeSection === 'ratings' && 'Értékelések áttekintése és moderálása'}
                                 {activeSection === 'logs' && 'Rendszeresemények és auditnapló'}
                             </p>
                         </div>
@@ -289,9 +305,7 @@ export default function AdminDashboard() {
                                 onClick={fetchStatistics}
                                 className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-2"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
-                                </svg>
+                                <RefreshIcon className="w-4 h-4" />
                                 Frissítés
                             </button>
                         )}
@@ -311,6 +325,9 @@ export default function AdminDashboard() {
 
                     {/* Section: Appointments */}
                     {activeSection === 'appointments' && <AppointmentManagement />}
+
+                    {/* Section: Ratings */}
+                    {activeSection === 'ratings' && <RatingManagement />}
 
                     {/* Section: Logs */}
                     {activeSection === 'logs' && <SystemLogs />}

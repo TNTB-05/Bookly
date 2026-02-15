@@ -38,8 +38,18 @@ const AuthMiddleware = async (req, res, next) => {
 
         req.user = decoded;
 
-        // Admins bypass DB status checks
+        // Check admin exists in DB (no bypass)
         if (decoded.role === 'admin') {
+            const [admins] = await pool.query(
+                'SELECT id FROM admins WHERE id = ?',
+                [decoded.userId]
+            );
+            if (admins.length === 0) {
+                return res.status(403).json({
+                    message: 'Admin fiók nem található',
+                    banned: true
+                });
+            }
             return next();
         }
 

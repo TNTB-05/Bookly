@@ -56,6 +56,27 @@ const generateTokens = (email, userId, name, role = 'customer') => {
     return { accessToken, refreshToken };
 };
 
+// Stricter token generation for admin accounts
+const generateAdminTokens = (email, adminId, name) => {
+    if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
+        throw new Error('Server configuration error: JWT secrets missing');
+    }
+
+    const accessToken = jwt.sign(
+        { email, userId: adminId, name, role: 'admin' },
+        process.env.JWT_SECRET,
+        { expiresIn: '5m' } // Very short-lived for admin security
+    );
+
+    const refreshToken = jwt.sign(
+        { email, userId: adminId, name, role: 'admin' },
+        process.env.JWT_REFRESH_SECRET,
+        { expiresIn: '1h' } // 1 hour admin session max
+    );
+
+    return { accessToken, refreshToken };
+};
+
 router.post('/register', async (request, response) => {
     const { name, email, password } = request.body;
 
@@ -300,10 +321,12 @@ router.post('/refresh', async (request, response) => {
         }
 
         // Generate new access token with userId and role
+        // Admin gets shorter-lived access token for security
+        const accessTokenExpiry = decoded.role === 'admin' ? '5m' : '15m';
         const newAccessToken = jwt.sign(
             { email: decoded.email, userId: decoded.userId, role: decoded.role },
             process.env.JWT_SECRET,
-            { expiresIn: '15m' }
+            { expiresIn: accessTokenExpiry }
         );
 
         response.status(200).json({
@@ -400,8 +423,8 @@ router.post('/admin/login', async (request, response) => {
             });
         }
 
-        // Generate tokens with admin role
-        const { accessToken, refreshToken } = generateTokens(email, admin.id, admin.name, 'admin');
+        // Generate tokens with admin-specific shorter durations
+        const { accessToken, refreshToken } = generateAdminTokens(email, admin.id, admin.name);
 
         // Store refresh token in database (admin_id for admins - separate column)
         await pool.query(
@@ -415,13 +438,13 @@ router.post('/admin/login', async (request, response) => {
         // Log admin login event
         await logEvent('INFO', 'ADMIN_LOGIN', 'admin', admin.id, 'admin', admin.id, `Admin ${email} logged in`);
 
-        // Send refresh token as HTTP-only cookie
+        // Send refresh token as HTTP-only cookie (1 hour for admin)
         response.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: false,
             sameSite: 'lax',
             path: '/',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+            maxAge: 1 * 60 * 60 * 1000 // 1 hour (admin)
         });
 
         response.status(200).json({

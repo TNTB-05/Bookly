@@ -473,6 +473,28 @@ router.put('/salons/:id/status', async (req, res) => {
 // ==========================================
 // Ratings Management
 // ==========================================
+router.get('/ratings', async (req, res) => {
+    try {
+        const [ratings] = await pool.query(`
+            SELECT r.id, r.user_id, r.appointment_id, r.salon_id, r.provider_id,
+                r.salon_rating, r.provider_rating, r.salon_comment, r.provider_comment,
+                r.created_at, r.active,
+                u.name as user_name, u.email as user_email,
+                s.name as salon_name,
+                p.name as provider_name
+            FROM ratings r
+            LEFT JOIN users u ON r.user_id = u.id
+            LEFT JOIN salons s ON r.salon_id = s.id
+            LEFT JOIN providers p ON r.provider_id = p.id
+            ORDER BY r.created_at DESC
+        `);
+        return res.json({ success: true, ratings });
+    } catch (error) {
+        console.error('[Admin Ratings] ERROR:', error);
+        return res.status(500).json({ success: false, message: 'Hiba az értékelések lekérése során' });
+    }
+});
+
 router.delete('/ratings/:id', async (req, res) => {
     try {
         const ratingId = req.params.id;
