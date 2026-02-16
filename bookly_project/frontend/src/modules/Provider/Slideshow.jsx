@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 const placeholderImages = [
-    "../../pics/slider1.png",
+    "https://placehold.co/1200x400/0A8CBA/white?text=Slide+1",
     "https://placehold.co/1200x400/7DE1F4/darkblue?text=Slide+2",
     "https://placehold.co/1200x400/E0F7FA/darkblue?text=Slide+3"
 ];

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { pool, getSalonHoursByProviderId, getExpandedTimeBlocksForDate, getFullyBookedDays } = require('../sql/database.js');
+const { pool, getSalonHoursByProviderId, getExpandedTimeBlocksForDate } = require('../sql/database.js');
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
 const { requireRole } = require('./auth/RoleMiddleware.js');
 
@@ -161,34 +161,6 @@ router.get('/working-hours', async (request, response) => {
         response.status(500).json({
             success: false,
             message: 'Hiba történt a nyitvatartás lekérdezésekor'
-        });
-    }
-});
-
-// Get fully booked days for a date range
-router.get('/fully-booked-days', async (request, response) => {
-    try {
-        const providerId = request.providerId;
-        const { startDate, endDate } = request.query;
-
-        if (!startDate || !endDate) {
-            return response.status(400).json({
-                success: false,
-                message: 'startDate és endDate megadása kötelező'
-            });
-        }
-
-        const fullyBookedDays = await getFullyBookedDays(providerId, startDate, endDate);
-
-        response.status(200).json({
-            success: true,
-            fullyBookedDays
-        });
-    } catch (error) {
-        console.error('Get fully booked days error:', error);
-        response.status(500).json({
-            success: false,
-            message: 'Hiba történt a teltház napok lekérdezésekor'
         });
     }
 });
