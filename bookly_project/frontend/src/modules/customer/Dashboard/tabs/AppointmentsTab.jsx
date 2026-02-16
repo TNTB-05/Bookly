@@ -8,9 +8,11 @@ import DiaryIcon from '../../../../icons/DiaryIcon';
 import LightningIcon from '../../../../icons/LightningIcon';
 import { authApi } from '../../../auth/auth';
 import RatingModal from '../RatingModal';
+import { useNotification } from '../../../../components/NotificationContext';
 
 // Foglalások tab - megjeleníti a felhasználó foglalásait
 export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons }) {
+    const { showToast, showConfirm } = useNotification();
     // Foglalások listája
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -45,7 +47,8 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
 
     // Foglalás lemondása
     async function handleCancelAppointment(appointmentId) {
-        if (!confirm('Biztosan le szeretnéd mondani ezt a foglalást?')) {
+        const confirmed = await showConfirm('Biztosan le szeretnéd mondani ezt a foglalást?', { danger: true });
+        if (!confirmed) {
             return;
         }
 
@@ -55,14 +58,14 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
             const data = await response.json();
             
             if (data.success) {
-                alert('Foglalás sikeresen lemondva');
+                showToast('Foglalás sikeresen lemondva', 'success');
                 loadAppointments(); // Reload appointments
             } else {
-                alert(data.message || 'Hiba történt a foglalás lemondásakor');
+                showToast(data.message || 'Hiba történt a foglalás lemondásakor', 'error');
             }
         } catch (err) {
             console.error('Hiba a foglalás lemondásakor:', err);
-            alert('Hiba történt a foglalás lemondásakor');
+            showToast('Hiba történt a foglalás lemondásakor', 'error');
         } finally {
             setCancelingId(null);
         }

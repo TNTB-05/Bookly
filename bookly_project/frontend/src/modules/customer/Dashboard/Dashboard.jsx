@@ -5,6 +5,7 @@ import './Dashboard.css';
 import { getUserFromToken } from '../../auth/auth';
 import { authApi } from '../../auth/auth';
 import WarningIcon from '../../../icons/WarningIcon';
+import { useNotification } from '../../../components/NotificationContext';
 
 // Tab komponensek
 import OverviewTab from './tabs/OverviewTab';
@@ -16,6 +17,7 @@ import ProfileTab from './tabs/ProfileTab';
 export default function Dashboard() {
     const location = useLocation();
     const navigate = useNavigate();
+    const { showToast } = useNotification();
     
     // URL paraméterből activeTab beállítása
     const urlParams = new URLSearchParams(location.search);
@@ -103,11 +105,11 @@ export default function Dashboard() {
                 setDaysRemaining(null);
                 setDeletionDate(null);
             } else {
-                alert(data.message || 'Hiba történt a fiók visszaállítása során');
+                showToast(data.message || 'Hiba történt a fiók visszaállítása során', 'error');
             }
         } catch (error) {
             console.error('Restore error:', error);
-            alert('Hiba történt a fiók visszaállítása során');
+            showToast('Hiba történt a fiók visszaállítása során', 'error');
         } finally {
             setRestoreLoading(false);
         }

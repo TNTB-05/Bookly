@@ -16,6 +16,7 @@ import StarSmallIcon from '../../../../icons/StarSmallIcon';
 // Komponensek
 import SalonCard from '../SalonCard';
 import SearchSuggestions from './SearchSuggestions';
+import { useNotification } from '../../../../components/NotificationContext';
 
 // Áttekintés tab - keresés, kiemelt szalonok és szolgáltatások
 export default function OverviewTab({
@@ -26,6 +27,7 @@ export default function OverviewTab({
     toggleSaveSalon,
     loadTopRatedSalons
 }) {
+    const { showToast } = useNotification();
     // UseState változók a kereséshez
     const [searchQuery, setSearchQuery] = useState('');
     const [serviceFilter, setServiceFilter] = useState('all');
@@ -123,7 +125,7 @@ export default function OverviewTab({
     // Felhasználó aktuális GPS pozíciójának lekérése
     function handleGetCurrentLocation() {
         if (!navigator.geolocation) {
-            alert('A böngésző nem támogatja a helymeghatározást');
+            showToast('A böngésző nem támogatja a helymeghatározást', 'warning');
             return;
         }
 
@@ -153,7 +155,7 @@ export default function OverviewTab({
             },
             (error) => {
                 console.error('Helymeghatározási hiba:', error);
-                alert('Nem sikerült lekérni a helyzetet. Kérjük, engedélyezd a helymeghatározást.');
+                showToast('Nem sikerült lekérni a helyzetet. Kérjük, engedélyezd a helymeghatározást.', 'warning');
             }
         );
     }

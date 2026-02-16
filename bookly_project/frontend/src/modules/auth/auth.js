@@ -113,6 +113,17 @@ function getLoginRedirect() {
 
 let isBanRedirecting = false;
 
+// Notification bridge — allows React components to register a toast callback
+let _notifyFn = null;
+export function registerNotifier(fn) {
+    _notifyFn = fn;
+}
+function notify(message, type = 'error') {
+    if (_notifyFn) {
+        _notifyFn(message, type);
+    }
+}
+
 export async function authFetch(url, options={}){
     let accessToken= localStorage.getItem('accessToken');
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -127,8 +138,9 @@ export async function authFetch(url, options={}){
                 // Token expired, refresh proactively
                 accessToken = await refreshAccessToken();
                 if (!accessToken) {
+                    notify('A munkamenet lejárt. Kérjük, jelentkezz be újra.', 'warning');
                     window.location.href = getLoginRedirect();
-                    throw new Error('Session expired. Please log in again.');
+                    throw new Error('A munkamenet lejárt. Kérjük, jelentkezz be újra.');
                 }
             }
         } catch (error) {
@@ -162,12 +174,15 @@ export async function authFetch(url, options={}){
             try {
                 const errorData = await response.clone().json();
                 if(errorData.banned){
-                    alert('A fiókod le lett tiltva vagy törölve. Kijelentkeztetés...');
+                    notify('A fiókod le lett tiltva vagy törölve. Kijelentkeztetés...', 'error');
                 }
             } catch(e) { /* ignore parse error */ }
-            window.location.href = '/';
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 600);
+            setTimeout(() => { isBanRedirecting = false; }, 3000);
         }
-        throw new Error('Account banned or deleted');
+        throw new Error('A fiók le lett tiltva vagy törölve.');
     }
 
     if(response.status===401){
@@ -197,7 +212,7 @@ export async function authFetch(url, options={}){
             }
             else{
                 window.location.href=getLoginRedirect();
-                throw new Error('Session expired. Please log in again.');
+                throw new Error('A munkamenet lejárt. Kérjük, jelentkezz be újra.');
             }
         }
         else{
@@ -217,7 +232,7 @@ export async function authFetch(url, options={}){
             }
             else{
                 window.location.href=getLoginRedirect();
-                throw new Error('Session expired. Please log in again.');
+                throw new Error('A munkamenet lejárt. Kérjük, jelentkezz be újra.');
             }
         }
     }
@@ -237,6 +252,7 @@ export function startAuthHeartbeat() {
             const result = await refreshAccessToken();
             if (!result) {
                 // Refresh failed — cookie missing/invalid — force logout
+                notify('A munkamenet lejárt. Kérjük, jelentkezz be újra.', 'warning');
                 localStorage.removeItem('accessToken');
             }
         } catch (e) {

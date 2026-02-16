@@ -5,6 +5,7 @@ import TimeBlockModal from './TimeBlockModal';
 import HourIcon from '../../icons/HourIcon';
 import PencilIcon from '../../icons/PencilIcon';
 import TrashIcon from '../../icons/TrashIcon';
+import { useNotification } from '../../components/NotificationContext';
 
 const AvailabilityManagement = () => {
     const [rawBlocks, setRawBlocks] = useState([]);
@@ -12,13 +13,8 @@ const AvailabilityManagement = () => {
     const [showModal, setShowModal] = useState(false);
     const [selectedBlock, setSelectedBlock] = useState(null);
     const [filter, setFilter] = useState('all'); // 'all', 'recurring', 'one-time'
-    const [toast, setToast] = useState(null);
     const [workingHours, setWorkingHours] = useState({ openingHour: 8, closingHour: 20 });
-
-    const showToast = (message, type = 'success') => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 3000);
-    };
+    const { showToast, showConfirm } = useNotification();
 
     const fetchWorkingHours = useCallback(async () => {
         try {
@@ -58,7 +54,8 @@ const AvailabilityManagement = () => {
     };
 
     const handleDeleteBlock = async (blockId) => {
-        if (!confirm('Biztosan törölni szeretné ezt a szünetet?')) return;
+        const confirmed = await showConfirm('Biztosan törölni szeretnéd ezt a szünetet?', { danger: true });
+        if (!confirmed) return;
         try {
             const result = await timeBlocksService.deleteTimeBlock(blockId);
             if (result.success) {
@@ -198,15 +195,6 @@ const AvailabilityManagement = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Toast */}
-            {toast && (
-                <div className={`fixed bottom-6 right-6 z-[9999] px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white transition-all animate-fade-in ${
-                    toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-                }`}>
-                    {toast.message}
-                </div>
-            )}
 
             {/* Modal */}
             <TimeBlockModal

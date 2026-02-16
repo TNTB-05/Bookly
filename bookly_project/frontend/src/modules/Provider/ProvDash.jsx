@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Logo from '../../modules/Logo';
+import { useNotification } from '../../components/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth';
 import { authApi, logout } from '../auth/auth';
@@ -217,7 +218,7 @@ const CalendarSection = () => {
     const [timeBlocks, setTimeBlocks] = useState([]);
     const [showTimeBlockModal, setShowTimeBlockModal] = useState(false);
     const [selectedTimeBlock, setSelectedTimeBlock] = useState(null);
-    const [toast, setToast] = useState(null);
+    const { showToast } = useNotification();
 
     // Derived timeline constants
     const START_HOUR = workingHours.openingHour;
@@ -284,12 +285,6 @@ const CalendarSection = () => {
         }
     }, [currentDate]);
 
-    // Toast notification helper
-    const showToast = (message, type = 'success') => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 3000);
-    };
-
     // Fetch working hours on mount
     useEffect(() => {
         fetchWorkingHours();
@@ -337,24 +332,24 @@ const CalendarSection = () => {
     const handleCreateAppointment = async () => {
         // Validation
         if (!createFormData.user_name || !createFormData.service_id) {
-            alert('Név és szolgáltatás megadása kötelező!');
+            showToast('Név és szolgáltatás megadása kötelező!', 'warning');
             return;
         }
 
         if (!createFormData.is_guest && !createFormData.user_email) {
-            alert('Regisztrált felhasználóhoz email cím szükséges!');
+            showToast('Regisztrált felhasználóhoz email cím szükséges!', 'warning');
             return;
         }
 
         if (createFormData.is_guest && !createFormData.user_email && !createFormData.user_phone) {
-            alert('Vendég foglaláshoz legalább email vagy telefonszám szükséges!');
+            showToast('Vendég foglaláshoz legalább email vagy telefonszám szükséges!', 'warning');
             return;
         }
 
         // Validate appointment time is within salon hours
         const [hours, minutes] = createFormData.appointment_time.split(':').map(Number);
         if (hours < workingHours.openingHour || hours >= workingHours.closingHour) {
-            alert('Az időpont a szalon nyitvatartási idején kívül esik!');
+            showToast('Az időpont a szalon nyitvatartási idején kívül esik!', 'warning');
             return;
         }
 
@@ -367,11 +362,11 @@ const CalendarSection = () => {
                 setShowCreateModal(false);
                 fetchAppointments();
             } else {
-                alert(data.message || 'Hiba történt a foglalás létrehozásakor');
+                showToast(data.message || 'Hiba történt a foglalás létrehozásakor', 'error');
             }
         } catch (error) {
             console.error('Create appointment error:', error);
-            alert('Hiba történt a foglalás létrehozásakor');
+            showToast('Hiba történt a foglalás létrehozásakor', 'error');
         } finally {
             setSaving(false);
         }
@@ -772,15 +767,6 @@ const CalendarSection = () => {
                 </div>
             </div>
 
-            {/* Toast Notification */}
-            {toast && (
-                <div className={`fixed bottom-6 right-6 z-[9999] px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white transition-all animate-fade-in ${
-                    toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-                }`}>
-                    {toast.message}
-                </div>
-            )}
-
             {/* Time Block Modal */}
             <TimeBlockModal
                 isOpen={showTimeBlockModal}
@@ -1162,15 +1148,15 @@ const ServicesSection = () => {
 
     const handleSave = async () => {
         if (!formData.name.trim()) {
-            alert('A szolgáltatás neve kötelező!');
+            showToast('A szolgáltatás neve kötelező!', 'warning');
             return;
         }
         if (formData.duration_minutes < 5) {
-            alert('A minimum időtartam 5 perc!');
+            showToast('A minimum időtartam 5 perc!', 'warning');
             return;
         }
         if (formData.price < 0) {
-            alert('Az ár nem lehet negatív!');
+            showToast('Az ár nem lehet negatív!', 'warning');
             return;
         }
 
@@ -1189,11 +1175,11 @@ const ServicesSection = () => {
                 handleCloseModal();
                 fetchServices();
             } else {
-                alert(data.message || 'Hiba történt a mentés során');
+                showToast(data.message || 'Hiba történt a mentés során', 'error');
             }
         } catch (error) {
             console.error('Save service error:', error);
-            alert('Hiba történt a mentés során');
+            showToast('Hiba történt a mentés során', 'error');
         } finally {
             setSaving(false);
         }
@@ -1209,11 +1195,11 @@ const ServicesSection = () => {
                 setDeleteConfirm(null);
                 fetchServices();
             } else {
-                alert(data.message || 'Hiba történt a törlés során');
+                showToast(data.message || 'Hiba történt a törlés során', 'error');
             }
         } catch (error) {
             console.error('Delete service error:', error);
-            alert('Hiba történt a törlés során');
+            showToast('Hiba történt a törlés során', 'error');
         } finally {
             setDeleting(false);
         }

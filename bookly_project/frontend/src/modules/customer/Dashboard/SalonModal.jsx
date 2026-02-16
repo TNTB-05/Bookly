@@ -8,6 +8,7 @@ import LeftArrowIcon from '../../../icons/LeftArrowIcon';
 import RightArrowIcon from '../../../icons/RightArrowIcon';
 import TickIcon from '../../../icons/TickIcon';
 import { authApi } from '../../auth/auth';
+import { useNotification } from '../../../components/NotificationContext';
 
 // Register Hungarian locale for date picker
 registerLocale('hu', hu);
@@ -26,6 +27,7 @@ const STEPS = {
 export default function SalonModal() {
     const { salonId } = useParams();
     const navigate = useNavigate();
+    const { showToast } = useNotification();
     const [salon, setSalon] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -239,15 +241,15 @@ export default function SalonModal() {
                 setBookingResult(data.appointment);
                 setCurrentStep(STEPS.SUCCESS);
             } else if (response.status === 409) {
-                alert(data.message || 'Ez az időpont már foglalt. Kérjük, válasszon másik időpontot.');
+                showToast(data.message || 'Ez az időpont már foglalt. Kérjük, válasszon másik időpontot.', 'warning');
                 setCurrentStep(STEPS.SELECT_DATETIME);
                 loadAvailableSlots();
             } else {
-                alert(data.message || 'Hiba történt a foglalás létrehozásakor');
+                showToast(data.message || 'Hiba történt a foglalás létrehozásakor', 'error');
             }
         } catch (err) {
             console.error('Booking error:', err);
-            alert('Hiba történt a foglalás létrehozásakor');
+            showToast('Hiba történt a foglalás létrehozásakor', 'error');
         } finally {
             setBooking(false);
         }

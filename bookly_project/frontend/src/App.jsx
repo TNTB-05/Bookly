@@ -8,12 +8,23 @@ import ProvDash from './modules/Provider/provDash'
 import Provlanding from './modules/Provider/ProvLanding'
 import './App.css' 
 import { useState, useEffect } from 'react'
-import { AuthContext, getUserFromToken, startAuthHeartbeat, stopAuthHeartbeat } from './modules/auth/auth'
+import { AuthContext, getUserFromToken, startAuthHeartbeat, stopAuthHeartbeat, registerNotifier } from './modules/auth/auth'
 import Dashboard from './modules/customer/Dashboard/Dashboard'
 import SalonModal from './modules/customer/Dashboard/SalonModal';
 import ProtectedRoute from './modules/auth/ProtectedRoute'
 import AdminLogin from './modules/Admin/AdminLogin'
 import AdminDashboard from './modules/Admin/AdminDashboard'
+import NotificationProvider, { useNotification } from './components/NotificationContext'
+
+// Bridge component to connect auth.js notifier with React notification context
+function NotifierBridge() {
+  const { showToast } = useNotification();
+  useEffect(() => {
+    registerNotifier(showToast);
+    return () => registerNotifier(null);
+  }, [showToast]);
+  return null;
+}
 
 function App() {
   const[isAuthenticated,setIsAuthenticated]=useState(!!localStorage.getItem('accessToken'));
@@ -71,6 +82,8 @@ function App() {
   
   return (
 <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, user, setUser }}>
+  <NotificationProvider>
+      <NotifierBridge />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Landing />} />
@@ -122,6 +135,7 @@ function App() {
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+  </NotificationProvider>
 </AuthContext.Provider>
   )
 }
