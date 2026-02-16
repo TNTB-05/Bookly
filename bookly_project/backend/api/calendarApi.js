@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../sql/database.js');
+const { pool, getSalonHoursByProviderId, getExpandedTimeBlocksForDate } = require('../sql/database.js');
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
 const { requireRole } = require('./auth/RoleMiddleware.js');
 
@@ -310,6 +310,26 @@ router.post('/appointments', async (request, response) => {
         const service = services[0];
         let userId = null;
 
+        // Fetch salon hours to validate appointment time
+        const salonHours = await getSalonHoursByProviderId(providerId);
+        const openingHour = salonHours?.opening_hours || 8;
+        const closingHour = salonHours?.closing_hours || 20;
+
+        // Parse appointment start datetime
+        const appointmentStart = new Date(`${appointment_date}T${appointment_time}`);
+        
+        // Calculate end time based on service duration
+        const appointmentEnd = new Date(appointmentStart.getTime() + service.duration_minutes * 60000);
+
+        // Validate appointment is within salon hours
+        const startHour = appointmentStart.getHours();
+        if (startHour < openingHour || startHour >= closingHour) {
+            return response.status(400).json({
+                success: false,
+                message: 'Az időpont a szalon nyitvatartási idején kívül esik'
+            });
+        }
+
         // Handle registered user vs guest
         if (is_guest) {
             // Guest booking - no user_id needed
@@ -356,11 +376,23 @@ router.post('/appointments', async (request, response) => {
             }
         }
 
-        // Parse appointment start datetime
-        const appointmentStart = new Date(`${appointment_date}T${appointment_time}`);
-        
-        // Calculate end time based on service duration
-        const appointmentEnd = new Date(appointmentStart.getTime() + service.duration_minutes * 60000);
+        // Helper: format date to MySQL datetime in local timezone (not UTC)
+        function formatDateTimeLocal(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        function formatDateLocal(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
 
         // Check for conflicts
         const [conflicts] = await pool.query(
@@ -374,12 +406,12 @@ router.post('/appointments', async (request, response) => {
              )`,
             [
                 providerId,
-                appointmentEnd.toISOString().slice(0, 19).replace('T', ' '),
-                appointmentStart.toISOString().slice(0, 19).replace('T', ' '),
-                appointmentEnd.toISOString().slice(0, 19).replace('T', ' '),
-                appointmentStart.toISOString().slice(0, 19).replace('T', ' '),
-                appointmentStart.toISOString().slice(0, 19).replace('T', ' '),
-                appointmentEnd.toISOString().slice(0, 19).replace('T', ' ')
+                formatDateTimeLocal(appointmentEnd),
+                formatDateTimeLocal(appointmentStart),
+                formatDateTimeLocal(appointmentEnd),
+                formatDateTimeLocal(appointmentStart),
+                formatDateTimeLocal(appointmentStart),
+                formatDateTimeLocal(appointmentEnd)
             ]
         );
 
@@ -387,6 +419,22 @@ router.post('/appointments', async (request, response) => {
             return response.status(409).json({
                 success: false,
                 message: 'Ez az időpont már foglalt'
+            });
+        }
+
+        // Check for time block conflicts
+        const dateStr = formatDateLocal(appointmentStart);
+        const timeBlocks = await getExpandedTimeBlocksForDate(providerId, dateStr);
+        const hasTimeBlockConflict = timeBlocks.some(block => {
+            const blockStart = new Date(block.start_datetime);
+            const blockEnd = new Date(block.end_datetime);
+            return appointmentStart < blockEnd && appointmentEnd > blockStart;
+        });
+
+        if (hasTimeBlockConflict) {
+            return response.status(409).json({
+                success: false,
+                message: 'Időpont foglalás ütközik a szolgáltató szünetével'
             });
         }
 
@@ -400,8 +448,8 @@ router.post('/appointments', async (request, response) => {
                 userId,
                 providerId,
                 service_id,
-                appointmentStart.toISOString().slice(0, 19).replace('T', ' '),
-                appointmentEnd.toISOString().slice(0, 19).replace('T', ' '),
+                formatDateTimeLocal(appointmentStart),
+                formatDateTimeLocal(appointmentEnd),
                 comment?.trim() || null,
                 service.price,
                 is_guest ? user_name.trim() : null,

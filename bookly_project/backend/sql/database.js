@@ -292,6 +292,9 @@ async function getAvailableTimeSlots(providerId, date, serviceDurationMinutes) {
     // Get existing appointments for the day
     const existingAppointments = await getProviderAppointmentsForDate(providerId, date);
 
+    // Get expanded time blocks for the day
+    const timeBlocks = await getExpandedTimeBlocksForDate(providerId, date);
+
     // Generate all possible 15-minute slots
     const slots = [];
     const slotInterval = 15; // minutes
@@ -327,11 +330,22 @@ async function getAvailableTimeSlots(providerId, date, serviceDurationMinutes) {
                 const aptEnd = new Date(apt.appointment_end);
 
                 // Check if the new slot overlaps with existing appointment
-                if (
-                    (slotStart < aptEnd && slotEnd > aptStart)
-                ) {
+                if (slotStart < aptEnd && slotEnd > aptStart) {
                     hasConflict = true;
                     break;
+                }
+            }
+
+            // Check for conflicts with time blocks
+            if (!hasConflict) {
+                for (const block of timeBlocks) {
+                    const blockStart = new Date(block.start_datetime);
+                    const blockEnd = new Date(block.end_datetime);
+
+                    if (slotStart < blockEnd && slotEnd > blockStart) {
+                        hasConflict = true;
+                        break;
+                    }
                 }
             }
 
@@ -360,6 +374,268 @@ async function getAppointmentById(appointmentId) {
     return rows.length > 0 ? rows[0] : null;
 }
 
+// ==================== TIME BLOCKS ====================
+
+// Get provider time blocks for a date range (raw DB rows)
+async function getProviderTimeBlocks(providerId, startDate, endDate) {
+    const query = `
+        SELECT id, provider_id, start_datetime, end_datetime, 
+               is_recurring, recurrence_pattern, recurrence_days, 
+               recurrence_end_date, notes, created_at
+        FROM provider_time_blocks
+        WHERE provider_id = ?
+        AND (
+            (is_recurring = FALSE AND DATE(start_datetime) <= ? AND DATE(end_datetime) >= ?)
+            OR is_recurring = TRUE
+        )
+        ORDER BY start_datetime ASC
+    `;
+    const [rows] = await pool.execute(query, [providerId, endDate, startDate]);
+    return rows;
+}
+
+// Expand recurring blocks into individual occurrences for a date range
+function expandTimeBlocks(blocks, startDate, endDate) {
+    const expanded = [];
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    for (const block of blocks) {
+        if (!block.is_recurring) {
+            // Non-recurring: include as-is if within range
+            const blockStart = new Date(block.start_datetime);
+            const blockEnd = new Date(block.end_datetime);
+            if (blockStart <= end && blockEnd >= start) {
+                expanded.push({
+                    id: block.id,
+                    parent_id: block.id,
+                    start_datetime: block.start_datetime,
+                    end_datetime: block.end_datetime,
+                    is_recurring: false,
+                    notes: block.notes,
+                });
+            }
+        } else {
+            // Recurring: expand into individual occurrences
+            const blockStart = new Date(block.start_datetime);
+            const blockEnd = new Date(block.end_datetime);
+            const timeStartHours = blockStart.getHours();
+            const timeStartMinutes = blockStart.getMinutes();
+            const timeEndHours = blockEnd.getHours();
+            const timeEndMinutes = blockEnd.getMinutes();
+            
+            const recurrenceEnd = block.recurrence_end_date 
+                ? new Date(block.recurrence_end_date) 
+                : end;
+            recurrenceEnd.setHours(23, 59, 59, 999);
+            
+            const effectiveEnd = recurrenceEnd < end ? recurrenceEnd : end;
+            const effectiveStart = blockStart > start ? new Date(blockStart) : new Date(start);
+            effectiveStart.setHours(0, 0, 0, 0);
+
+            let days = [];
+            if (block.recurrence_pattern === 'daily') {
+                // Every day
+                for (let d = new Date(effectiveStart); d <= effectiveEnd; d.setDate(d.getDate() + 1)) {
+                    days.push(new Date(d));
+                }
+            } else if (block.recurrence_pattern === 'weekly') {
+                // Specific days of week
+                const recurrenceDays = typeof block.recurrence_days === 'string' 
+                    ? JSON.parse(block.recurrence_days) 
+                    : (block.recurrence_days || []);
+                for (let d = new Date(effectiveStart); d <= effectiveEnd; d.setDate(d.getDate() + 1)) {
+                    if (recurrenceDays.includes(d.getDay())) {
+                        days.push(new Date(d));
+                    }
+                }
+            }
+
+            for (const day of days) {
+                const occStart = new Date(day);
+                occStart.setHours(timeStartHours, timeStartMinutes, 0, 0);
+                const occEnd = new Date(day);
+                occEnd.setHours(timeEndHours, timeEndMinutes, 0, 0);
+
+                expanded.push({
+                    id: block.id,
+                    parent_id: block.id,
+                    start_datetime: occStart,
+                    end_datetime: occEnd,
+                    is_recurring: true,
+                    recurrence_pattern: block.recurrence_pattern,
+                    notes: block.notes,
+                });
+            }
+        }
+    }
+
+    return expanded;
+}
+
+// Get expanded time blocks for a specific date (used in availability check)
+async function getExpandedTimeBlocksForDate(providerId, date) {
+    const blocks = await getProviderTimeBlocks(providerId, date, date);
+    return expandTimeBlocks(blocks, date, date);
+}
+
+// Get expanded time blocks for a date range (used in calendar view)
+async function getExpandedTimeBlocksForRange(providerId, startDate, endDate) {
+    const blocks = await getProviderTimeBlocks(providerId, startDate, endDate);
+    return expandTimeBlocks(blocks, startDate, endDate);
+}
+
+// Check appointment conflicts for a time range
+async function checkAppointmentConflicts(providerId, startDatetime, endDatetime) {
+    const query = `
+        SELECT a.id, a.appointment_start, a.appointment_end, 
+               COALESCE(u.name, a.guest_name) as user_name,
+               s.name as service_name
+        FROM appointments a
+        LEFT JOIN users u ON a.user_id = u.id
+        LEFT JOIN services s ON a.service_id = s.id
+        WHERE a.provider_id = ? 
+        AND a.status = 'scheduled'
+        AND a.appointment_start < ? 
+        AND a.appointment_end > ?
+    `;
+    const [rows] = await pool.execute(query, [providerId, endDatetime, startDatetime]);
+    return rows;
+}
+
+// Check time block overlaps for merging
+async function getOverlappingTimeBlocks(providerId, startDatetime, endDatetime, excludeId = null) {
+    let query = `
+        SELECT id, start_datetime, end_datetime, is_recurring, 
+               recurrence_pattern, recurrence_days, recurrence_end_date, notes
+        FROM provider_time_blocks
+        WHERE provider_id = ? 
+        AND is_recurring = FALSE
+        AND start_datetime < ? 
+        AND end_datetime > ?
+    `;
+    const params = [providerId, endDatetime, startDatetime];
+    
+    if (excludeId) {
+        query += ' AND id != ?';
+        params.push(excludeId);
+    }
+    
+    const [rows] = await pool.execute(query, params);
+    return rows;
+}
+
+// Create time block (with auto-merge of overlapping non-recurring blocks)
+async function createTimeBlock(providerId, blockData) {
+    const { start_datetime, end_datetime, is_recurring, recurrence_pattern, recurrence_days, recurrence_end_date, notes } = blockData;
+    
+    // For non-recurring blocks, check and merge overlaps
+    if (!is_recurring) {
+        const overlapping = await getOverlappingTimeBlocks(providerId, start_datetime, end_datetime);
+        
+        if (overlapping.length > 0) {
+            // Merge: find the earliest start and latest end among all overlapping blocks
+            let mergedStart = new Date(start_datetime);
+            let mergedEnd = new Date(end_datetime);
+            const idsToDelete = [];
+            
+            for (const existing of overlapping) {
+                const existStart = new Date(existing.start_datetime);
+                const existEnd = new Date(existing.end_datetime);
+                if (existStart < mergedStart) mergedStart = existStart;
+                if (existEnd > mergedEnd) mergedEnd = existEnd;
+                idsToDelete.push(existing.id);
+            }
+            
+            // Delete overlapping blocks
+            if (idsToDelete.length > 0) {
+                await pool.execute(
+                    `DELETE FROM provider_time_blocks WHERE id IN (${idsToDelete.map(() => '?').join(',')})`,
+                    idsToDelete
+                );
+            }
+            
+            // Insert merged block
+            const [result] = await pool.execute(
+                `INSERT INTO provider_time_blocks (provider_id, start_datetime, end_datetime, is_recurring, recurrence_pattern, recurrence_days, recurrence_end_date, notes)
+                 VALUES (?, ?, ?, FALSE, NULL, NULL, NULL, ?)`,
+                [providerId, mergedStart, mergedEnd, notes || null]
+            );
+            return { id: result.insertId, merged: true, mergedCount: idsToDelete.length };
+        }
+    }
+    
+    const [result] = await pool.execute(
+        `INSERT INTO provider_time_blocks (provider_id, start_datetime, end_datetime, is_recurring, recurrence_pattern, recurrence_days, recurrence_end_date, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+            providerId, 
+            start_datetime, 
+            end_datetime, 
+            is_recurring || false, 
+            recurrence_pattern || null, 
+            recurrence_days ? JSON.stringify(recurrence_days) : null, 
+            recurrence_end_date || null, 
+            notes || null
+        ]
+    );
+    return { id: result.insertId, merged: false };
+}
+
+// Update time block
+async function updateTimeBlock(blockId, providerId, updateData) {
+    const { start_datetime, end_datetime, is_recurring, recurrence_pattern, recurrence_days, recurrence_end_date, notes } = updateData;
+    
+    const [result] = await pool.execute(
+        `UPDATE provider_time_blocks 
+         SET start_datetime = ?, end_datetime = ?, is_recurring = ?, 
+             recurrence_pattern = ?, recurrence_days = ?, recurrence_end_date = ?, notes = ?
+         WHERE id = ? AND provider_id = ?`,
+        [
+            start_datetime, end_datetime, is_recurring || false,
+            recurrence_pattern || null,
+            recurrence_days ? JSON.stringify(recurrence_days) : null,
+            recurrence_end_date || null,
+            notes || null,
+            blockId, providerId
+        ]
+    );
+    return result;
+}
+
+// Delete time block
+async function deleteTimeBlock(blockId, providerId) {
+    const [result] = await pool.execute(
+        'DELETE FROM provider_time_blocks WHERE id = ? AND provider_id = ?',
+        [blockId, providerId]
+    );
+    return result;
+}
+
+// Get single time block by ID
+async function getTimeBlockById(blockId) {
+    const query = `
+        SELECT id, provider_id, start_datetime, end_datetime, 
+               is_recurring, recurrence_pattern, recurrence_days, 
+               recurrence_end_date, notes, created_at
+        FROM provider_time_blocks
+        WHERE id = ?
+    `;
+    const [rows] = await pool.execute(query, [blockId]);
+    return rows.length > 0 ? rows[0] : null;
+}
+
+// End recurring block from a specific date (for "edit this and future" scenario)
+async function endRecurringBlockAt(blockId, providerId, endDate) {
+    const [result] = await pool.execute(
+        'UPDATE provider_time_blocks SET recurrence_end_date = ? WHERE id = ? AND provider_id = ?',
+        [endDate, blockId, providerId]
+    );
+    return result;
+}
+
 //!Export
 module.exports = {
     pool,
@@ -383,5 +659,17 @@ module.exports = {
     getProviderAppointmentsForDate,
     getSalonHoursByProviderId,
     getAvailableTimeSlots,
-    getAppointmentById
+    getAppointmentById,
+    // Time blocks
+    getProviderTimeBlocks,
+    expandTimeBlocks,
+    getExpandedTimeBlocksForDate,
+    getExpandedTimeBlocksForRange,
+    checkAppointmentConflicts,
+    getOverlappingTimeBlocks,
+    createTimeBlock,
+    updateTimeBlock,
+    deleteTimeBlock,
+    getTimeBlockById,
+    endRecurringBlockAt
 };

@@ -1,5 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AddressInput from './AddressInput';
+import PlusIcon from '../../icons/PlusIcon';
+import UserPlusIcon from '../../icons/UserPlusIcon';
+import BackArrowIcon from '../../icons/BackArrowIcon';
 
 // Steps: 'choice' -> 'joinSalon' or 'createSalon' -> 'userRegistration'
 const STEPS = {
@@ -36,6 +40,8 @@ export default function ProvRegister() {
     const [salonData, setSalonData] = useState({
         companyName: '',
         address: '',
+        latitude: null,
+        longitude: null,
         description: '',
         salonType: ''
     });
@@ -68,7 +74,7 @@ export default function ProvRegister() {
     }
 
     function validateSalonData() {
-        const { companyName, address, description, salonType } = salonData;
+        const { companyName, address, description, salonType, latitude, longitude } = salonData;
         if (!companyName.trim() || !address.trim() || !description.trim() || !salonType) {
             setError('Minden mező kitöltése kötelező');
             return false;
@@ -77,8 +83,8 @@ export default function ProvRegister() {
             setError('A cégnév legalább 2 karakter hosszú kell legyen');
             return false;
         }
-        if (address.trim().length < 5) {
-            setError('Kérjük adjon meg érvényes címet');
+        if (!latitude || !longitude) {
+            setError('Kérjük, válassz egy érvényes címet a listából a pontos helymeghatározáshoz');
             return false;
         }
         if (description.trim().length < 10) {
@@ -201,7 +207,9 @@ export default function ProvRegister() {
                     companyName: salonData.companyName.trim(),
                     address: salonData.address.trim(),
                     description: salonData.description.trim(),
-                    salonType: salonData.salonType
+                    salonType: salonData.salonType,
+                    latitude: salonData.latitude,
+                    longitude: salonData.longitude
                 };
             }
 
@@ -297,9 +305,7 @@ export default function ProvRegister() {
                     <div className="flex items-start gap-3 sm:gap-4">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-dark-blue/10 rounded-xl flex items-center justify-center flex-shrink-0
                                       group-hover:bg-dark-blue/20 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 text-dark-blue">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
+                            <PlusIcon className="w-5 h-5 sm:w-6 sm:h-6 text-dark-blue" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-gray-900 text-base sm:text-lg">Új szalon létrehozása</h3>
@@ -319,9 +325,7 @@ export default function ProvRegister() {
                     <div className="flex items-start gap-3 sm:gap-4">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-dark-blue/10 rounded-xl flex items-center justify-center flex-shrink-0
                                       group-hover:bg-dark-blue/20 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 text-dark-blue">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
-                            </svg>
+                            <UserPlusIcon className="w-5 h-5 sm:w-6 sm:h-6 text-dark-blue" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-gray-900 text-base sm:text-lg">Csatlakozás meglévő szalonhoz</h3>
@@ -404,16 +408,13 @@ export default function ProvRegister() {
                     <label htmlFor="address" className="block text-sm font-medium text-gray-900 mb-1.5">
                         Cím
                     </label>
-                    <input
-                        type="text"
-                        id="address"
-                        value={salonData.address}
-                        onChange={(e) => setSalonData({...salonData, address: e.target.value})}
-                        className="w-full px-4 py-2.5 bg-white/60 backdrop-blur-sm border-2 border-white/50 rounded-lg 
-                                 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent
-                                 text-gray-900 placeholder-gray-500 transition-all"
-                        placeholder="1234 Budapest, Példa utca 1."
+                    <AddressInput
+                        initialAddress={salonData.address}
+                        initialLat={salonData.latitude}
+                        initialLng={salonData.longitude}
+                        onChange={(addr, lat, lng) => setSalonData({...salonData, address: addr, latitude: lat, longitude: lng})}
                         disabled={loading}
+                        required={true}
                     />
                 </div>
 
@@ -602,9 +603,7 @@ export default function ProvRegister() {
                         onClick={handleBack}
                         className="mb-4 text-gray-700 hover:text-gray-900 flex items-center gap-2 transition-colors"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                        </svg>
+                        <BackArrowIcon className="w-5 h-5" />
                         Vissza
                     </button>
                     

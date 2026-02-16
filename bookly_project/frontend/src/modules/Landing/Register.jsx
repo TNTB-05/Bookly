@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import BackArrowIcon from '../../icons/BackArrowIcon';
 
 export default function Register() {
     const nameRef = useRef(null);
@@ -100,9 +101,7 @@ export default function Register() {
                         disabled={loading}
                         className="mb-4 text-gray-700 hover:text-gray-900 flex items-center gap-2 transition-colors disabled:opacity-50"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                        </svg>
+                        <BackArrowIcon className="w-5 h-5" />
                         Vissza
                     </button>
 

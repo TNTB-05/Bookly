@@ -310,36 +310,32 @@ router.get('/by-name', async (req, res) => {
             });
         }
 
-        let salons = [];
+        // Build WHERE conditions dynamically
+        let whereConditions = ['s.status = ?'];
+        let queryParams = ['open'];
 
         if (query) {
-            const searchTerm = query.trim().toLowerCase();
-            const salonQuery = `
-                SELECT s.id, s.name, s.address, s.type, s.description, s.banner_color, s.logo_url, s.banner_image_url,
-                       COALESCE(AVG(r.salon_rating), 0) as average_rating,
-                       COUNT(DISTINCT r.id) as rating_count
-                FROM salons s
-                LEFT JOIN ratings r ON s.id = r.salon_id AND r.active = TRUE
-                WHERE s.status = 'open' 
-                AND LOWER(s.name) LIKE ?
-                GROUP BY s.id
-                ORDER BY average_rating DESC, rating_count DESC
-            `;
-            [salons] = await database.pool.execute(salonQuery, [`%${searchTerm}%`]);
-        } else if (service_type) {
-            const salonQuery = `
-                SELECT s.id, s.name, s.address, s.type, s.description, s.banner_color, s.logo_url, s.banner_image_url,
-                       COALESCE(AVG(r.salon_rating), 0) as average_rating,
-                       COUNT(DISTINCT r.id) as rating_count
-                FROM salons s
-                LEFT JOIN ratings r ON s.id = r.salon_id AND r.active = TRUE
-                WHERE s.status = 'open' 
-                AND s.type = ?
-                GROUP BY s.id
-                ORDER BY average_rating DESC, rating_count DESC
-            `;
-            [salons] = await database.pool.execute(salonQuery, [service_type]);
+            whereConditions.push('LOWER(s.name) LIKE ?');
+            queryParams.push(`%${query.trim().toLowerCase()}%`);
         }
+
+        if (service_type) {
+            whereConditions.push('s.type = ?');
+            queryParams.push(service_type);
+        }
+
+        const salonQuery = `
+            SELECT s.id, s.name, s.address, s.type, s.description, s.banner_color, s.logo_url, s.banner_image_url,
+                   COALESCE(AVG(r.salon_rating), 0) as average_rating,
+                   COUNT(DISTINCT r.id) as rating_count
+            FROM salons s
+            LEFT JOIN ratings r ON s.id = r.salon_id AND r.active = TRUE
+            WHERE ${whereConditions.join(' AND ')}
+            GROUP BY s.id
+            ORDER BY average_rating DESC, rating_count DESC
+        `;
+
+        const [salons] = await database.pool.execute(salonQuery, queryParams);
 
         // Get providers for each salon
         const salonsWithProviders = await Promise.all(
@@ -364,6 +360,113 @@ router.get('/by-name', async (req, res) => {
         return res.status(500).json({
             success: false,
             message: 'problem searching salons by name',
+            error: error.message
+        });
+    }
+});
+
+// Get recent reviews for the overview page
+router.get('/recent-reviews', async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 8;
+        
+        const query = `
+            SELECT 
+                r.id,
+                r.salon_rating,
+                r.salon_comment,
+                r.created_at,
+                u.name as user_name,
+                sal.id as salon_id,
+                sal.name as salon_name,
+                sal.type as salon_type
+            FROM ratings r
+            JOIN users u ON r.user_id = u.id
+            JOIN salons sal ON r.salon_id = sal.id
+            WHERE r.active = TRUE 
+            AND r.salon_comment IS NOT NULL 
+            AND r.salon_comment != ''
+            ORDER BY r.created_at DESC
+            LIMIT ?
+        `;
+        
+        const [reviews] = await database.pool.execute(query, [String(limit)]);
+        
+        return res.status(200).json({
+            success: true,
+            reviews
+        });
+    } catch (error) {
+        console.error('Get recent reviews error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error fetching recent reviews',
+            error: error.message
+        });
+    }
+});
+
+// Address autocomplete using Nominatim
+router.get('/address-autocomplete', async (req, res) => {
+    try {
+        const { q } = req.query;
+
+        if (!q || q.trim().length < 3) {
+            return res.status(200).json({
+                success: true,
+                suggestions: []
+            });
+        }
+
+        const suggestions = await locationService.addressAutocomplete(q.trim());
+
+        return res.status(200).json({
+            success: true,
+            suggestions
+        });
+    } catch (error) {
+        console.error('Address autocomplete error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Hiba a cím keresés során',
+            error: error.message
+        });
+    }
+});
+
+// Reverse geocode: coordinates to address
+router.post('/reverse-geocode', async (req, res) => {
+    try {
+        const { latitude, longitude } = req.body;
+
+        if (latitude == null || longitude == null) {
+            return res.status(400).json({
+                success: false,
+                message: 'Koordináták (latitude, longitude) szükségesek'
+            });
+        }
+
+        if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+            return res.status(400).json({
+                success: false,
+                message: 'Érvénytelen koordináták'
+            });
+        }
+
+        const result = await locationService.coordinateToPlace(latitude, longitude);
+
+        return res.status(200).json({
+            success: true,
+            address: result.address,
+            display_name: result.display_name,
+            latitude: result.latitude,
+            longitude: result.longitude
+        });
+    } catch (error) {
+        console.error('Reverse geocode error:', error);
+        return res.status(400).json({
+            success: false,
+            message: 'Hiba a fordított geokódolás során',
             error: error.message
         });
     }

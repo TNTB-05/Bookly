@@ -156,6 +156,11 @@ function toRadians(degrees) {
 function findNearbySalons(salons, userLat, userLon, radiusKm = 50) {
     return salons
         .map((salon) => {
+            // Skip salons without valid coordinates
+            if (salon.latitude == null || salon.longitude == null) {
+                return null;
+            }
+
             const distance = calculateDistance(
                 userLat,
                 userLon,
@@ -168,12 +173,90 @@ function findNearbySalons(salons, userLat, userLon, radiusKm = 50) {
                 distance: Math.round(distance * 100) / 100 // Round to 2 decimal places
             };
         })
-        .filter((salon) => salon.distance <= radiusKm)
+        .filter((salon) => salon !== null && salon.distance <= radiusKm)
         .sort((a, b) => a.distance - b.distance);
+}
+
+// Koordináták visszaalakítása címmé (reverse geocoding)
+async function coordinateToPlace(latitude, longitude) {
+    try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`;
+        
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'Bookly-App/1.0'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Reverse geocoding hiba: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        if (!data || data.error) {
+            throw new Error('Cím nem található a megadott koordinátákhoz');
+        }
+
+        const address = data.address;
+        const parts = [];
+
+        const city = address.city || address.town || address.village || '';
+        if (city) parts.push(city);
+
+        const street = address.road || '';
+        const houseNumber = address.house_number || '';
+        if (street) {
+            parts.push(houseNumber ? `${street} ${houseNumber}` : street);
+        }
+
+        const postalCode = address.postcode || '';
+        if (postalCode) parts.push(postalCode);
+
+        return {
+            address: parts.join(', ') || data.display_name || 'Ismeretlen cím',
+            display_name: data.display_name,
+            latitude: parseFloat(data.lat),
+            longitude: parseFloat(data.lon)
+        };
+    } catch (error) {
+        throw new Error(`Reverse geocoding error: ${error.message}`);
+    }
+}
+
+// Cím autocomplete Nominatim használatával
+async function addressAutocomplete(query) {
+    try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=hu&limit=5&addressdetails=1`;
+        
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'Bookly-App/1.0'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Autocomplete hiba: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        return data.map(item => ({
+            display_name: item.display_name,
+            lat: parseFloat(item.lat),
+            lon: parseFloat(item.lon),
+            type: item.type,
+            address: item.address
+        }));
+    } catch (error) {
+        throw new Error(`Autocomplete error: ${error.message}`);
+    }
 }
 
 module.exports = {
     placeToCoordinate,
+    coordinateToPlace,
+    addressAutocomplete,
     calculateDistance,
     findNearbySalons
 };

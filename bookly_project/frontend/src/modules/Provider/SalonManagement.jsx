@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { authApi } from '../auth/auth';
+import AddressInput from './AddressInput';
+import { useNotification } from '../../components/NotificationContext';
 
 const PRESET_COLORS = [
     '#3B82F6', '#1E40AF', '#6366F1', '#8B5CF6', '#A855F7',
@@ -8,6 +10,7 @@ const PRESET_COLORS = [
 ];
 
 const SalonManagement = () => {
+    const { showToast, showConfirm } = useNotification();
     const [salon, setSalon] = useState(null);
     const [providers, setProviders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -54,7 +57,7 @@ const SalonManagement = () => {
             }
         } catch (error) {
             console.error('Error fetching salon:', error);
-            setError('Failed to load salon data');
+            setError('Nem sikerült betölteni a szalon adatait');
         } finally {
             setLoading(false);
         }
@@ -94,14 +97,14 @@ const SalonManagement = () => {
                 setSalon(data.salon);
                 setFormData(data.salon);
                 setEditMode(false);
-                setSuccess('Salon updated successfully');
+                setSuccess('Szalon sikeresen frissítve');
                 setTimeout(() => setSuccess(null), 3000);
             } else {
                 setError(data.message);
             }
         } catch (error) {
             console.error('Error updating salon:', error);
-            setError('Failed to update salon');
+            setError('Nem sikerült frissíteni a szalont');
         }
     };
 
@@ -232,14 +235,14 @@ const SalonManagement = () => {
 
             if (data.success) {
                 fetchProviders();
-                setSuccess('Provider status updated');
+                setSuccess('Szolgáltató státusza frissítve');
                 setTimeout(() => setSuccess(null), 3000);
             } else {
                 setError(data.message);
             }
         } catch (error) {
             console.error('Error updating provider:', error);
-            setError('Failed to update provider');
+            setError('Nem sikerült frissíteni a szolgáltatót');
         }
     };
 
@@ -252,19 +255,20 @@ const SalonManagement = () => {
 
             if (data.success) {
                 fetchProviders();
-                setSuccess('Provider role updated');
+                setSuccess('Szolgáltató szerepe frissítve');
                 setTimeout(() => setSuccess(null), 3000);
             } else {
                 setError(data.message);
             }
         } catch (error) {
             console.error('Error updating provider:', error);
-            setError('Failed to update provider');
+            setError('Nem sikerült frissíteni a szolgáltatót');
         }
     };
 
     const handleProviderRemove = async (providerId) => {
-        if (!window.confirm('Are you sure you want to remove this provider?')) {
+        const confirmed = await showConfirm('Biztosan eltávolítod ezt a szolgáltatót?', { danger: true });
+        if (!confirmed) {
             return;
         }
 
@@ -274,14 +278,14 @@ const SalonManagement = () => {
 
             if (data.success) {
                 fetchProviders();
-                setSuccess('Provider removed successfully');
+                setSuccess('Szolgáltató sikeresen eltávolítva');
                 setTimeout(() => setSuccess(null), 3000);
             } else {
                 setError(data.message);
             }
         } catch (error) {
             console.error('Error removing provider:', error);
-            setError('Failed to remove provider');
+            setError('Nem sikerült eltávolítani a szolgáltatót');
         }
     };
 
@@ -295,14 +299,14 @@ const SalonManagement = () => {
             if (data.success) {
                 setSalon(prev => ({ ...prev, status: newStatus }));
                 setFormData(prev => ({ ...prev, status: newStatus }));
-                setSuccess('Salon status updated');
+                setSuccess('Szalon státusza frissítve');
                 setTimeout(() => setSuccess(null), 3000);
             } else {
                 setError(data.message);
             }
         } catch (error) {
             console.error('Error updating salon status:', error);
-            setError('Failed to update salon status');
+            setError('Nem sikerült frissíteni a szalon státuszát');
         }
     };
 
@@ -353,13 +357,12 @@ const SalonManagement = () => {
 
                         <div className="flex flex-col">
                             <label className="mb-2 font-medium text-gray-700">Address *</label>
-                            <input
-                                type="text"
-                                name="address"
-                                value={formData.address || ''}
-                                onChange={handleInputChange}
-                                required
-                                className="p-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-blue-500"
+                            <AddressInput
+                                initialAddress={formData.address || ''}
+                                initialLat={formData.latitude}
+                                initialLng={formData.longitude}
+                                onChange={(addr, lat, lng) => setFormData(prev => ({ ...prev, address: addr, latitude: lat, longitude: lng }))}
+                                required={true}
                             />
                         </div>
 

@@ -5,13 +5,18 @@ import { useDebounce } from '../../../../hooks/useDebounce';
 // Ikonok
 import SearchIcon from '../../../../icons/SearchIcon';
 import LocationIcon from '../../../../icons/LocationIcon';
-import ServicesLoadingIcon from '../../../../icons/ServicesLoadingIcon';
+
 import LeftArrowIcon from '../../../../icons/LeftArrowIcon';
 import RightArrowIcon from '../../../../icons/RightArrowIcon';
+import BuildingIcon from '../../../../icons/BuildingIcon';
+import CalendarSimpleIcon from '../../../../icons/CalendarSimpleIcon';
+import ClipboardCheckIcon from '../../../../icons/ClipboardCheckIcon';
+import StarSmallIcon from '../../../../icons/StarSmallIcon';
 
 // Komponensek
 import SalonCard from '../SalonCard';
 import SearchSuggestions from './SearchSuggestions';
+import { useNotification } from '../../../../components/NotificationContext';
 
 // Áttekintés tab - keresés, kiemelt szalonok és szolgáltatások
 export default function OverviewTab({
@@ -22,6 +27,7 @@ export default function OverviewTab({
     toggleSaveSalon,
     loadTopRatedSalons
 }) {
+    const { showToast } = useNotification();
     // UseState változók a kereséshez
     const [searchQuery, setSearchQuery] = useState('');
     const [serviceFilter, setServiceFilter] = useState('all');
@@ -31,6 +37,7 @@ export default function OverviewTab({
     const [searchResults, setSearchResults] = useState([]);
     const [showAllFeatured, setShowAllFeatured] = useState(false);
     const [salonLimit, setSalonLimit] = useState(12);
+    const [recentReviews, setRecentReviews] = useState([]);
     const carouselRef = useRef(null);
     
     // Suggestions state
@@ -38,6 +45,22 @@ export default function OverviewTab({
     const [showSuggestions, setShowSuggestions] = useState(false);
     const searchContainerRef = useRef(null);
     
+    // Legújabb értékelések betöltése
+    useEffect(() => {
+        async function fetchRecentReviews() {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/search/recent-reviews?limit=8`);
+                const data = await response.json();
+                if (data.success) {
+                    setRecentReviews(data.reviews);
+                }
+            } catch (error) {
+                console.error('Hiba a legújabb értékelések betöltésekor:', error);
+            }
+        }
+        fetchRecentReviews();
+    }, []);
+
     // Debounce search query for suggestions
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
     
@@ -102,7 +125,7 @@ export default function OverviewTab({
     // Felhasználó aktuális GPS pozíciójának lekérése
     function handleGetCurrentLocation() {
         if (!navigator.geolocation) {
-            alert('A böngésző nem támogatja a helymeghatározást');
+            showToast('A böngésző nem támogatja a helymeghatározást', 'warning');
             return;
         }
 
@@ -112,30 +135,19 @@ export default function OverviewTab({
                 setUserLocation({ latitude, longitude });
 
                 try {
-                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
-                        headers: {
-                            'User-Agent': 'Bookly-App/1.0'
-                        }
+                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                    const response = await fetch(`${apiUrl}/api/search/reverse-geocode`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ latitude, longitude })
                     });
                     const data = await response.json();
                     
-                    const address = data.address;
-                    const parts = [];
-                    
-                    const city = address.city || address.town || address.village || '';
-                    if (city) parts.push(city);
-                    
-                    const street = address.road || '';
-                    const houseNumber = address.house_number || '';
-                    if (street) {
-                        parts.push(houseNumber ? `${street} ${houseNumber}` : street);
+                    if (data.success) {
+                        setLocationSearch(data.address);
+                    } else {
+                        setLocationSearch(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
                     }
-                    
-                    const postalCode = address.postcode || '';
-                    if (postalCode) parts.push(postalCode);
-                    
-                    const fullAddress = parts.join(', ') || 'Jelenlegi helyzet';
-                    setLocationSearch(fullAddress);
                 } catch (error) {
                     console.error('Fordított geokódolás sikertelen:', error);
                     setLocationSearch(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
@@ -143,7 +155,7 @@ export default function OverviewTab({
             },
             (error) => {
                 console.error('Helymeghatározási hiba:', error);
-                alert('Nem sikerült lekérni a helyzetet. Kérjük, engedélyezd a helymeghatározást.');
+                showToast('Nem sikerült lekérni a helyzetet. Kérjük, engedélyezd a helymeghatározást.', 'warning');
             }
         );
     }
@@ -156,7 +168,9 @@ export default function OverviewTab({
      */
     function scrollCarousel(direction) {
         if (carouselRef.current) {
-            const scrollAmount = 400;
+            const cardWidth = 320; // w-80 = 320px
+            const gap = 24; // gap-6 = 24px
+            const scrollAmount = cardWidth + gap;
             const newScrollPosition = carouselRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
             carouselRef.current.scrollTo({
                 left: newScrollPosition,
@@ -427,47 +441,91 @@ export default function OverviewTab({
                 )}
             </div>
 
-            {/* Szolgáltatások */}
-            <div>
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                    <div className="mb-8">
-                        <h2 className="text-2xl font-bold text-dark-blue mb-3">Szolgáltatások</h2>
-                        
-                        {/* Filter by Service Type */}
-                        <div className="flex gap-2 flex-wrap">
-                            <button
-                                key="all"
-                                onClick={() => setServiceFilter('all')}
-                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                                    serviceFilter === 'all'
-                                        ? 'bg-dark-blue text-white shadow-lg'
-                                        : 'bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-white/70 border border-white/50'
-                                }`}
-                            >
-                                Összes
-                            </button>
-                            {serviceTypes.map((type) => (
-                                <button
-                                    key={type}
-                                    onClick={() => setServiceFilter(type)}
-                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                                        serviceFilter === type
-                                            ? 'bg-dark-blue text-white shadow-lg'
-                                            : 'bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-white/70 border border-white/50'
-                                    }`}
-                                >
-                                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                                </button>
-                            ))}
+            {/* Hogyan működik? */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div className="text-center mb-10">
+                    <h2 className="text-2xl font-bold text-dark-blue">Hogyan működik?</h2>
+                    <p className="text-gray-600 mt-2">Foglalj időpontot néhány egyszerű lépésben</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {/* Lépés 1 */}
+                    <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/50 shadow-sm text-center hover:shadow-md transition-shadow">
+                        <div className="w-12 h-12 bg-blue-100 text-dark-blue rounded-full flex items-center justify-center mx-auto mb-4">
+                            <SearchIcon className="w-6 h-6" />
                         </div>
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-dark-blue text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">1</div>
+                        <h3 className="font-semibold text-gray-900 mb-2">Keresés</h3>
+                        <p className="text-sm text-gray-500">Keresd meg a számodra ideális szalont név, szolgáltatás vagy helyszín alapján.</p>
                     </div>
-                    <div className="text-center py-12 bg-white/40 backdrop-blur-md rounded-xl border border-white/50">
-                        <ServicesLoadingIcon />
-                        <h3 className="text-lg font-medium text-gray-900">Szolgáltatások hamarosan</h3>
-                        <p className="text-gray-500 mt-1">A szolgáltatások böngészése fejlesztés alatt áll</p>
+
+                    {/* Lépés 2 */}
+                    <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/50 shadow-sm text-center hover:shadow-md transition-shadow">
+                        <div className="w-12 h-12 bg-blue-100 text-dark-blue rounded-full flex items-center justify-center mx-auto mb-4">
+                            <BuildingIcon className="w-6 h-6" />
+                        </div>
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-dark-blue text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">2</div>
+                        <h3 className="font-semibold text-gray-900 mb-2">Válassz szalont</h3>
+                        <p className="text-sm text-gray-500">Böngészd az értékeléseket, szolgáltatásokat és válaszd ki a legjobbat.</p>
+                    </div>
+
+                    {/* Lépés 3 */}
+                    <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/50 shadow-sm text-center hover:shadow-md transition-shadow">
+                        <div className="w-12 h-12 bg-blue-100 text-dark-blue rounded-full flex items-center justify-center mx-auto mb-4">
+                            <CalendarSimpleIcon className="w-6 h-6" />
+                        </div>
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-dark-blue text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">3</div>
+                        <h3 className="font-semibold text-gray-900 mb-2">Foglalj időpontot</h3>
+                        <p className="text-sm text-gray-500">Válaszd ki a neked megfelelő időpontot és foglald le pár kattintással.</p>
+                    </div>
+
+                    {/* Lépés 4 */}
+                    <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/50 shadow-sm text-center hover:shadow-md transition-shadow">
+                        <div className="w-12 h-12 bg-blue-100 text-dark-blue rounded-full flex items-center justify-center mx-auto mb-4">
+                            <ClipboardCheckIcon className="w-6 h-6" />
+                        </div>
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-dark-blue text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">4</div>
+                        <h3 className="font-semibold text-gray-900 mb-2">Kezeld a foglalásaid</h3>
+                        <p className="text-sm text-gray-500">Kövesd nyomon foglalásaidat, és értékeld a szolgáltatót a látogatás után.</p>
                     </div>
                 </div>
             </div>
+
+            {/* Legújabb értékelések */}
+            {recentReviews.length > 0 && (
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    <div className="text-center mb-10">
+                        <h2 className="text-2xl font-bold text-dark-blue">Legújabb értékelések</h2>
+                        <p className="text-gray-600 mt-2">Vendégeink visszajelzései</p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {recentReviews.map((review) => (
+                            <div key={review.id} className="bg-white/60 backdrop-blur-md rounded-2xl p-5 border border-white/50 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-10 h-10 rounded-full bg-dark-blue text-white flex items-center justify-center text-sm font-bold shrink-0">
+                                        {review.user_name?.charAt(0).toUpperCase() || '?'}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-gray-900 truncate">{review.user_name}</p>
+                                        <p className="text-xs text-gray-500 truncate">{review.salon_name}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1 mb-2">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <StarSmallIcon
+                                            key={star}
+                                            className={`w-4 h-4 ${star <= review.salon_rating ? 'text-amber-400' : 'text-gray-200'}`}
+                                        />
+                                    ))}
+                                </div>
+                                <p className="text-sm text-gray-600 line-clamp-3 flex-1">"{review.salon_comment}"</p>
+                                <p className="text-xs text-gray-400 mt-3">
+                                    {new Date(review.created_at).toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
