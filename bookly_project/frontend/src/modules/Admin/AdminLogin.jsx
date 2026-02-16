@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth';
+import BackArrowIcon from '../../icons/BackArrowIcon';
+import ShieldCheckIcon from '../../icons/ShieldCheckIcon';
 
 export default function AdminLogin() {
     const emailRef = useRef(null);
@@ -70,18 +72,14 @@ export default function AdminLogin() {
                         onClick={() => navigate('/')}
                         className="mb-4 text-gray-300 hover:text-white flex items-center gap-2 transition-colors"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                        </svg>
+                        <BackArrowIcon className="w-5 h-5" />
                         Vissza
                     </button>
 
                     {/* Header */}
                     <div className="text-center mb-6 sm:mb-8">
                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500/30 mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-amber-400">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-                            </svg>
+                            <ShieldCheckIcon className="w-8 h-8 text-amber-400" />
                         </div>
                         <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
                         <p className="text-gray-400 text-sm mt-1">Bookly adminisztrációs felület</p>

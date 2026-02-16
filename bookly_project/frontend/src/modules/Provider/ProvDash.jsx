@@ -15,6 +15,20 @@ import { getUserFromToken } from '../auth/auth';
 import TimeSpinner from '../../components/TimeSpinner';
 import TimeBlockModal from './TimeBlockModal';
 import { timeBlocksService } from '../../services/timeBlocksService';
+import CurrencyIcon from '../../icons/CurrencyIcon';
+import UsersIcon from '../../icons/UsersIcon';
+import LeftArrowIcon from '../../icons/LeftArrowIcon';
+import RightArrowIcon from '../../icons/RightArrowIcon';
+import CloseIcon from '../../icons/CloseIcon';
+import UserIcon from '../../icons/UserIcon';
+import ChatBubbleIcon from '../../icons/ChatBubbleIcon';
+import TrashIcon from '../../icons/TrashIcon';
+import PencilIcon from '../../icons/PencilIcon';
+import WarningIcon from '../../icons/WarningIcon';
+import SettingsIcon from '../../icons/SettingsIcon';
+import LogoutIcon from '../../icons/LogoutIcon';
+import CheckCircleIcon from '../../icons/CheckCircleIcon';
+import LockIcon from '../../icons/LockIcon';
 
 // Section Components
 const OverviewSection = () => {
@@ -116,9 +130,7 @@ const OverviewSection = () => {
                             <p className="text-4xl font-bold text-dark-blue mt-2">{formatPrice(statistics.weeklyRevenue)} Ft</p>
                         </div>
                         <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-green-600">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <CurrencyIcon className="w-6 h-6 text-green-600" />
                         </div>
                     </div>
                 </div>
@@ -129,9 +141,7 @@ const OverviewSection = () => {
                             <p className="text-4xl font-bold text-dark-blue mt-2">{statistics.newCustomers}</p>
                         </div>
                         <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-purple-600">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-                            </svg>
+                            <UsersIcon className="w-6 h-6 text-purple-600" />
                         </div>
                     </div>
                 </div>
@@ -576,9 +586,7 @@ const CalendarSection = () => {
                                 onClick={prevMonth}
                                 className="p-1.5 sm:p-2 hover:bg-white/50 rounded-lg transition-colors"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-dark-blue">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                                </svg>
+                                <LeftArrowIcon className="w-4 h-4 sm:w-5 sm:h-5 text-dark-blue" />
                             </button>
                             <h3 className="text-base sm:text-lg font-bold text-dark-blue">
                                 {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
@@ -587,9 +595,7 @@ const CalendarSection = () => {
                                 onClick={nextMonth}
                                 className="p-1.5 sm:p-2 hover:bg-white/50 rounded-lg transition-colors"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-dark-blue">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                                </svg>
+                                <RightArrowIcon className="w-4 h-4 sm:w-5 sm:h-5 text-dark-blue" />
                             </button>
                         </div>
 
@@ -816,9 +822,7 @@ const CalendarSection = () => {
                                     onClick={() => setShowModal(false)}
                                     className="p-1 hover:bg-white/30 rounded-lg transition-colors"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
+                                    <CloseIcon className="w-5 h-5" />
                                 </button>
                             </div>
                         </div>
@@ -828,9 +832,7 @@ const CalendarSection = () => {
                             {/* Time */}
                             <div className="flex items-start gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-blue-600">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
+                                    <HourIcon className="w-4 h-4 text-blue-600" />
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500">Időpont</p>
@@ -850,9 +852,7 @@ const CalendarSection = () => {
                             {/* Contact */}
                             <div className="flex items-start gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-green-600">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                                    </svg>
+                                    <UserIcon className="w-4 h-4 text-green-600" />
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500">Kapcsolat</p>
@@ -866,9 +866,7 @@ const CalendarSection = () => {
                             {/* Price */}
                             <div className="flex items-start gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center shrink-0">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-yellow-600">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
+                                    <CurrencyIcon className="w-4 h-4 text-yellow-600" />
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500">Ár</p>
@@ -882,9 +880,7 @@ const CalendarSection = () => {
                             {selectedAppointment.comment && (
                                 <div className="flex items-start gap-3">
                                     <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-purple-600">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
-                                        </svg>
+                                        <ChatBubbleIcon className="w-4 h-4 text-purple-600" />
                                     </div>
                                     <div>
                                         <p className="text-xs text-gray-500">Megjegyzés</p>
@@ -906,9 +902,7 @@ const CalendarSection = () => {
                                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                                     ) : (
                                         <>
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                            </svg>
+                                            <TrashIcon className="w-4 h-4" />
                                             Foglalás törlése
                                         </>
                                     )}
@@ -935,9 +929,7 @@ const CalendarSection = () => {
                                     onClick={() => setShowCreateModal(false)}
                                     className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
+                                    <CloseIcon className="w-5 h-5" />
                                 </button>
                             </div>
                         </div>
@@ -1266,17 +1258,13 @@ const ServicesSection = () => {
                                         onClick={() => handleOpenModal(service)}
                                         className="p-1 hover:bg-white/50 rounded text-blue-600"
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                                        </svg>
+                                        <PencilIcon className="w-5 h-5" />
                                     </button>
                                     <button 
                                         onClick={() => setDeleteConfirm(service)}
                                         className="p-1 hover:bg-white/50 rounded text-red-500"
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                        </svg>
+                                        <TrashIcon className="w-5 h-5" />
                                     </button>
                                 </div>
                             </div>
@@ -1317,9 +1305,7 @@ const ServicesSection = () => {
                                     onClick={handleCloseModal}
                                     className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
+                                    <CloseIcon className="w-5 h-5" />
                                 </button>
                             </div>
                         </div>
@@ -1418,9 +1404,7 @@ const ServicesSection = () => {
                     <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm my-8">
                         <div className="p-6">
                             <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-red-600">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                                </svg>
+                                <WarningIcon className="w-6 h-6 text-red-600" />
                             </div>
                             <h3 className="text-lg font-bold text-center text-gray-900 mb-2">Szolgáltatás Törlése</h3>
                             <p className="text-gray-600 text-center text-sm">
@@ -1488,16 +1472,11 @@ const UserDropdown = ({ isOpen, onLogout, onProfileEdit, providerProfile }) => {
             </div>
             <div className="p-2 space-y-1">
                 <button onClick={onProfileEdit} className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-white/50 rounded-lg transition-colors flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                    </svg>
+                    <UserIcon className="w-4 h-4" />
                     Profil Szerkesztése
                 </button>
                 <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-white/50 rounded-lg transition-colors flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
+                    <SettingsIcon className="w-4 h-4" />
                     Beállítások
                 </button>
                 <div className="border-t border-gray-100 my-1"></div>
@@ -1505,9 +1484,7 @@ const UserDropdown = ({ isOpen, onLogout, onProfileEdit, providerProfile }) => {
                     onClick={onLogout}
                     className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-                    </svg>
+                    <LogoutIcon className="w-4 h-4" />
                     Kijelentkezés
                 </button>
             </div>
@@ -1832,14 +1809,14 @@ export default function ProvDash() {
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xl font-bold text-dark-blue">Profil szerkesztése</h3>
                                 <button onClick={() => setShowProfileModal(false)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    <CloseIcon className="w-5 h-5" />
                                 </button>
                             </div>
                         </div>
                         <div className="p-6 space-y-5">
                             {profileSuccess && (
                                 <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-center gap-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <CheckCircleIcon className="w-5 h-5 shrink-0" />
                                     {profileSuccess}
                                 </div>
                             )}
@@ -1887,10 +1864,10 @@ export default function ProvDash() {
                             <div className="pt-2 border-t border-gray-200">
                                 <button onClick={openPasswordModal} className="w-full text-left px-3 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-between">
                                     <span className="flex items-center gap-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+                                        <LockIcon className="w-4 h-4" />
                                         Jelszó módosítása
                                     </span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+                                    <RightArrowIcon className="w-4 h-4" />
                                 </button>
                             </div>
                         </div>
@@ -1914,7 +1891,7 @@ export default function ProvDash() {
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xl font-bold text-dark-blue">Jelszó módosítása</h3>
                                 <button onClick={() => setShowPasswordModal(false)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    <CloseIcon className="w-5 h-5" />
                                 </button>
                             </div>
                         </div>
@@ -1922,7 +1899,7 @@ export default function ProvDash() {
                             {passwordError && (<div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{passwordError}</div>)}
                             {passwordSuccess && (
                                 <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-center gap-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <CheckCircleIcon className="w-5 h-5 shrink-0" />
                                     {passwordSuccess}
                                 </div>
                             )}

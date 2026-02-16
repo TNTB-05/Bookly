@@ -8,6 +8,10 @@ import LocationIcon from '../../../../icons/LocationIcon';
 
 import LeftArrowIcon from '../../../../icons/LeftArrowIcon';
 import RightArrowIcon from '../../../../icons/RightArrowIcon';
+import BuildingIcon from '../../../../icons/BuildingIcon';
+import CalendarSimpleIcon from '../../../../icons/CalendarSimpleIcon';
+import ClipboardCheckIcon from '../../../../icons/ClipboardCheckIcon';
+import StarSmallIcon from '../../../../icons/StarSmallIcon';
 
 // Komponensek
 import SalonCard from '../SalonCard';
@@ -445,7 +449,7 @@ export default function OverviewTab({
                     {/* Lépés 1 */}
                     <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/50 shadow-sm text-center hover:shadow-md transition-shadow">
                         <div className="w-12 h-12 bg-blue-100 text-dark-blue rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            <SearchIcon className="w-6 h-6" />
                         </div>
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-dark-blue text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">1</div>
                         <h3 className="font-semibold text-gray-900 mb-2">Keresés</h3>
@@ -455,7 +459,7 @@ export default function OverviewTab({
                     {/* Lépés 2 */}
                     <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/50 shadow-sm text-center hover:shadow-md transition-shadow">
                         <div className="w-12 h-12 bg-blue-100 text-dark-blue rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                            <BuildingIcon className="w-6 h-6" />
                         </div>
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-dark-blue text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">2</div>
                         <h3 className="font-semibold text-gray-900 mb-2">Válassz szalont</h3>
@@ -465,7 +469,7 @@ export default function OverviewTab({
                     {/* Lépés 3 */}
                     <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/50 shadow-sm text-center hover:shadow-md transition-shadow">
                         <div className="w-12 h-12 bg-blue-100 text-dark-blue rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            <CalendarSimpleIcon className="w-6 h-6" />
                         </div>
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-dark-blue text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">3</div>
                         <h3 className="font-semibold text-gray-900 mb-2">Foglalj időpontot</h3>
@@ -475,7 +479,7 @@ export default function OverviewTab({
                     {/* Lépés 4 */}
                     <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/50 shadow-sm text-center hover:shadow-md transition-shadow">
                         <div className="w-12 h-12 bg-blue-100 text-dark-blue rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                            <ClipboardCheckIcon className="w-6 h-6" />
                         </div>
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-dark-blue text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">4</div>
                         <h3 className="font-semibold text-gray-900 mb-2">Kezeld a foglalásaid</h3>
@@ -505,14 +509,10 @@ export default function OverviewTab({
                                 </div>
                                 <div className="flex items-center gap-1 mb-2">
                                     {[1, 2, 3, 4, 5].map((star) => (
-                                        <svg
+                                        <StarSmallIcon
                                             key={star}
                                             className={`w-4 h-4 ${star <= review.salon_rating ? 'text-amber-400' : 'text-gray-200'}`}
-                                            fill="currentColor"
-                                            viewBox="0 0 20 20"
-                                        >
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                        </svg>
+                                        />
                                     ))}
                                 </div>
                                 <p className="text-sm text-gray-600 line-clamp-3 flex-1">"{review.salon_comment}"</p>

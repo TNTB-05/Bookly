@@ -5,6 +5,8 @@ import { hu } from 'date-fns/locale';
 import 'react-datepicker/dist/react-datepicker.css';
 import CloseIcon from '../../../icons/CloseIcon';
 import LeftArrowIcon from '../../../icons/LeftArrowIcon';
+import RightArrowIcon from '../../../icons/RightArrowIcon';
+import TickIcon from '../../../icons/TickIcon';
 import { authApi } from '../../auth/auth';
 
 // Register Hungarian locale for date picker
@@ -528,9 +530,7 @@ export default function SalonModal() {
                                                     {provider.services?.length || 0} szolgáltatás
                                                 </p>
                                             </div>
-                                            <svg className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                            </svg>
+                                            <RightArrowIcon className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition-colors" />
                                         </div>
                                         {provider.description && (
                                             <p className="mt-3 text-sm text-gray-500 line-clamp-2">{provider.description}</p>
@@ -734,9 +734,7 @@ export default function SalonModal() {
                         <div className="p-6 flex items-center justify-center min-h-100">
                             <div className="text-center max-w-md">
                                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
+                                    <TickIcon className="w-10 h-10 text-green-600" />
                                 </div>
                                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Sikeres foglalás!</h3>
                                 <p className="text-gray-600 mb-8">Az időpontod sikeresen lefoglaltad.</p>
