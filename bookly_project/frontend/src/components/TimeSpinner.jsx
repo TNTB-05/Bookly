@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import ChevronDownIcon from '../icons/ChevronDownIcon';
 
 const TimeSpinner = ({ value, onChange, minHour, maxHour }) => {
     const [hours, minutes] = value.split(':').map(Number);
@@ -64,14 +65,7 @@ const TimeSpinner = ({ value, onChange, minHour, maxHour }) => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-left focus:ring-2 focus:ring-dark-blue focus:border-transparent flex items-center justify-between"
             >
                 <span className="text-lg font-medium">{value}</span>
-                <svg 
-                    className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <ChevronDownIcon className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Dropdown Picker */}

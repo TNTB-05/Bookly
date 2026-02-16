@@ -5,7 +5,10 @@ import { hu } from 'date-fns/locale';
 import 'react-datepicker/dist/react-datepicker.css';
 import CloseIcon from '../../../icons/CloseIcon';
 import LeftArrowIcon from '../../../icons/LeftArrowIcon';
+import RightArrowIcon from '../../../icons/RightArrowIcon';
+import TickIcon from '../../../icons/TickIcon';
 import { authApi } from '../../auth/auth';
+import { useNotification } from '../../../components/NotificationContext';
 
 // Register Hungarian locale for date picker
 registerLocale('hu', hu);
@@ -24,6 +27,7 @@ const STEPS = {
 export default function SalonModal() {
     const { salonId } = useParams();
     const navigate = useNavigate();
+    const { showToast } = useNotification();
     const [salon, setSalon] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -237,15 +241,15 @@ export default function SalonModal() {
                 setBookingResult(data.appointment);
                 setCurrentStep(STEPS.SUCCESS);
             } else if (response.status === 409) {
-                alert(data.message || 'Ez az időpont már foglalt. Kérjük, válasszon másik időpontot.');
+                showToast(data.message || 'Ez az időpont már foglalt. Kérjük, válasszon másik időpontot.', 'warning');
                 setCurrentStep(STEPS.SELECT_DATETIME);
                 loadAvailableSlots();
             } else {
-                alert(data.message || 'Hiba történt a foglalás létrehozásakor');
+                showToast(data.message || 'Hiba történt a foglalás létrehozásakor', 'error');
             }
         } catch (err) {
             console.error('Booking error:', err);
-            alert('Hiba történt a foglalás létrehozásakor');
+            showToast('Hiba történt a foglalás létrehozásakor', 'error');
         } finally {
             setBooking(false);
         }
@@ -258,7 +262,8 @@ export default function SalonModal() {
             month: 'long',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
+
         });
     }
 
@@ -527,9 +532,7 @@ export default function SalonModal() {
                                                     {provider.services?.length || 0} szolgáltatás
                                                 </p>
                                             </div>
-                                            <svg className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                            </svg>
+                                            <RightArrowIcon className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition-colors" />
                                         </div>
                                         {provider.description && (
                                             <p className="mt-3 text-sm text-gray-500 line-clamp-2">{provider.description}</p>
@@ -733,9 +736,7 @@ export default function SalonModal() {
                         <div className="p-6 flex items-center justify-center min-h-100">
                             <div className="text-center max-w-md">
                                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
+                                    <TickIcon className="w-10 h-10 text-green-600" />
                                 </div>
                                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Sikeres foglalás!</h3>
                                 <p className="text-gray-600 mb-8">Az időpontod sikeresen lefoglaltad.</p>

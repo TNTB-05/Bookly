@@ -13,10 +13,12 @@ export default function ProtectedRoute({ allowedRoles, children }) {
 
     // Not logged in at all → redirect to appropriate login page
     if (!isAuthenticated || !user) {
-        // Determine which login page based on the route they tried to access
-        const loginPath = location.pathname.startsWith('/provider') || location.pathname.startsWith('/ProvDash')
-            ? '/provider/login' 
-            : '/login';
+        let loginPath = '/login';
+        if (location.pathname.startsWith('/admin')) {
+            loginPath = '/admin/login';
+        } else if (location.pathname.startsWith('/provider') || location.pathname.startsWith('/ProvDash')) {
+            loginPath = '/provider/login';
+        }
         
         // Save where they were trying to go (for redirect after login)
         return <Navigate to={loginPath} state={{ from: location }} replace />;
@@ -24,9 +26,12 @@ export default function ProtectedRoute({ allowedRoles, children }) {
 
     // Logged in but wrong role → redirect to their correct dashboard
     if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-        const redirectPath = user.role === 'provider' 
-            ? '/ProvDash' 
-            : '/dashboard';
+        let redirectPath = '/dashboard';
+        if (user.role === 'provider') {
+            redirectPath = '/ProvDash';
+        } else if (user.role === 'admin') {
+            redirectPath = '/admin/dashboard';
+        }
         
         return <Navigate to={redirectPath} replace />;
     }

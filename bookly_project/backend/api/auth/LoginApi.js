@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken'); //?npm install jsonwebtoken
 const addUser = require('../../sql/users.js').addUser;
 const getUserByEmail = require('../../sql/users.js').getUserByEmail;
 const getUsers = require('../../sql/users.js').getUsers;
+const { logEvent } = require('../../services/logService.js');
 
 
 //!Multer
@@ -29,7 +30,7 @@ const upload = multer({ storage });
 //!Endpoints:
 
 // Helper function to generate tokens
-const generateTokens = (email, userId, name) => {
+const generateTokens = (email, userId, name, role = 'customer') => {
     if (!process.env.JWT_SECRET) {
         console.error('JWT_SECRET is not configured');
         throw new Error('Server configuration error: JWT_SECRET missing');
@@ -41,15 +42,36 @@ const generateTokens = (email, userId, name) => {
     }
 
     const accessToken = jwt.sign(
-        { email, userId, name, role: 'customer'},
+        { email, userId, name, role },
         process.env.JWT_SECRET,
         { expiresIn: '15m' } // Short-lived access token
     );
 
     const refreshToken = jwt.sign(
-        { email, userId, name, role: 'customer'},
+        { email, userId, name, role },
         process.env.JWT_REFRESH_SECRET,
         { expiresIn: '7d' } // Long-lived refresh token
+    );
+
+    return { accessToken, refreshToken };
+};
+
+// Stricter token generation for admin accounts
+const generateAdminTokens = (email, adminId, name) => {
+    if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
+        throw new Error('Server configuration error: JWT secrets missing');
+    }
+
+    const accessToken = jwt.sign(
+        { email, userId: adminId, name, role: 'admin' },
+        process.env.JWT_SECRET,
+        { expiresIn: '5m' } // Very short-lived for admin security
+    );
+
+    const refreshToken = jwt.sign(
+        { email, userId: adminId, name, role: 'admin' },
+        process.env.JWT_REFRESH_SECRET,
+        { expiresIn: '1h' } // 1 hour admin session max
     );
 
     return { accessToken, refreshToken };
@@ -135,21 +157,28 @@ router.post('/login', async (request, response) => {
         }
 
         // Check if user account is deleted or banned
-        if (user.status === 'banned') {
+        if (user.status === 'banned' || user.status === 'deleted') {
             return response.status(403).json({
                 success: false,
-                message: 'Account is no longer active'
+                message: 'A fiók le van tiltva vagy törölve',
+                banned: true
             });
         }
 
         // Generate both access and refresh tokens
-        const { accessToken, refreshToken } = generateTokens(email, user.id, user.name);
+        const { accessToken, refreshToken } = generateTokens(email, user.id, user.name, 'customer');
 
         // Store refresh token in database (user_id for customers)
         await pool.query(
             'INSERT INTO RefTokens (user_id, refresh_token) VALUES (?, ?)',
             [user.id, refreshToken]
         );
+
+        // Update last_login
+        await pool.query('UPDATE users SET last_login = NOW() WHERE id = ?', [user.id]);
+
+        // Log login event
+        await logEvent('INFO', 'USER_LOGIN', 'user', user.id, 'user', user.id, `User ${email} logged in`);
 
         // Send refresh token as HTTP-only cookie
         response.cookie('refreshToken', refreshToken, {
@@ -202,7 +231,7 @@ router.post('/refresh', async (request, response) => {
 
         // Check if token exists in database
         const [tokens] = await pool.query(
-            'SELECT id, user_id, provider_id FROM RefTokens WHERE refresh_token = ?',
+            'SELECT id, user_id, provider_id, admin_id FROM RefTokens WHERE refresh_token = ?',
             [refreshToken]
         );
 
@@ -234,7 +263,6 @@ router.post('/refresh', async (request, response) => {
             );
 
             if (providers.length === 0 || providers[0].status === 'deleted' || providers[0].status === 'banned') {
-                // Remove invalid token
                 await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
                 response.clearCookie('refreshToken');
                 return response.status(401).json({
@@ -242,8 +270,32 @@ router.post('/refresh', async (request, response) => {
                     message: 'User account is no longer active'
                 });
             }
+        } else if (decoded.role === 'admin') {
+            // Admin validation - verify token belongs to an admin
+            if (!tokenRecord.admin_id) {
+                await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
+                response.clearCookie('refreshToken');
+                return response.status(401).json({
+                    success: false,
+                    message: 'Invalid token for user type'
+                });
+            }
+
+            const [admins] = await pool.query(
+                'SELECT id FROM admins WHERE id = ?',
+                [tokenRecord.admin_id]
+            );
+
+            if (admins.length === 0) {
+                await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
+                response.clearCookie('refreshToken');
+                return response.status(401).json({
+                    success: false,
+                    message: 'Admin account is no longer active'
+                });
+            }
         } else {
-            // Customer validation - verify token belongs to a customer
+            // Customer validation - verify token belongs to a user
             if (!tokenRecord.user_id) {
                 await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
                 response.clearCookie('refreshToken');
@@ -258,22 +310,23 @@ router.post('/refresh', async (request, response) => {
                 [tokenRecord.user_id]
             );
 
-            if (users.length === 0 || users[0].status === 'banned') {
-                // Remove invalid token
+            if (users.length === 0 || users[0].status === 'banned' || users[0].status === 'deleted') {
                 await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
                 response.clearCookie('refreshToken');
                 return response.status(401).json({
                     success: false,
-                    message: 'User account is no longer active'
+                    message: 'A fiók le van tiltva vagy törölve'
                 });
             }
         }
 
         // Generate new access token with userId and role
+        // Admin gets shorter-lived access token for security
+        const accessTokenExpiry = decoded.role === 'admin' ? '5m' : '15m';
         const newAccessToken = jwt.sign(
             { email: decoded.email, userId: decoded.userId, role: decoded.role },
             process.env.JWT_SECRET,
-            { expiresIn: '15m' }
+            { expiresIn: accessTokenExpiry }
         );
 
         response.status(200).json({
@@ -313,11 +366,6 @@ router.post('/logout', async (request, response) => {
             // Decode token to get user/provider ID
             const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
             
-            // Clear the foreign key reference in providers table if applicable
-            if (decoded.role === 'provider') {
-                await pool.query('UPDATE providers SET refresh_token_id = NULL WHERE id = ?', [decoded.userId]);
-            }
-            
             // Delete the token from RefTokens table
             const [result] = await pool.query('DELETE FROM RefTokens WHERE refresh_token = ?', [refreshToken]);
             console.log('Deleted rows:', result.affectedRows);
@@ -337,6 +385,80 @@ router.post('/logout', async (request, response) => {
         success: true,
         message: 'Logged out successfully'
     });
+});
+
+// Admin login endpoint - authenticates against separate admins table
+router.post('/admin/login', async (request, response) => {
+    const { email, password } = request.body;
+
+    if (!email || !password) {
+        return response.status(400).json({
+            success: false,
+            message: 'Email és jelszó megadása kötelező'
+        });
+    }
+
+    try {
+        // Query admins table (separate from users for security)
+        const [admins] = await pool.query(
+            'SELECT id, name, email, password_hash FROM admins WHERE email = ?',
+            [email]
+        );
+
+        if (admins.length === 0) {
+            return response.status(422).json({
+                success: false,
+                message: 'Érvénytelen email vagy jelszó'
+            });
+        }
+
+        const admin = admins[0];
+
+        const passwordMatch = await bcrypt.compare(password, admin.password_hash);
+        
+        if (!passwordMatch) {
+            return response.status(422).json({
+                success: false,
+                message: 'Érvénytelen email vagy jelszó'
+            });
+        }
+
+        // Generate tokens with admin-specific shorter durations
+        const { accessToken, refreshToken } = generateAdminTokens(email, admin.id, admin.name);
+
+        // Store refresh token in database (admin_id for admins - separate column)
+        await pool.query(
+            'INSERT INTO RefTokens (admin_id, refresh_token) VALUES (?, ?)',
+            [admin.id, refreshToken]
+        );
+
+        // Update last_login on admins table
+        await pool.query('UPDATE admins SET last_login = NOW() WHERE id = ?', [admin.id]);
+
+        // Log admin login event
+        await logEvent('INFO', 'ADMIN_LOGIN', 'admin', admin.id, 'admin', admin.id, `Admin ${email} logged in`);
+
+        // Send refresh token as HTTP-only cookie (1 hour for admin)
+        response.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 1 * 60 * 60 * 1000 // 1 hour (admin)
+        });
+
+        response.status(200).json({
+            success: true,
+            message: 'Admin bejelentkezés sikeres',
+            accessToken
+        });
+    } catch (error) {
+        console.error('Admin login error:', error);
+        response.status(500).json({
+            success: false,
+            message: 'Szerverhiba'
+        });
+    }
 });
 
 module.exports = router;

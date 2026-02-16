@@ -1,161 +1,142 @@
-<h1 align="center">NodeJS - Template project</h1>
+# Bookly - Szalon Foglalási Rendszer
 
-## readme.md preview megnyitása:<br>
+Modern foglalási rendszer szolgáltatók és vendégeik számára.
 
-`Ctrl + Shift + V`<br>
+## Technológiai Stack
 
-## package.json fájl létrehozása, amennyiben nem létezik:<br>
+**Frontend:** React 19 + Vite + Tailwind CSS v4 + React Router  
+**Backend:** Node.js + Express 5 + MySQL  
+**Egyéb:** Docker, JWT autentikáció, nodemon
 
-1. Terminal megnyitása.<br>
-
-2. npm init<br>
-
-3. **Package name:** A projekt neve<br>
-
-4. **Version:** Elég egy entert nyomni<br>
-
-5. **Description:** Leírása a projektnek _(valamilyen stringet megadunk, majd enter)_<br>
-
-6. **Entry point:** elég egy entert nyomnunk<br>
-
-7. **Test command:** elég egy entert nyomnunk<br>
-
-8. **Git repository:** elég egy entert nyomnunk<br>
-
-9. **Keywords:** elég egy entert nyomnunk<br>
-
-10. **Author:** beírhatjuk a saját nevünket<br>
-
-11. **License:** elég egy entert nyomnunk<br>
-
-12. Ezután megjelenik az, hogy ez a fájl, amit szeretnénk-e létrehozni, majd egy enter megadásával létrehozhatjuk a **package.json** fájlt.<br>
-
-## NodeJS - Template project használata:<br>
-
-0. Töltsd le a Template project-et és csomagold ki.<br>
-
-1. Lépj be a projekt fő könyvtárába:<br>
-   `cd bookly_projekt`<br>
-
-2. Indítsd el a docker-compose tárolót, ami az adatbázist futtatja:<br>
-   `docker-compose up -d db`<br>
-
-3. Lépj be a backend mappába:<br>
-   `cd backend`<br>
-
-4. Telepítsd a függőségeket a backend mappába a következő parancs segítségével, amennyiben nincs node_modules mappa a backend mappában:<br>
-   `npm install`<br>
-
-5. Backend indítása fejlesztés alatt: _(Fájlok szerkesztésének az esetén újraindul a szerver.)_<br>
-   `npm run dev`<br>
-
-6. Backend indítása élesben: _(Fájlok szerkesztésének az esetén nem indul újra a szerver.)_<br>
-   `npm run start`<br>
-
-
-## NPM hiba esetén<br>
-
-Amennyiben a npm run start nem működik a következő hiba miatt:<br>
+## Projekt Struktúra
 
 ```
-Cannot be loaded because running scripts is disabled on this system.
+bookly_project/
+├── backend/              # Node.js/Express API
+│   ├── api/             # Endpoint-ok (auth/, adminApi.js, userApi.js, ...)
+│   ├── sql/             # Adatbázis fájlok
+│   ├── middleware/      # Middleware-ek
+│   └── server.js        # Backend belépési pont
+│
+├── frontend/            # React/Vite frontend
+│   ├── src/
+│   │   ├── modules/     # Admin/, Provider/, customer/, auth/, Landing/
+│   │   ├── icons/       # 48 SVG ikon komponens
+│   │   └── components/  # Megosztott komponensek
+│   └── vite.config.js
+│
+└── docker-compose.yml   # MySQL + phpMyAdmin konténere
 ```
 
-#### Megoldás:<br>
+## Telepítés es Indítás
 
-Át kell állítani a PowerShell végrehajtási házirendjét. Ezt rendszergazdai jogosultságokkal futó PowerShell-ben tudod megtenni:<br>
+### Előfeltételek
+- Node.js (v18+)
+- Docker + Docker Compose
+- npm
 
-1. Nyisd meg a PowerShell-t.<br>
+### 1. Adatbázis indítás
 
-2. Állítsd be az Execution Policy-t a következő parancs segítségével:<br>
-
+Hozd létre a `bookly_project/.env` fájlt (docker-compose használja):
+```env
+DB_PASSWORD=majom123
+DB_NAME=bookly_db
 ```
+
+Majd indítsd el:
+```bash
+cd bookly_project
+docker-compose up -d db
+```
+
+### 2. Backend indítás
+
+```bash
+cd backend
+npm install
+```
+
+**`Secret.env` fajl létrehozása** a `backend/` mappában:
+```env
+JWT_SECRET=your-secret-key
+JWT_REFRESH_SECRET=your-refresh-secret-key
+PORT=3000
+IP_ADDRESS=127.0.0.1
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=majom123
+DB_NAME=bookly_db
+SESSION_SECRET=some-secret
+FRONTEND_URL=http://127.0.0.1:5173
+```
+
+**Inditas:**
+```bash
+npm run dev    # Fejlesztési mód (automatikusan inditja a DB-t + nodemon)
+npm start      # Éles mód (csak a szerver)
+```
+
+Backend: **http://localhost:3000**
+
+### 3. Frontend indítás
+
+Új terminálban:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend: **http://localhost:5173**
+
+> A frontend alapértelmezetten a `http://localhost:3000` backend-hez csatlakozik. Ha más portra van szükség, hozz létre egy `.env` fájlt a `frontend/` mappában:
+> ```env
+> VITE_API_URL=http://localhost:3000
+> ```
+
+## Szerepkorok
+
+- **Ügyfelek:** Keresés, foglalás, értékelés
+- **Szolgáltatók:** Szalon kezelés, naptár, statisztikák
+- **Admin:** Moderálás, felhasználó kezelés, rendszer naplók
+
+**Admin panel:** `http://localhost:5173/admin/login`
+
+## phpMyAdmin
+
+Ha szükséged van az adatbázis közvetlen elérésére:
+```bash
+docker-compose up -d phpmyadmin
+```
+Elérhető: **http://localhost:8080**
+
+## Hibaelhárítás
+
+**Port foglalt:**
+```bash
+npx kill-port 3000
+npx kill-port 5173
+```
+
+**Adatbázis reset:**
+```bash
+bash reset-db.sh
+```
+Vagy Windows-on:
+```bash
+npm run db:reset-win    # a backend/ mappaban
+```
+
+**PowerShell script hiba (Windows):**
+```powershell
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 ```
 
-3. Nyomj enter-t.
+**Frontend nem indul:** Ellenőrizd, hogy a backend fut-e  
+**Backend nem indul:** Ellenőrizd, hogy a Docker MySQL fut-e: `docker ps`
 
-4. Zárd be és nyisd újra a VS Code-ot.
+## További dokumentáció
 
-## Használat:<br>
-
-Nyisd meg a böngésződben a **http://localhost:3000** címet.
-
-## Felhasznált npm package-ek backend-en:<br>
-
-`nodemon`<br>
-`express`<br>
-`express-session`<br>
-`multer`<br>
-`mysql2`<br>
-
-## nodemon.json felépítése:<br>
-
-1. **"watch": ["."]:** megadja, hogy a teljes projektmappát figyelje a nodemon.<br>
-
-2. **"ext": "js":** Ha bármely .js fájl változik → Nodemon újraindítja a szervert.<br>
-
-3. **"exec": "node server.js":** Ezt a parancsot futtatja a nodemon minden újraindításkor.<br>
-
-4. **"legacyWatch": true:** Engedélyezi a lassabb, de stabilabb fájlfigyelési módot.<br>
-
-5. **"usePolling": true:** Rendszeresen ellenőrzi, változott-e a fájl.<br>
-
-6. **"interval": 1000:** Meghatározza, hogy a polling milyen időközönként történjen az ellenőrzés.<br>
-
-```json
-{
-    "watch": ["."],
-    "ext": "js",
-    "exec": "node server.js",
-    "legacyWatch": true,
-    "watchOptions": {
-        "usePolling": true,
-        "interval": 1000
-    }
-}
-```
-
-## .prettierrc fájl felépítése:<br>
-
-1. Létrehozunk a projektünkben a következő néven egy fájlt: .prettierrc<br>
-
-2. A fájlban nyitunk kapcsos zárójeleket, amelyek közé definiálhatjuk, hogy miket formázzon automatikusan a prettier<br>
-
-3. Beállítása annak, hogy minden idézőjel szimpla idézőjel legyen: ”singleQuote”: true (false értékkel minden szimpla rendes idézőjel lesz).<br>
-
-4. Annak beállítása, hogy legyen-e szóköz az objektum kapcsos zárójelei között: "bracketSpacing": true<br>
-
-5. Annak meghatározása, hogy maximum hány karakter hosszú lehet egy sor: "printWidth": 100<br>
-
-6. Beállítása annak, hogy a tabulátor hány szóközt érjen: "tabWidth": 4<br>
-
-7. Annak meghatározása, hogy egy objektum esetén az utolsó sor után ne szerepeljen vessző: "trailingComma": "none"<br>
-
-```
-{
-    "singleQuote": true,
-    "bracketSpacing": true,
-    "printWidth": 100,
-    "tabWidth": 4,
-    "trailingComma": "none"
-}
-```
-
-## .prettierrc használata:<br>
-
-1. Az Extensions fülben telepítsd a prettier-t.<br>
-
-2. Keresd meg a VS Code beállításokban az editor.defaultFormatter opciót és válasszuk ki a Prettiert, mint formázót.<br>
-
-3. Settings => Rákeresés a következőre: Format => Editor: Format On Save _(Ez legyen bekapcsolva)_<br>
-
-4. Keyboard shortcuts => Format document => CMD + P / CTRL + P<br>
-
-5. Egyéb: Prettier ignorálás: (sor elé) // prettier-ignore<br>
-
-## Amennyiben egy port-on továbbra is futna a szerver, viszont a terminal-t már bezártuk, így onnan nem tudjuk leállítani:<br>
-
-`npx kill-port port`<br>
-
-`npx kill-port 3000`<br>
+Részletes fejlesztői útmutató: [FEJLESZTES.md](FEJLESZTES.md)

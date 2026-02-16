@@ -250,7 +250,8 @@ router.put('/:id', async (req, res) => {
             const instanceDate = new Date(start_datetime);
             const dayBefore = new Date(instanceDate);
             dayBefore.setDate(dayBefore.getDate() - 1);
-            await endRecurringBlockAt(blockId, providerId, dayBefore.toISOString().split('T')[0]);
+            const dayBeforeStr = `${dayBefore.getFullYear()}-${String(dayBefore.getMonth()+1).padStart(2,'0')}-${String(dayBefore.getDate()).padStart(2,'0')}`;
+            await endRecurringBlockAt(blockId, providerId, dayBeforeStr);
 
             // Create a new non-recurring block for this specific instance
             const newBlock = await createTimeBlock(providerId, {
@@ -357,9 +358,10 @@ router.delete('/:id', async (req, res) => {
             const deleteDate = new Date(instanceDate);
             const dayBefore = new Date(deleteDate);
             dayBefore.setDate(dayBefore.getDate() - 1);
+            const dayBeforeStr = `${dayBefore.getFullYear()}-${String(dayBefore.getMonth()+1).padStart(2,'0')}-${String(dayBefore.getDate()).padStart(2,'0')}`;
             
             // End current series before the deleted date
-            await endRecurringBlockAt(blockId, providerId, dayBefore.toISOString().split('T')[0]);
+            await endRecurringBlockAt(blockId, providerId, dayBeforeStr);
 
             // Create new recurring block starting after the deleted date
             const dayAfter = new Date(deleteDate);

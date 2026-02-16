@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import Logo from '../../modules/Logo';
+import { useNotification } from '../../components/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth';
 import { authApi, logout, getUserFromToken } from '../auth/auth';
@@ -181,7 +182,8 @@ export default function ProvDash() {
         };
     }, [dropdownRef]);
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        await logout();
         localStorage.removeItem('accessToken');
         logout();
         setIsAuthenticated(false);

@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AddressInput from './AddressInput';
+import PlusIcon from '../../icons/PlusIcon';
+import UserPlusIcon from '../../icons/UserPlusIcon';
+import BackArrowIcon from '../../icons/BackArrowIcon';
 
 // Steps: 'choice' -> 'joinSalon' or 'createSalon' -> 'userRegistration'
 const STEPS = {
@@ -302,9 +305,7 @@ export default function ProvRegister() {
                     <div className="flex items-start gap-3 sm:gap-4">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-dark-blue/10 rounded-xl flex items-center justify-center flex-shrink-0
                                       group-hover:bg-dark-blue/20 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 text-dark-blue">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
+                            <PlusIcon className="w-5 h-5 sm:w-6 sm:h-6 text-dark-blue" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-gray-900 text-base sm:text-lg">Új szalon létrehozása</h3>
@@ -324,9 +325,7 @@ export default function ProvRegister() {
                     <div className="flex items-start gap-3 sm:gap-4">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-dark-blue/10 rounded-xl flex items-center justify-center flex-shrink-0
                                       group-hover:bg-dark-blue/20 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 text-dark-blue">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
-                            </svg>
+                            <UserPlusIcon className="w-5 h-5 sm:w-6 sm:h-6 text-dark-blue" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-gray-900 text-base sm:text-lg">Csatlakozás meglévő szalonhoz</h3>
@@ -604,9 +603,7 @@ export default function ProvRegister() {
                         onClick={handleBack}
                         className="mb-4 text-gray-700 hover:text-gray-900 flex items-center gap-2 transition-colors"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                        </svg>
+                        <BackArrowIcon className="w-5 h-5" />
                         Vissza
                     </button>
                     

@@ -404,6 +404,24 @@ router.post('/appointments', async (request, response) => {
             }
         }
 
+        // Helper: format date to MySQL datetime in local timezone (not UTC)
+        function formatDateTimeLocal(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        function formatDateLocal(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
         // Check for conflicts
         const [conflicts] = await pool.query(
             `SELECT id FROM appointments 
@@ -416,12 +434,12 @@ router.post('/appointments', async (request, response) => {
              )`,
             [
                 providerId,
-                appointmentEnd.toISOString().slice(0, 19).replace('T', ' '),
-                appointmentStart.toISOString().slice(0, 19).replace('T', ' '),
-                appointmentEnd.toISOString().slice(0, 19).replace('T', ' '),
-                appointmentStart.toISOString().slice(0, 19).replace('T', ' '),
-                appointmentStart.toISOString().slice(0, 19).replace('T', ' '),
-                appointmentEnd.toISOString().slice(0, 19).replace('T', ' ')
+                formatDateTimeLocal(appointmentEnd),
+                formatDateTimeLocal(appointmentStart),
+                formatDateTimeLocal(appointmentEnd),
+                formatDateTimeLocal(appointmentStart),
+                formatDateTimeLocal(appointmentStart),
+                formatDateTimeLocal(appointmentEnd)
             ]
         );
 
@@ -433,7 +451,7 @@ router.post('/appointments', async (request, response) => {
         }
 
         // Check for time block conflicts
-        const dateStr = appointmentStart.toISOString().split('T')[0];
+        const dateStr = formatDateLocal(appointmentStart);
         const timeBlocks = await getExpandedTimeBlocksForDate(providerId, dateStr);
         const hasTimeBlockConflict = timeBlocks.some(block => {
             const blockStart = new Date(block.start_datetime);
@@ -458,8 +476,8 @@ router.post('/appointments', async (request, response) => {
                 userId,
                 providerId,
                 service_id,
-                appointmentStart.toISOString().slice(0, 19).replace('T', ' '),
-                appointmentEnd.toISOString().slice(0, 19).replace('T', ' '),
+                formatDateTimeLocal(appointmentStart),
+                formatDateTimeLocal(appointmentEnd),
                 comment?.trim() || null,
                 service.price,
                 is_guest ? user_name.trim() : null,
