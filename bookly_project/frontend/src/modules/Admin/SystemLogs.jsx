@@ -144,7 +144,7 @@ export default function SystemLogs() {
                                 <th className="text-left px-4 py-3 font-medium text-gray-600">Időpont</th>
                                 <th className="text-left px-4 py-3 font-medium text-gray-600">Szint</th>
                                 <th className="text-left px-4 py-3 font-medium text-gray-600">Művelet</th>
-                                <th className="text-left px-4 py-3 font-medium text-gray-600">Szereplő</th>
+                                <th className="text-left px-4 py-3 font-medium text-gray-600">Indító</th>
                                 <th className="text-left px-4 py-3 font-medium text-gray-600">Cél</th>
                                 <th className="text-left px-4 py-3 font-medium text-gray-600">Részletek</th>
                             </tr>

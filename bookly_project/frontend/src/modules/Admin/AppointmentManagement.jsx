@@ -6,6 +6,7 @@ export default function AppointmentManagement() {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [searchField, setSearchField] = useState('all');
     const [statusFilter, setStatusFilter] = useState('all');
     const [actionLoading, setActionLoading] = useState(false);
     const [deleteModal, setDeleteModal] = useState(null); // { appointmentId }
@@ -45,12 +46,16 @@ export default function AppointmentManagement() {
     };
 
     const filteredAppointments = appointments.filter(a => {
-        const matchesSearch =
-            a.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
-            a.provider_name?.toLowerCase().includes(search.toLowerCase()) ||
-            a.salon_name?.toLowerCase().includes(search.toLowerCase()) ||
-            a.service_name?.toLowerCase().includes(search.toLowerCase()) ||
-            a.guest_name?.toLowerCase().includes(search.toLowerCase());
+        const s = search.toLowerCase();
+        const matchesSearch = !s || (
+            searchField === 'all'
+                ? (a.customer_name?.toLowerCase().includes(s) || a.provider_name?.toLowerCase().includes(s) || a.salon_name?.toLowerCase().includes(s) || a.service_name?.toLowerCase().includes(s) || a.guest_name?.toLowerCase().includes(s))
+                : searchField === 'customer' ? (a.customer_name?.toLowerCase().includes(s) || a.guest_name?.toLowerCase().includes(s))
+                : searchField === 'provider' ? a.provider_name?.toLowerCase().includes(s)
+                : searchField === 'salon' ? a.salon_name?.toLowerCase().includes(s)
+                : searchField === 'service' ? a.service_name?.toLowerCase().includes(s)
+                : true
+        );
         const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
@@ -86,12 +91,23 @@ export default function AppointmentManagement() {
         <div>
             {/* Filters */}
             <div className="flex flex-wrap gap-3 mb-4">
+                <select
+                    value={searchField}
+                    onChange={e => setSearchField(e.target.value)}
+                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                >
+                    <option value="all">Minden mező</option>
+                    <option value="customer">Ügyfél</option>
+                    <option value="provider">Szolgáltató</option>
+                    <option value="salon">Szalon</option>
+                    <option value="service">Szolgáltatás</option>
+                </select>
                 <input
                     type="text"
-                    placeholder="Keresés ügyfél, szolgáltató, szalon alapján..."
+                    placeholder="Keresés..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="flex-1 min-w-[250px] px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="flex-1 min-w-[200px] px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 />
                 <select
                     value={statusFilter}

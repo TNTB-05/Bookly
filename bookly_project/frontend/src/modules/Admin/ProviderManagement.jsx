@@ -10,7 +10,11 @@ export default function ProviderManagement() {
     const [detailLoading, setDetailLoading] = useState(false);
     const [detailTab, setDetailTab] = useState('appointments');
     const [search, setSearch] = useState('');
+    const [searchField, setSearchField] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('all');
     const [actionLoading, setActionLoading] = useState(false);
+    const [deleteModal, setDeleteModal] = useState(null);
+    const [deleteReason, setDeleteReason] = useState('');
 
     useEffect(() => { fetchProviders(); }, []);
 
@@ -51,39 +55,6 @@ export default function ProviderManagement() {
         }
     };
 
-    const handleDeactivate = async (providerId) => {
-        if (!confirm('Biztosan deaktiválod ezt a szolgáltatót?')) return;
-        setActionLoading(true);
-        try {
-            const res = await authApi.post(`/api/admin/providers/${providerId}/deactivate`);
-            const data = await res.json();
-            if (data.success) {
-                fetchProviders();
-                if (selectedProvider?.id === providerId) fetchProviderDetails(providerId);
-            }
-        } catch (err) {
-            console.error('Error deactivating provider:', err);
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    const handleActivate = async (providerId) => {
-        setActionLoading(true);
-        try {
-            const res = await authApi.post(`/api/admin/providers/${providerId}/activate`);
-            const data = await res.json();
-            if (data.success) {
-                fetchProviders();
-                if (selectedProvider?.id === providerId) fetchProviderDetails(providerId);
-            }
-        } catch (err) {
-            console.error('Error activating provider:', err);
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
     const handleRemovePicture = async (providerId) => {
         if (!confirm('Biztosan eltávolítod a profilképet?')) return;
         setActionLoading(true);
@@ -102,27 +73,45 @@ export default function ProviderManagement() {
     };
 
     const handleDeleteAppointment = async (appointmentId) => {
-        const reason = prompt('Kérlek add meg a törlés okát:');
-        if (!reason || !reason.trim()) return;
+        setDeleteModal({ appointmentId });
+        setDeleteReason('');
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteModal || !deleteReason.trim()) return;
+        setActionLoading(true);
         try {
-            const res = await authApi.delete(`/api/admin/appointments/${appointmentId}`, {
-                body: JSON.stringify({ reason: reason.trim() })
+            const res = await authApi.delete(`/api/admin/appointments/${deleteModal.appointmentId}`, {
+                body: JSON.stringify({ reason: deleteReason.trim() })
             });
             const data = await res.json();
-            if (data.success && selectedProvider) fetchProviderDetails(selectedProvider.id);
+            if (data.success) {
+                if (selectedProvider) fetchProviderDetails(selectedProvider.id);
+                fetchProviders();
+            }
         } catch (err) {
             console.error('Error deleting appointment:', err);
+        } finally {
+            setActionLoading(false);
+            setDeleteModal(null);
+            setDeleteReason('');
         }
     };
 
     const handleDeleteRating = async (ratingId) => {
         if (!confirm('Biztosan deaktiválod ezt az értékelést?')) return;
+        setActionLoading(true);
         try {
             const res = await authApi.delete(`/api/admin/ratings/${ratingId}`);
             const data = await res.json();
-            if (data.success && selectedProvider) fetchProviderDetails(selectedProvider.id);
+            if (data.success) {
+                if (selectedProvider) fetchProviderDetails(selectedProvider.id);
+                fetchProviders();
+            }
         } catch (err) {
             console.error('Error deleting rating:', err);
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -159,11 +148,19 @@ export default function ProviderManagement() {
         }
     };
 
-    const filteredProviders = providers.filter(p =>
-        p.name?.toLowerCase().includes(search.toLowerCase()) ||
-        p.email?.toLowerCase().includes(search.toLowerCase()) ||
-        p.salon_name?.toLowerCase().includes(search.toLowerCase())
-    );
+    const filteredProviders = providers.filter(p => {
+        const s = search.toLowerCase();
+        const matchesSearch = !s || (
+            searchField === 'all'
+                ? (p.name?.toLowerCase().includes(s) || p.email?.toLowerCase().includes(s) || p.salon_name?.toLowerCase().includes(s))
+                : searchField === 'name' ? p.name?.toLowerCase().includes(s)
+                : searchField === 'email' ? p.email?.toLowerCase().includes(s)
+                : searchField === 'salon' ? p.salon_name?.toLowerCase().includes(s)
+                : true
+        );
+        const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
 
     const statusBadge = (status) => {
         const map = {
@@ -193,15 +190,35 @@ export default function ProviderManagement() {
 
     return (
         <div>
-            {/* Search + Refresh */}
+            {/* Search + Filters */}
             <div className="flex flex-wrap gap-3 mb-4">
+                <select
+                    value={searchField}
+                    onChange={e => setSearchField(e.target.value)}
+                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                >
+                    <option value="all">Minden mező</option>
+                    <option value="name">Név</option>
+                    <option value="email">Email</option>
+                    <option value="salon">Szalon</option>
+                </select>
                 <input
                     type="text"
-                    placeholder="Keresés név, email vagy szalon alapján..."
+                    placeholder="Keresés..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="flex-1 min-w-[250px] px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="flex-1 min-w-[200px] px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 />
+                <select
+                    value={statusFilter}
+                    onChange={e => setStatusFilter(e.target.value)}
+                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                >
+                    <option value="all">Minden státusz</option>
+                    <option value="active">Aktív</option>
+                    <option value="inactive">Inaktív</option>
+                    <option value="banned">Tiltva</option>
+                </select>
                 <button
                     onClick={fetchProviders}
                     className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-1"
@@ -250,23 +267,6 @@ export default function ProviderManagement() {
                                     <td className="px-4 py-3">{statusBadge(provider.status)}</td>
                                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                                         <div className="flex gap-1 flex-wrap">
-                                            {provider.status === 'active' ? (
-                                                <button
-                                                    onClick={() => handleDeactivate(provider.id)}
-                                                    disabled={actionLoading}
-                                                    className="px-2 py-1 text-xs bg-amber-50 text-amber-700 rounded hover:bg-amber-100 transition-colors"
-                                                >
-                                                    Deaktiválás
-                                                </button>
-                                            ) : provider.status !== 'banned' && provider.status !== 'deleted' ? (
-                                                <button
-                                                    onClick={() => handleActivate(provider.id)}
-                                                    disabled={actionLoading}
-                                                    className="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors"
-                                                >
-                                                    Aktiválás
-                                                </button>
-                                            ) : null}
                                             {provider.status !== 'banned' && provider.status !== 'deleted' ? (
                                                 <button
                                                     onClick={() => handleBan(provider.id)}
@@ -335,22 +335,36 @@ export default function ProviderManagement() {
                                                     {detailTab === 'appointments' && (
                                                         <div className="space-y-2 max-h-64 overflow-y-auto">
                                                             {detailData.appointments?.length === 0 && <p className="text-sm text-gray-400">Nincsenek foglalások</p>}
-                                                            {detailData.appointments?.map(apt => (
-                                                                <div key={apt.id} className="flex items-center justify-between p-3 bg-white rounded-lg">
-                                                                    <div>
-                                                                        <p className="text-sm font-medium text-gray-900">{apt.service_name}</p>
-                                                                        <p className="text-xs text-gray-500">Ügyfél: {apt.customer_name || 'Vendég'}</p>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className="text-right">
-                                                                            <p className="text-xs text-gray-600">{formatDate(apt.appointment_start)}</p>
-                                                                            <p className="text-xs font-medium">{formatPrice(apt.price)}</p>
+                                                            {detailData.appointments?.map(apt => {
+                                                                const aptStatusMap = {
+                                                                    booked: { label: 'Foglalt', cls: 'bg-blue-100 text-blue-700' },
+                                                                    completed: { label: 'Teljesült', cls: 'bg-green-100 text-green-700' },
+                                                                    cancelled: { label: 'Lemondva', cls: 'bg-yellow-100 text-yellow-700' },
+                                                                    deleted: { label: 'Törölve', cls: 'bg-red-100 text-red-700' },
+                                                                    no_show: { label: 'Nem jelent meg', cls: 'bg-gray-100 text-gray-600' },
+                                                                };
+                                                                const aptBadge = aptStatusMap[apt.status] || { label: apt.status, cls: 'bg-gray-100 text-gray-600' };
+                                                                return (
+                                                                    <div key={apt.id} className={`flex items-center justify-between p-3 rounded-lg ${apt.status === 'deleted' ? 'bg-red-50/60' : 'bg-white'}`}>
+                                                                        <div>
+                                                                            <p className="text-sm font-medium text-gray-900">{apt.service_name}</p>
+                                                                            <p className="text-xs text-gray-500">Ügyfél: {apt.customer_name || 'Vendég'}</p>
                                                                         </div>
-                                                                        <button onClick={() => handleDeleteAppointment(apt.id)}
-                                                                            className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors">Törlés</button>
+                                                                        <div className="flex items-center gap-3">
+                                                                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${aptBadge.cls}`}>{aptBadge.label}</span>
+                                                                            <div className="text-right">
+                                                                                <p className="text-xs text-gray-600">{formatDate(apt.appointment_start)}</p>
+                                                                                <p className="text-xs font-medium">{formatPrice(apt.price)}</p>
+                                                                            </div>
+                                                                            {apt.status !== 'deleted' && (
+                                                                                <button onClick={() => handleDeleteAppointment(apt.id)}
+                                                                                    disabled={actionLoading}
+                                                                                    className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors disabled:opacity-50">Törlés</button>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                            ))}
+                                                                );
+                                                            })}
                                                         </div>
                                                     )}
 
@@ -361,11 +375,19 @@ export default function ProviderManagement() {
                                                             {detailData.ratings?.map(r => (
                                                                 <div key={r.id} className="p-3 bg-white rounded-lg">
                                                                     <div className="flex justify-between mb-1">
-                                                                        <p className="text-sm font-medium">{r.user_name}</p>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <p className="text-sm font-medium">{r.user_name}</p>
+                                                                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${r.active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>
+                                                                                {r.active ? 'Aktív' : 'Inaktív'}
+                                                                            </span>
+                                                                        </div>
                                                                         <div className="flex items-center gap-2">
                                                                             <span className="text-xs text-blue-600">{'★'.repeat(r.provider_rating || 0)}{'☆'.repeat(5 - (r.provider_rating || 0))}</span>
-                                                                            <button onClick={() => handleDeleteRating(r.id)}
-                                                                                className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors">Törlés</button>
+                                                                            {r.active !== 0 && (
+                                                                                <button onClick={() => handleDeleteRating(r.id)}
+                                                                                    disabled={actionLoading}
+                                                                                    className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors disabled:opacity-50">Deaktiválás</button>
+                                                                            )}
                                                                         </div>
                                                                     </div>
                                                                     {r.provider_comment && <p className="text-xs text-gray-600">{r.provider_comment}</p>}
@@ -408,6 +430,34 @@ export default function ProviderManagement() {
                     <div className="p-8 text-center text-gray-400 text-sm">Nincs találat</div>
                 )}
             </div>
+
+            {/* Delete Reason Modal */}
+            {deleteModal && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">Foglalás törlése</h3>
+                        <p className="text-sm text-gray-600 mb-4">Kérjük, adja meg a törlés okát:</p>
+                        <textarea
+                            value={deleteReason}
+                            onChange={e => setDeleteReason(e.target.value)}
+                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 resize-none"
+                            placeholder="Törlés oka..."
+                        />
+                        <div className="flex justify-end gap-2 mt-4">
+                            <button
+                                onClick={() => { setDeleteModal(null); setDeleteReason(''); }}
+                                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                            >Mégse</button>
+                            <button
+                                onClick={handleConfirmDelete}
+                                disabled={!deleteReason.trim() || actionLoading}
+                                className="px-4 py-2 text-sm text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors disabled:opacity-50"
+                            >Törlés</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

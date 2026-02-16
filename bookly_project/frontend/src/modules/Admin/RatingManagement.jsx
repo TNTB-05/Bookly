@@ -6,8 +6,10 @@ export default function RatingManagement() {
     const [ratings, setRatings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [searchField, setSearchField] = useState('all');
     const [activeFilter, setActiveFilter] = useState('all');
     const [actionLoading, setActionLoading] = useState(false);
+    const [expandedRating, setExpandedRating] = useState(null);
 
     useEffect(() => { fetchRatings(); }, []);
 
@@ -39,13 +41,16 @@ export default function RatingManagement() {
     };
 
     const filteredRatings = ratings.filter(r => {
-        const matchesSearch =
-            r.user_name?.toLowerCase().includes(search.toLowerCase()) ||
-            r.user_email?.toLowerCase().includes(search.toLowerCase()) ||
-            r.salon_name?.toLowerCase().includes(search.toLowerCase()) ||
-            r.provider_name?.toLowerCase().includes(search.toLowerCase()) ||
-            r.salon_comment?.toLowerCase().includes(search.toLowerCase()) ||
-            r.provider_comment?.toLowerCase().includes(search.toLowerCase());
+        const s = search.toLowerCase();
+        const matchesSearch = !s || (
+            searchField === 'all'
+                ? (r.user_name?.toLowerCase().includes(s) || r.user_email?.toLowerCase().includes(s) || r.salon_name?.toLowerCase().includes(s) || r.provider_name?.toLowerCase().includes(s) || r.salon_comment?.toLowerCase().includes(s) || r.provider_comment?.toLowerCase().includes(s))
+                : searchField === 'user' ? (r.user_name?.toLowerCase().includes(s) || r.user_email?.toLowerCase().includes(s))
+                : searchField === 'salon' ? r.salon_name?.toLowerCase().includes(s)
+                : searchField === 'provider' ? r.provider_name?.toLowerCase().includes(s)
+                : searchField === 'comment' ? (r.salon_comment?.toLowerCase().includes(s) || r.provider_comment?.toLowerCase().includes(s))
+                : true
+        );
         const matchesActive =
             activeFilter === 'all' ||
             (activeFilter === 'active' && r.active) ||
@@ -85,12 +90,23 @@ export default function RatingManagement() {
         <div>
             {/* Filters */}
             <div className="flex flex-wrap gap-3 mb-4">
+                <select
+                    value={searchField}
+                    onChange={e => setSearchField(e.target.value)}
+                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                >
+                    <option value="all">Minden mező</option>
+                    <option value="user">Felhasználó</option>
+                    <option value="salon">Szalon</option>
+                    <option value="provider">Szolgáltató</option>
+                    <option value="comment">Komment</option>
+                </select>
                 <input
                     type="text"
-                    placeholder="Keresés felhasználó, szalon, szolgáltató, komment alapján..."
+                    placeholder="Keresés..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="flex-1 min-w-[250px] px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="flex-1 min-w-[200px] px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 />
                 <select
                     value={activeFilter}
@@ -145,7 +161,6 @@ export default function RatingManagement() {
                                 <th className="text-left px-4 py-3 font-medium text-gray-600">Szolgáltató</th>
                                 <th className="text-left px-4 py-3 font-medium text-gray-600">Szalon ★</th>
                                 <th className="text-left px-4 py-3 font-medium text-gray-600">Szolgáltató ★</th>
-                                <th className="text-left px-4 py-3 font-medium text-gray-600">Komment</th>
                                 <th className="text-left px-4 py-3 font-medium text-gray-600">Dátum</th>
                                 <th className="text-left px-4 py-3 font-medium text-gray-600">Státusz</th>
                                 <th className="text-left px-4 py-3 font-medium text-gray-600">Művelet</th>
@@ -153,50 +168,81 @@ export default function RatingManagement() {
                         </thead>
                         <tbody>
                             {filteredRatings.map(r => (
-                                <tr key={r.id} className={`border-b border-gray-50 transition-colors ${!r.active ? 'bg-gray-50/60 hover:bg-gray-100/60' : 'hover:bg-gray-50'}`}>
-                                    <td className="px-4 py-3">
-                                        <p className="font-medium text-gray-900">{r.user_name || '—'}</p>
-                                        <p className="text-xs text-gray-400">{r.user_email}</p>
-                                    </td>
-                                    <td className="px-4 py-3 text-gray-600">{r.salon_name}</td>
-                                    <td className="px-4 py-3 text-gray-600">{r.provider_name}</td>
-                                    <td className="px-4 py-3">{renderStars(r.salon_rating)}</td>
-                                    <td className="px-4 py-3">{renderStars(r.provider_rating)}</td>
-                                    <td className="px-4 py-3 max-w-[200px]">
-                                        {r.salon_comment && (
-                                            <p className="text-xs text-gray-600 truncate" title={r.salon_comment}>
-                                                <span className="text-gray-400">Szalon:</span> {r.salon_comment}
-                                            </p>
-                                        )}
-                                        {r.provider_comment && (
-                                            <p className="text-xs text-gray-600 truncate" title={r.provider_comment}>
-                                                <span className="text-gray-400">Szolg.:</span> {r.provider_comment}
-                                            </p>
-                                        )}
-                                        {!r.salon_comment && !r.provider_comment && (
-                                            <span className="text-xs text-gray-300">—</span>
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-3 text-xs text-gray-700">{formatDate(r.created_at)}</td>
-                                    <td className="px-4 py-3">
-                                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${r.active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>
-                                            {r.active ? 'Aktív' : 'Inaktív'}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        {r.active ? (
-                                            <button
-                                                onClick={() => handleDeactivate(r.id)}
-                                                disabled={actionLoading}
-                                                className="px-2 py-1 text-xs bg-red-50 text-red-700 rounded hover:bg-red-100 transition-colors disabled:opacity-50"
-                                            >
-                                                Deaktiválás
-                                            </button>
-                                        ) : (
-                                            <span className="text-xs text-gray-400">Inaktív</span>
-                                        )}
-                                    </td>
-                                </tr>
+                                <React.Fragment key={r.id}>
+                                    <tr
+                                        onClick={() => setExpandedRating(expandedRating === r.id ? null : r.id)}
+                                        className={`border-b border-gray-50 cursor-pointer transition-colors ${!r.active ? 'bg-gray-50/60' : ''} ${expandedRating === r.id ? 'bg-amber-50' : 'hover:bg-gray-50'}`}
+                                    >
+                                        <td className="px-4 py-3">
+                                            <p className="font-medium text-gray-900">{r.user_name || '—'}</p>
+                                            <p className="text-xs text-gray-400">{r.user_email}</p>
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-600">{r.salon_name}</td>
+                                        <td className="px-4 py-3 text-gray-600">{r.provider_name}</td>
+                                        <td className="px-4 py-3">{renderStars(r.salon_rating)}</td>
+                                        <td className="px-4 py-3">{renderStars(r.provider_rating)}</td>
+                                        <td className="px-4 py-3 text-xs text-gray-700">{formatDate(r.created_at)}</td>
+                                        <td className="px-4 py-3">
+                                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${r.active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>
+                                                {r.active ? 'Aktív' : 'Inaktív'}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                                            {r.active ? (
+                                                <button
+                                                    onClick={() => handleDeactivate(r.id)}
+                                                    disabled={actionLoading}
+                                                    className="px-2 py-1 text-xs bg-red-50 text-red-700 rounded hover:bg-red-100 transition-colors disabled:opacity-50"
+                                                >
+                                                    Deaktiválás
+                                                </button>
+                                            ) : (
+                                                <span className="text-xs text-gray-400">Inaktív</span>
+                                            )}
+                                        </td>
+                                    </tr>
+
+                                    {/* Accordion Detail Row */}
+                                    {expandedRating === r.id && (
+                                        <tr className="bg-amber-50/30">
+                                            <td colSpan="8" className="px-4 py-4">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    {/* Salon rating details */}
+                                                    <div className="p-3 bg-white/80 rounded-lg">
+                                                        <p className="text-xs font-medium text-gray-500 mb-2">Szalon értékelés</p>
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            {renderStars(r.salon_rating)}
+                                                        </div>
+                                                        {r.salon_comment ? (
+                                                            <div className="bg-gray-50 rounded p-2">
+                                                                <p className="text-xs text-gray-500 mb-1">Komment:</p>
+                                                                <p className="text-sm text-gray-700 whitespace-pre-wrap">{r.salon_comment}</p>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-xs text-gray-400 italic">Nincs komment</p>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Provider rating details */}
+                                                    <div className="p-3 bg-white/80 rounded-lg">
+                                                        <p className="text-xs font-medium text-gray-500 mb-2">Szolgáltató értékelés</p>
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            {renderStars(r.provider_rating)}
+                                                        </div>
+                                                        {r.provider_comment ? (
+                                                            <div className="bg-gray-50 rounded p-2">
+                                                                <p className="text-xs text-gray-500 mb-1">Komment:</p>
+                                                                <p className="text-sm text-gray-700 whitespace-pre-wrap">{r.provider_comment}</p>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-xs text-gray-400 italic">Nincs komment</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
                             ))}
                         </tbody>
                     </table>

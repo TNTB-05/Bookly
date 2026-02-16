@@ -8,7 +8,7 @@ import ProvDash from './modules/Provider/provDash'
 import Provlanding from './modules/Provider/ProvLanding'
 import './App.css' 
 import { useState, useEffect } from 'react'
-import { AuthContext, getUserFromToken } from './modules/auth/auth'
+import { AuthContext, getUserFromToken, startAuthHeartbeat, stopAuthHeartbeat } from './modules/auth/auth'
 import Dashboard from './modules/customer/Dashboard/Dashboard'
 import SalonModal from './modules/customer/Dashboard/SalonModal';
 import ProtectedRoute from './modules/auth/ProtectedRoute'
@@ -57,6 +57,16 @@ function App() {
       localStorage.setItem = originalSetItem;
     };
   }, []);
+
+  // Auth heartbeat — periodic token validation
+  useEffect(() => {
+    if (isAuthenticated) {
+      startAuthHeartbeat();
+    } else {
+      stopAuthHeartbeat();
+    }
+    return () => stopAuthHeartbeat();
+  }, [isAuthenticated]);
 
   
   return (

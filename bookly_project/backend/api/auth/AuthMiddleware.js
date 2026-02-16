@@ -59,7 +59,7 @@ const AuthMiddleware = async (req, res, next) => {
                 'SELECT status FROM providers WHERE id = ?',
                 [decoded.userId]
             );
-            if (providers.length === 0 || providers[0].status === 'banned' || providers[0].status === 'deleted') {
+            if (providers.length === 0 || providers[0].status === 'banned' || providers[0].status === 'deleted' || providers[0].status === 'inactive') {
                 return res.status(403).json({
                     message: 'A fiók le van tiltva vagy törölve',
                     banned: true

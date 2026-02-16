@@ -37,7 +37,7 @@ function StatCard({ title, value, icon, color = 'blue', subtitle }) {
 }
 
 // Sidebar navigation item
-function NavItem({ label, icon, active, onClick }) {
+function NavItem({ label, active, onClick }) {
     return (
         <button
             onClick={onClick}
@@ -47,8 +47,7 @@ function NavItem({ label, icon, active, onClick }) {
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-l-[3px] border-transparent pl-[9px]'
                 }`}
         >
-            <span className="w-5 h-5 flex-shrink-0">{icon}</span>
-            <span className="flex-1 text-left">{label}</span>
+            <span className="w-5 h-5 shrink-0 text-left">{label}</span>
         </button>
     );
 }
@@ -202,7 +201,6 @@ export default function AdminDashboard() {
                 <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
                     <NavItem
                         label="Áttekintés"
-                        icon={icons.dashboard}
                         active={activeSection === 'dashboard'}
                         onClick={() => setActiveSection('dashboard')}
                     />
@@ -211,31 +209,26 @@ export default function AdminDashboard() {
 
                     <NavItem
                         label="Felhasználók"
-                        icon={icons.users}
                         active={activeSection === 'users'}
                         onClick={() => setActiveSection('users')}
                     />
                     <NavItem
                         label="Szolgáltatók"
-                        icon={icons.providers}
                         active={activeSection === 'providers'}
                         onClick={() => setActiveSection('providers')}
                     />
                     <NavItem
                         label="Szalonok"
-                        icon={icons.salons}
                         active={activeSection === 'salons'}
                         onClick={() => setActiveSection('salons')}
                     />
                     <NavItem
                         label="Foglalások"
-                        icon={icons.calendar}
                         active={activeSection === 'appointments'}
                         onClick={() => setActiveSection('appointments')}
                     />
                     <NavItem
                         label="Értékelések"
-                        icon={icons.star}
                         active={activeSection === 'ratings'}
                         onClick={() => setActiveSection('ratings')}
                     />
@@ -244,7 +237,6 @@ export default function AdminDashboard() {
 
                     <NavItem
                         label="Naplók"
-                        icon={icons.logs}
                         active={activeSection === 'logs'}
                         onClick={() => setActiveSection('logs')}
                     />
@@ -305,7 +297,9 @@ export default function AdminDashboard() {
                                 onClick={fetchStatistics}
                                 className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-2"
                             >
-                                <RefreshIcon className="w-4 h-4" />
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
+                                </svg>
                                 Frissítés
                             </button>
                         )}

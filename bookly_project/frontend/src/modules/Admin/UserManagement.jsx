@@ -10,7 +10,11 @@ export default function UserManagement() {
     const [detailLoading, setDetailLoading] = useState(false);
     const [detailTab, setDetailTab] = useState('appointments');
     const [search, setSearch] = useState('');
+    const [searchField, setSearchField] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('all');
     const [actionLoading, setActionLoading] = useState(false);
+    const [deleteModal, setDeleteModal] = useState(null);
+    const [deleteReason, setDeleteReason] = useState('');
 
     useEffect(() => { fetchUsers(); }, []);
 
@@ -102,27 +106,45 @@ export default function UserManagement() {
     };
 
     const handleDeleteAppointment = async (appointmentId) => {
-        const reason = prompt('Kérlek add meg a törlés okát:');
-        if (!reason || !reason.trim()) return;
+        setDeleteModal({ appointmentId });
+        setDeleteReason('');
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteModal || !deleteReason.trim()) return;
+        setActionLoading(true);
         try {
-            const res = await authApi.delete(`/api/admin/appointments/${appointmentId}`, {
-                body: JSON.stringify({ reason: reason.trim() })
+            const res = await authApi.delete(`/api/admin/appointments/${deleteModal.appointmentId}`, {
+                body: JSON.stringify({ reason: deleteReason.trim() })
             });
             const data = await res.json();
-            if (data.success && selectedUser) fetchUserDetails(selectedUser.id);
+            if (data.success) {
+                if (selectedUser) fetchUserDetails(selectedUser.id);
+                fetchUsers();
+            }
         } catch (err) {
             console.error('Error deleting appointment:', err);
+        } finally {
+            setActionLoading(false);
+            setDeleteModal(null);
+            setDeleteReason('');
         }
     };
 
     const handleDeleteRating = async (ratingId) => {
         if (!confirm('Biztosan deaktiválod ezt az értékelést?')) return;
+        setActionLoading(true);
         try {
             const res = await authApi.delete(`/api/admin/ratings/${ratingId}`);
             const data = await res.json();
-            if (data.success && selectedUser) fetchUserDetails(selectedUser.id);
+            if (data.success) {
+                if (selectedUser) fetchUserDetails(selectedUser.id);
+                fetchUsers();
+            }
         } catch (err) {
             console.error('Error deleting rating:', err);
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -146,11 +168,19 @@ export default function UserManagement() {
         }
     };
 
-    const filteredUsers = users.filter(u =>
-        u.name?.toLowerCase().includes(search.toLowerCase()) ||
-        u.email?.toLowerCase().includes(search.toLowerCase()) ||
-        u.phone?.includes(search)
-    );
+    const filteredUsers = users.filter(u => {
+        const s = search.toLowerCase();
+        const matchesSearch = !s || (
+            searchField === 'all'
+                ? (u.name?.toLowerCase().includes(s) || u.email?.toLowerCase().includes(s) || u.phone?.includes(search))
+                : searchField === 'name' ? u.name?.toLowerCase().includes(s)
+                : searchField === 'email' ? u.email?.toLowerCase().includes(s)
+                : searchField === 'phone' ? u.phone?.includes(search)
+                : true
+        );
+        const matchesStatus = statusFilter === 'all' || u.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
 
     const statusBadge = (status) => {
         const map = {
@@ -180,15 +210,35 @@ export default function UserManagement() {
 
     return (
         <div>
-            {/* Search + Refresh */}
+            {/* Search + Filters */}
             <div className="flex flex-wrap gap-3 mb-4">
+                <select
+                    value={searchField}
+                    onChange={e => setSearchField(e.target.value)}
+                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                >
+                    <option value="all">Minden mező</option>
+                    <option value="name">Név</option>
+                    <option value="email">Email</option>
+                    <option value="phone">Telefon</option>
+                </select>
                 <input
                     type="text"
-                    placeholder="Keresés név, email vagy telefon alapján..."
+                    placeholder="Keresés..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="flex-1 min-w-[250px] px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="flex-1 min-w-[200px] px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 />
+                <select
+                    value={statusFilter}
+                    onChange={e => setStatusFilter(e.target.value)}
+                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                >
+                    <option value="all">Minden státusz</option>
+                    <option value="active">Aktív</option>
+                    <option value="banned">Tiltva</option>
+                    <option value="deleted">Törölve</option>
+                </select>
                 <button
                     onClick={fetchUsers}
                     className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-1"
@@ -317,7 +367,7 @@ export default function UserManagement() {
                                                         <div className="space-y-2 max-h-64 overflow-y-auto">
                                                             {detailData.appointments?.length === 0 && <p className="text-sm text-gray-400">Nincsenek foglalások</p>}
                                                             {detailData.appointments?.map(apt => (
-                                                                <div key={apt.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100">
+                                                                <div key={apt.id} className={`flex items-center justify-between p-3 rounded-lg border border-gray-100 ${apt.status === 'deleted' ? 'bg-red-50/60' : 'bg-white'}`}>
                                                                     <div>
                                                                         <p className="text-sm font-medium text-gray-900">{apt.service_name}</p>
                                                                         <p className="text-xs text-gray-500">{apt.salon_name} — {apt.provider_name}</p>
@@ -325,10 +375,30 @@ export default function UserManagement() {
                                                                     <div className="flex items-center gap-3">
                                                                         <div className="text-right">
                                                                             <p className="text-xs text-gray-600">{formatDate(apt.appointment_start)}</p>
-                                                                            <p className="text-xs font-medium">{formatPrice(apt.price)}</p>
+                                                                            <div className="flex items-center gap-2 justify-end mt-0.5">
+                                                                                <p className="text-xs font-medium">{formatPrice(apt.price)}</p>
+                                                                                <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded-full ${
+                                                                                    apt.status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
+                                                                                    apt.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                                                                    apt.status === 'canceled' ? 'bg-red-100 text-red-700' :
+                                                                                    apt.status === 'deleted' ? 'bg-red-200 text-red-800' :
+                                                                                    'bg-gray-100 text-gray-600'
+                                                                                }`}>{
+                                                                                    apt.status === 'scheduled' ? 'Foglalt' :
+                                                                                    apt.status === 'completed' ? 'Teljesült' :
+                                                                                    apt.status === 'canceled' ? 'Lemondva' :
+                                                                                    apt.status === 'deleted' ? 'Törölve' :
+                                                                                    apt.status === 'no_show' ? 'Nem jelent meg' : apt.status
+                                                                                }</span>
+                                                                            </div>
                                                                         </div>
-                                                                        <button onClick={() => handleDeleteAppointment(apt.id)}
-                                                                            className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors">Törlés</button>
+                                                                        {apt.status !== 'deleted' ? (
+                                                                            <button onClick={() => handleDeleteAppointment(apt.id)}
+                                                                                disabled={actionLoading}
+                                                                                className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors disabled:opacity-50">Törlés</button>
+                                                                        ) : (
+                                                                            <span className="text-xs text-gray-400 min-w-[40px] text-center">—</span>
+                                                                        )}
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -340,14 +410,24 @@ export default function UserManagement() {
                                                         <div className="space-y-2 max-h-64 overflow-y-auto">
                                                             {detailData.ratings?.length === 0 && <p className="text-sm text-gray-400">Nincsenek értékelések</p>}
                                                             {detailData.ratings?.map(r => (
-                                                                <div key={r.id} className="p-3 bg-white rounded-lg border border-gray-100">
+                                                                <div key={r.id} className={`p-3 rounded-lg border border-gray-100 ${!r.active ? 'bg-gray-50/60' : 'bg-white'}`}>
                                                                     <div className="flex justify-between mb-1">
-                                                                        <p className="text-sm font-medium text-gray-900">{r.salon_name}</p>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <p className="text-sm font-medium text-gray-900">{r.salon_name}</p>
+                                                                            <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded-full ${r.active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>
+                                                                                {r.active ? 'Aktív' : 'Inaktív'}
+                                                                            </span>
+                                                                        </div>
                                                                         <div className="flex items-center gap-2">
                                                                             <span className="text-xs text-amber-600">Szalon: {'★'.repeat(r.salon_rating || 0)}</span>
                                                                             <span className="text-xs text-blue-600">Szolgáltató: {'★'.repeat(r.provider_rating || 0)}</span>
-                                                                            <button onClick={() => handleDeleteRating(r.id)}
-                                                                                className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors">Törlés</button>
+                                                                            {r.active ? (
+                                                                                <button onClick={() => handleDeleteRating(r.id)}
+                                                                                    disabled={actionLoading}
+                                                                                    className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors disabled:opacity-50">Deaktiválás</button>
+                                                                            ) : (
+                                                                                <span className="text-xs text-gray-400 min-w-[40px] text-center">—</span>
+                                                                            )}
                                                                         </div>
                                                                     </div>
                                                                     {r.salon_comment && <p className="text-xs text-gray-600 mt-1">Szalon: {r.salon_comment}</p>}
@@ -370,6 +450,39 @@ export default function UserManagement() {
                     <div className="p-8 text-center text-gray-400 text-sm">Nincs találat</div>
                 )}
             </div>
+
+            {/* Delete Reason Modal */}
+            {deleteModal && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Foglalás törlése</h3>
+                        <p className="text-sm text-gray-500 mb-4">Kérlek írd le a törlés okát. Ez az információ naplózásra kerül.</p>
+                        <textarea
+                            value={deleteReason}
+                            onChange={e => setDeleteReason(e.target.value)}
+                            placeholder="Törlés oka (kötelező)..."
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500 resize-none"
+                            rows={3}
+                            autoFocus
+                        />
+                        <div className="flex justify-end gap-2 mt-4">
+                            <button
+                                onClick={() => { setDeleteModal(null); setDeleteReason(''); }}
+                                className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                            >
+                                Mégse
+                            </button>
+                            <button
+                                onClick={handleConfirmDelete}
+                                disabled={!deleteReason.trim() || actionLoading}
+                                className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {actionLoading ? 'Törlés...' : 'Törlés megerősítése'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

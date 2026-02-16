@@ -221,6 +221,31 @@ export async function authFetch(url, options={}){
 
 
 
+// Periodic auth heartbeat — detects deleted/missing refresh tokens in real-time
+let heartbeatInterval = null;
+export function startAuthHeartbeat() {
+    stopAuthHeartbeat();
+    heartbeatInterval = setInterval(async () => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) return;
+        try {
+            const result = await refreshAccessToken();
+            if (!result) {
+                // Refresh failed — cookie missing/invalid — force logout
+                localStorage.removeItem('accessToken');
+            }
+        } catch (e) {
+            // Network error — don't force logout on transient failures
+        }
+    }, 30000); // every 30 seconds
+}
+export function stopAuthHeartbeat() {
+    if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+    }
+}
+
 export const authApi ={
     get: (url , options={})=> authFetch(url,{ method: 'GET', ...options }),
     post: (url , body, options={})=> authFetch(url,{

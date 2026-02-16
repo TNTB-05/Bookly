@@ -10,6 +10,8 @@ export default function SalonManagement() {
     const [detailLoading, setDetailLoading] = useState(false);
     const [detailTab, setDetailTab] = useState('providers');
     const [search, setSearch] = useState('');
+    const [searchField, setSearchField] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('all');
     const [actionLoading, setActionLoading] = useState(false);
 
     useEffect(() => { fetchSalons(); }, []);
@@ -129,11 +131,19 @@ export default function SalonManagement() {
         }
     };
 
-    const filteredSalons = salons.filter(s =>
-        s.name?.toLowerCase().includes(search.toLowerCase()) ||
-        s.address?.toLowerCase().includes(search.toLowerCase()) ||
-        s.type?.toLowerCase().includes(search.toLowerCase())
-    );
+    const filteredSalons = salons.filter(s => {
+        const q = search.toLowerCase();
+        const matchesSearch = !q || (
+            searchField === 'all'
+                ? (s.name?.toLowerCase().includes(q) || s.address?.toLowerCase().includes(q) || s.type?.toLowerCase().includes(q))
+                : searchField === 'name' ? s.name?.toLowerCase().includes(q)
+                : searchField === 'address' ? s.address?.toLowerCase().includes(q)
+                : searchField === 'type' ? s.type?.toLowerCase().includes(q)
+                : true
+        );
+        const matchesStatus = statusFilter === 'all' || s.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
 
     const statusBadge = (status) => {
         const map = {
@@ -162,15 +172,35 @@ export default function SalonManagement() {
 
     return (
         <div>
-            {/* Search + Refresh */}
+            {/* Search + Filters */}
             <div className="flex flex-wrap gap-3 mb-4">
+                <select
+                    value={searchField}
+                    onChange={e => setSearchField(e.target.value)}
+                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                >
+                    <option value="all">Minden mező</option>
+                    <option value="name">Név</option>
+                    <option value="address">Cím</option>
+                    <option value="type">Típus</option>
+                </select>
                 <input
                     type="text"
-                    placeholder="Keresés név, cím vagy típus alapján..."
+                    placeholder="Keresés..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="flex-1 min-w-[250px] px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="flex-1 min-w-[200px] px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 />
+                <select
+                    value={statusFilter}
+                    onChange={e => setStatusFilter(e.target.value)}
+                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                >
+                    <option value="all">Minden státusz</option>
+                    <option value="open">Nyitva</option>
+                    <option value="closed">Zárva</option>
+                    <option value="renovation">Felújítás</option>
+                </select>
                 <button
                     onClick={fetchSalons}
                     className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-1"
@@ -347,13 +377,21 @@ export default function SalonManagement() {
                                                             {detailData.ratings?.map(r => (
                                                                 <div key={r.id} className="p-3 bg-white rounded-lg">
                                                                     <div className="flex justify-between mb-1">
-                                                                        <p className="text-sm font-medium">{r.user_name}</p>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <p className="text-sm font-medium">{r.user_name}</p>
+                                                                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${r.active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>
+                                                                                {r.active ? 'Aktív' : 'Inaktív'}
+                                                                            </span>
+                                                                        </div>
                                                                         <div className="flex items-center gap-2">
                                                                             <span className="text-xs text-amber-600">
                                                                                 {'★'.repeat(r.salon_rating || 0)}{'☆'.repeat(5 - (r.salon_rating || 0))}
                                                                             </span>
-                                                                            <button onClick={() => handleDeleteRating(r.id)}
-                                                                                className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors">Törlés</button>
+                                                                            {r.active !== 0 && (
+                                                                                <button onClick={() => handleDeleteRating(r.id)}
+                                                                                    disabled={actionLoading}
+                                                                                    className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors disabled:opacity-50">Deaktiválás</button>
+                                                                            )}
                                                                         </div>
                                                                     </div>
                                                                     {r.salon_comment && <p className="text-xs text-gray-600">{r.salon_comment}</p>}
