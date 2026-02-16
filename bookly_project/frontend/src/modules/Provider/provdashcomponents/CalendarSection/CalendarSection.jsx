@@ -32,6 +32,9 @@ const CalendarSection = () => {
     // Working hours state (fetched from database)
     const [workingHours, setWorkingHours] = useState({ openingHour: 8, closingHour: 20 });
 
+    // Fully booked days state (Set of date strings like "2026-03-12")
+    const [fullyBookedDays, setFullyBookedDays] = useState(new Set());
+
     // Time blocks state
     const [timeBlocks, setTimeBlocks] = useState([]);
     const [showTimeBlockModal, setShowTimeBlockModal] = useState(false);
@@ -90,6 +93,20 @@ const CalendarSection = () => {
         }
     }, [currentDate]);
 
+    // Fetch fully booked days for the current month
+    const fetchFullyBookedDays = useCallback(async () => {
+        try {
+            const { startDate, endDate } = getMonthRange(currentDate);
+            const response = await authApi.get(`/api/provider/calendar/fully-booked-days?startDate=${startDate}&endDate=${endDate}`);
+            const data = await response.json();
+            if (data.success) {
+                setFullyBookedDays(new Set(data.fullyBookedDays.map(d => d.date)));
+            }
+        } catch (error) {
+            console.error('Error fetching fully booked days:', error);
+        }
+    }, [currentDate]);
+
     // Fetch time blocks for the current month
     const fetchTimeBlocks = useCallback(async () => {
         try {
@@ -118,7 +135,8 @@ const CalendarSection = () => {
     useEffect(() => {
         fetchAppointments();
         fetchTimeBlocks();
-    }, [fetchAppointments, fetchTimeBlocks]);
+        fetchFullyBookedDays();
+    }, [fetchAppointments, fetchTimeBlocks, fetchFullyBookedDays]);
 
     // Fetch services for dropdown
     const fetchServices = async () => {
@@ -181,6 +199,7 @@ const CalendarSection = () => {
             if (data.success) {
                 setShowCreateModal(false);
                 fetchAppointments();
+                fetchFullyBookedDays();
             } else {
                 alert(data.message || 'Hiba történt a foglalás létrehozásakor');
             }
@@ -234,6 +253,7 @@ const CalendarSection = () => {
     // Handle time block saved
     const handleTimeBlockSaved = () => {
         fetchTimeBlocks();
+        fetchFullyBookedDays();
         showToast('Szünet sikeresen mentve');
     };
 
@@ -293,18 +313,16 @@ const CalendarSection = () => {
         return days;
     };
 
-    // Total slots based on working hours
-    const TOTAL_SLOTS = END_HOUR - START_HOUR;
-
     // Get booking status for a date
     const getBookingStatus = (date) => {
         if (!date) return 'empty';
+        const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         const dayAppointments = appointments.filter(apt => {
             const aptDate = new Date(apt.appointment_start);
             return aptDate.toDateString() === date.toDateString() && apt.status !== 'canceled';
         });
-        if (dayAppointments.length === 0) return 'empty';
-        if (dayAppointments.length >= TOTAL_SLOTS) return 'full';
+        if (dayAppointments.length === 0 && !fullyBookedDays.has(dateKey)) return 'empty';
+        if (fullyBookedDays.has(dateKey)) return 'full';
         return 'available';
     };
 
@@ -325,6 +343,7 @@ const CalendarSection = () => {
                 setShowModal(false);
                 setSelectedAppointment(null);
                 fetchAppointments();
+                fetchFullyBookedDays();
             }
         } catch (error) {
             console.error('Error deleting appointment:', error);
