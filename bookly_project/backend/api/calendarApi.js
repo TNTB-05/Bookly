@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { pool, getSalonHoursByProviderId, getExpandedTimeBlocksForDate } = require('../sql/database.js');
+const { pool, getSalonHoursByProviderId, getExpandedTimeBlocksForDate, getFullyBookedDays } = require('../sql/database.js');
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
 const { requireRole } = require('./auth/RoleMiddleware.js');
 
@@ -165,6 +165,34 @@ router.get('/working-hours', async (request, response) => {
     }
 });
 
+// Get fully booked days for a date range
+router.get('/fully-booked-days', async (request, response) => {
+    try {
+        const providerId = request.providerId;
+        const { startDate, endDate } = request.query;
+
+        if (!startDate || !endDate) {
+            return response.status(400).json({
+                success: false,
+                message: 'startDate és endDate megadása kötelező'
+            });
+        }
+
+        const fullyBookedDays = await getFullyBookedDays(providerId, startDate, endDate);
+
+        response.status(200).json({
+            success: true,
+            fullyBookedDays
+        });
+    } catch (error) {
+        console.error('Get fully booked days error:', error);
+        response.status(500).json({
+            success: false,
+            message: 'Hiba történt a teltház napok lekérdezésekor'
+        });
+    }
+});
+
 // Get appointments for a provider
 router.get('/appointments', async (request, response) => {
     try {
@@ -281,6 +309,17 @@ router.get('/appointments/:id', async (request, response) => {
 });
 
 // Create new appointment (manual booking by provider)
+// Format a Date as 'YYYY-MM-DD HH:MM:SS' in local time (no UTC conversion)
+function formatLocalDatetime(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    const h = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    const s = String(date.getSeconds()).padStart(2, '0');
+    return `${y}-${m}-${d} ${h}:${min}:${s}`;
+}
+
 router.post('/appointments', async (request, response) => {
     try {
         const providerId = request.providerId;
@@ -406,12 +445,12 @@ router.post('/appointments', async (request, response) => {
              )`,
             [
                 providerId,
-                formatDateTimeLocal(appointmentEnd),
-                formatDateTimeLocal(appointmentStart),
-                formatDateTimeLocal(appointmentEnd),
-                formatDateTimeLocal(appointmentStart),
-                formatDateTimeLocal(appointmentStart),
-                formatDateTimeLocal(appointmentEnd)
+                formatLocalDatetime(appointmentEnd),
+                formatLocalDatetime(appointmentStart),
+                formatLocalDatetime(appointmentEnd),
+                formatLocalDatetime(appointmentStart),
+                formatLocalDatetime(appointmentStart),
+                formatLocalDatetime(appointmentEnd)
             ]
         );
 
@@ -423,7 +462,7 @@ router.post('/appointments', async (request, response) => {
         }
 
         // Check for time block conflicts
-        const dateStr = formatDateLocal(appointmentStart);
+        const dateStr = formatLocalDatetime(appointmentStart).split(' ')[0];
         const timeBlocks = await getExpandedTimeBlocksForDate(providerId, dateStr);
         const hasTimeBlockConflict = timeBlocks.some(block => {
             const blockStart = new Date(block.start_datetime);
@@ -448,8 +487,8 @@ router.post('/appointments', async (request, response) => {
                 userId,
                 providerId,
                 service_id,
-                formatDateTimeLocal(appointmentStart),
-                formatDateTimeLocal(appointmentEnd),
+                formatLocalDatetime(appointmentStart),
+                formatLocalDatetime(appointmentEnd),
                 comment?.trim() || null,
                 service.price,
                 is_guest ? user_name.trim() : null,

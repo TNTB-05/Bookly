@@ -627,6 +627,136 @@ async function getTimeBlockById(blockId) {
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Get fully booked days for a provider in a date range
+async function getFullyBookedDays(providerId, startDate, endDate) {
+    // 1. Get salon working hours
+    const salonHours = await getSalonHoursByProviderId(providerId);
+    const openingHour = salonHours?.opening_hours || 8;
+    const closingHour = salonHours?.closing_hours || 20;
+
+    // 2. Get shortest service duration
+    const [minResult] = await pool.execute(
+        `SELECT MIN(duration_minutes) as min_duration FROM services
+         WHERE provider_id = ? AND status = 'available'`,
+        [providerId]
+    );
+    const minDuration = minResult[0]?.min_duration;
+    if (!minDuration) return []; // No services → never fully booked
+
+    // 3. Batch-fetch appointments for the range (exclude canceled)
+    const [appointments] = await pool.execute(
+        `SELECT appointment_start, appointment_end
+         FROM appointments
+         WHERE provider_id = ?
+         AND DATE(appointment_start) BETWEEN ? AND ?
+         AND status != 'canceled'
+         ORDER BY appointment_start ASC`,
+        [providerId, startDate, endDate]
+    );
+
+    // 4. Batch-fetch and expand time blocks for the range
+    const expandedBlocks = await getExpandedTimeBlocksForRange(providerId, startDate, endDate);
+
+    // 5. Group occupied intervals by date string
+    const intervalsByDate = {};
+
+    for (const apt of appointments) {
+        const dateKey = new Date(apt.appointment_start).toISOString().split('T')[0];
+        if (!intervalsByDate[dateKey]) intervalsByDate[dateKey] = [];
+        intervalsByDate[dateKey].push({
+            start: new Date(apt.appointment_start),
+            end: new Date(apt.appointment_end)
+        });
+    }
+
+    for (const block of expandedBlocks) {
+        const dateKey = new Date(block.start_datetime).toISOString().split('T')[0];
+        if (!intervalsByDate[dateKey]) intervalsByDate[dateKey] = [];
+        intervalsByDate[dateKey].push({
+            start: new Date(block.start_datetime),
+            end: new Date(block.end_datetime)
+        });
+    }
+
+    // 6. For each day in range, compute fully-booked status
+    const results = [];
+    const current = new Date(startDate);
+    const end = new Date(endDate);
+
+    while (current <= end) {
+        const dateKey = current.toISOString().split('T')[0];
+        const dayOpen = new Date(current);
+        dayOpen.setHours(openingHour, 0, 0, 0);
+        const dayClose = new Date(current);
+        dayClose.setHours(closingHour, 0, 0, 0);
+
+        const intervals = intervalsByDate[dateKey] || [];
+
+        // No occupied intervals → whole day is free
+        if (intervals.length === 0) {
+            current.setDate(current.getDate() + 1);
+            continue; // not fully booked, skip adding to results
+        }
+
+        // Clamp intervals to working hours and convert to minutes
+        const clamped = [];
+        for (const iv of intervals) {
+            const s = iv.start < dayOpen ? dayOpen : iv.start;
+            const e = iv.end > dayClose ? dayClose : iv.end;
+            if (s < e) {
+                clamped.push({
+                    start: s.getHours() * 60 + s.getMinutes(),
+                    end: e.getHours() * 60 + e.getMinutes()
+                });
+            }
+        }
+
+        // Sort by start, then merge overlapping/adjacent
+        clamped.sort((a, b) => a.start - b.start);
+        const merged = [];
+        for (const iv of clamped) {
+            if (merged.length === 0 || iv.start > merged[merged.length - 1].end) {
+                merged.push({ start: iv.start, end: iv.end });
+            } else {
+                merged[merged.length - 1].end = Math.max(merged[merged.length - 1].end, iv.end);
+            }
+        }
+
+        // Walk gaps between working hours boundaries and merged blocks
+        const openMin = openingHour * 60;
+        const closeMin = closingHour * 60;
+        let fullyBooked = true;
+
+        // Gap before first block
+        if (merged.length === 0 || merged[0].start - openMin >= minDuration) {
+            fullyBooked = false;
+        }
+
+        // Gaps between blocks
+        if (fullyBooked) {
+            for (let i = 1; i < merged.length; i++) {
+                if (merged[i].start - merged[i - 1].end >= minDuration) {
+                    fullyBooked = false;
+                    break;
+                }
+            }
+        }
+
+        // Gap after last block
+        if (fullyBooked && merged.length > 0 && closeMin - merged[merged.length - 1].end >= minDuration) {
+            fullyBooked = false;
+        }
+
+        if (fullyBooked) {
+            results.push({ date: dateKey, fullyBooked: true });
+        }
+
+        current.setDate(current.getDate() + 1);
+    }
+
+    return results;
+}
+
 // End recurring block from a specific date (for "edit this and future" scenario)
 async function endRecurringBlockAt(blockId, providerId, endDate) {
     const [result] = await pool.execute(
@@ -671,5 +801,6 @@ module.exports = {
     updateTimeBlock,
     deleteTimeBlock,
     getTimeBlockById,
-    endRecurringBlockAt
+    endRecurringBlockAt,
+    getFullyBookedDays
 };
