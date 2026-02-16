@@ -2,16 +2,29 @@ import { Routes, Route, Navigate} from 'react-router-dom'
 import Landing from './modules/Landing/Landing'
 import Login from './modules/Landing/Login'
 import Register from './modules/Landing/Register'
-import ProvRegister from './modules/Provider/provRegister'
+import ProvRegister from './modules/Provider/ProvRegister'
 import ProvLogin from './modules/Provider/provLogin'
 import ProvDash from './modules/Provider/provDash'
 import Provlanding from './modules/Provider/ProvLanding'
 import './App.css' 
 import { useState, useEffect } from 'react'
-import { AuthContext, getUserFromToken } from './modules/auth/auth'
+import { AuthContext, getUserFromToken, startAuthHeartbeat, stopAuthHeartbeat, registerNotifier } from './modules/auth/auth'
 import Dashboard from './modules/customer/Dashboard/Dashboard'
 import SalonModal from './modules/customer/Dashboard/SalonModal';
 import ProtectedRoute from './modules/auth/ProtectedRoute'
+import AdminLogin from './modules/Admin/AdminLogin'
+import AdminDashboard from './modules/Admin/AdminDashboard'
+import NotificationProvider, { useNotification } from './components/NotificationContext'
+
+// Bridge component to connect auth.js notifier with React notification context
+function NotifierBridge() {
+  const { showToast } = useNotification();
+  useEffect(() => {
+    registerNotifier(showToast);
+    return () => registerNotifier(null);
+  }, [showToast]);
+  return null;
+}
 
 function App() {
   const[isAuthenticated,setIsAuthenticated]=useState(!!localStorage.getItem('accessToken'));
@@ -56,9 +69,21 @@ function App() {
     };
   }, []);
 
+  // Auth heartbeat — periodic token validation
+  useEffect(() => {
+    if (isAuthenticated) {
+      startAuthHeartbeat();
+    } else {
+      stopAuthHeartbeat();
+    }
+    return () => stopAuthHeartbeat();
+  }, [isAuthenticated]);
+
   
   return (
 <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, user, setUser }}>
+  <NotificationProvider>
+      <NotifierBridge />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Landing />} />
@@ -67,6 +92,7 @@ function App() {
         <Route path="/provider/register" element={<ProvRegister />} />
         <Route path="/provider/login" element={<ProvLogin />} />
         <Route path='/provider/landing' element={<Provlanding />} />
+        <Route path='/admin/login' element={<AdminLogin />} />
         
         {/* Protected Customer Routes */}
         <Route 
@@ -96,9 +122,20 @@ function App() {
           } 
         />
         
+        {/* Protected Admin Routes */}
+        <Route 
+          path="/admin/dashboard" 
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+  </NotificationProvider>
 </AuthContext.Provider>
   )
 }

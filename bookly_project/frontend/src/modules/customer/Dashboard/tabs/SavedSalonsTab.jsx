@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 // Ikonok
 import SaveIcon from '../../../../icons/SaveIcon';
 import DiaryIcon from '../../../../icons/DiaryIcon';
+import HourIcon from '../../../../icons/HourIcon';
+import LightningIcon from '../../../../icons/LightningIcon';
 import SalonCard from '../SalonCard';
 import { authApi } from '../../../auth/auth';
 
@@ -44,7 +46,8 @@ export default function SavedSalonsTab({ savedSalons, savedSalonIds, toggleSaveS
             month: 'long',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
+
         });
     }
 
@@ -128,37 +131,11 @@ export default function SavedSalonsTab({ savedSalons, savedSalonIds, toggleSaveS
                                         <h3 className="text-lg font-bold text-gray-900">{apt.salon_name}</h3>
                                         <p className="text-gray-600 text-sm">{apt.provider_name} - {apt.service_name}</p>
                                         <div className="flex items-center text-gray-700 mt-1">
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                className="h-4 w-4 mr-1 text-gray-500"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                                />
-                                            </svg>
+                                            <HourIcon className="h-4 w-4 mr-1 text-gray-500" />
                                             {formatDate(apt.appointment_start)}
                                         </div>
                                         <div className="flex items-center text-gray-600 mt-1 text-sm">
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                className="h-4 w-4 mr-1 text-gray-500"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                                                />
-                                            </svg>
+                                            <LightningIcon className="h-4 w-4 mr-1 text-gray-500" />
                                             Időtartam: {apt.duration_minutes} perc
                                         </div>
                                         {apt.comment && <p className="text-gray-500 text-sm mt-1 italic">"{apt.comment}"</p>}

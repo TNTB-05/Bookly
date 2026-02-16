@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import TickIcon from '../../icons/TickIcon';
 
 // Fix for default marker icon in Leaflet + bundlers
 const defaultIcon = L.icon({
@@ -235,9 +236,7 @@ export default function AddressInput({
                 {/* Validated checkmark */}
                 {isValidated && !loading && !reverseLoading && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
+                        <TickIcon className="w-5 h-5" />
                     </div>
                 )}
 

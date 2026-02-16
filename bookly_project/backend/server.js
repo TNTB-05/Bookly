@@ -59,6 +59,8 @@ const timeBlocksApi = require('./api/timeBlocksApi.js');
 app.use('/api/provider/time-blocks', timeBlocksApi);
 const salonApi = require('./api/salonApi.js');
 app.use('/api/salon', salonApi);
+const adminApi = require('./api/adminApi.js');
+app.use('/api/admin', adminApi);
 
 
 //!Szerver futtatása

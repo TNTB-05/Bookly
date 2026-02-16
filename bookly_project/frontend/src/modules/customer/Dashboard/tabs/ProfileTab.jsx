@@ -9,10 +9,12 @@ import WarningIcon from '../../../../icons/WarningIcon';
 import CheckCircleIcon from '../../../../icons/CheckCircleIcon';
 import MapPinIcon from '../../../../icons/MapPinIcon';
 import AlertCircleIcon from '../../../../icons/AlertCircleIcon';
+import { useNotification } from '../../../../components/NotificationContext';
 
 // Profil tab - felhasználói adatok, jelszó és fiók kezelés
 export default function ProfileTab({ user, userProfile, setUserProfile }) {
     const navigate = useNavigate();
+    const { showToast } = useNotification();
 
     // Profil szerkesztés modal állapotok
     const [showProfileModal, setShowProfileModal] = useState(false);
@@ -224,6 +226,7 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
             if (data.success) {
                 setUserProfile(data.user);
                 setShowProfileModal(false);
+                showToast('Adatok sikeresen frissítve.', 'success');
             } else {
                 setProfileError(data.message || 'Hiba történt a mentés során');
             }
@@ -274,6 +277,7 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
 
             if (data.success) {
                 setPasswordSuccess('Jelszó sikeresen megváltoztatva!');
+                showToast('Jelszó sikeresen módosítva.', 'success');
                 setPasswordFormData({
                     currentPassword: '',
                     newPassword: '',

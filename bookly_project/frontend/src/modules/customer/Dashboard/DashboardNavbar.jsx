@@ -84,13 +84,13 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                                 className="flex items-center gap-3 group px-3 py-2 rounded-lg hover:bg-blue-50 transition-all"
                             >
                                 <span className="text-sm font-medium text-gray-700 group-hover:text-dark-blue transition-colors">
-                                    {user?.name || 'Felhasználó'}
+                                    {userProfile?.name || user?.name || 'Felhasználó'}
                                 </span>
                                 {userProfile?.profile_picture_url ? (
                                     <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${userProfile.profile_picture_url}`} alt="Profil" className="w-10 h-10 rounded-full object-cover shadow-lg hover:shadow-xl transition-all" />
                                 ) : (
                                     <div className="w-10 h-10 rounded-full bg-dark-blue text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all text-sm font-bold">
-                                        {user?.name?.charAt(0).toUpperCase() || 'U'}
+                                        {(userProfile?.name || user?.name)?.charAt(0)?.toUpperCase() || 'U'}
                                     </div>
                                 )}
                             </button>
@@ -99,7 +99,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                             {isDropdownOpen && (
                                 <div className="absolute top-14 right-0 w-56 bg-white/90 backdrop-blur-xl border border-white/50 rounded-2xl shadow-xl overflow-hidden z-50">
                                     <div className="px-4 py-2 border-b border-gray-200">
-                                        <p className="text-xs font-semibold text-gray-900 truncate">{user?.name || 'Felhasználó'}</p>
+                                        <p className="text-xs font-semibold text-gray-900 truncate">{userProfile?.name || user?.name || 'Felhasználó'}</p>
                                     </div>
                                     <div className="p-2 space-y-1">
                                         <button
@@ -153,7 +153,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                                     <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${userProfile.profile_picture_url}`} alt="Profil" className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full bg-dark-blue text-white flex items-center justify-center text-sm font-bold">
-                                        {user?.name?.charAt(0).toUpperCase() || 'U'}
+                                        {(userProfile?.name || user?.name)?.charAt(0)?.toUpperCase() || 'U'}
                                     </div>
                                 )}
                             </button>
@@ -162,7 +162,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                             {isDropdownOpen && (
                                 <div className="absolute top-12 right-0 w-56 bg-white/90 backdrop-blur-xl border border-white/50 rounded-2xl shadow-xl overflow-hidden z-50">
                                     <div className="px-4 py-2 border-b border-gray-200">
-                                        <p className="text-xs font-semibold text-gray-900 truncate">{user?.name || 'Felhasználó'}</p>
+                                        <p className="text-xs font-semibold text-gray-900 truncate">{userProfile?.name || user?.name || 'Felhasználó'}</p>
                                     </div>
                                     <div className="p-2 space-y-1">
                                         <button

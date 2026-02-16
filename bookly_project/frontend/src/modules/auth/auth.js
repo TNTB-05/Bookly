@@ -25,7 +25,7 @@ export function getUserFromToken() {
             email: decoded.email,
             userId: decoded.userId,
             name: decoded.name,
-            role: decoded.role // 'provider' or 'costumer'
+            role: decoded.role // 'provider', 'customer', or 'admin'
         };
     } catch (error) {
         console.error('Error decoding token:', error);
@@ -95,6 +95,35 @@ function onRefresh(newToken){
 
 }
 
+// Helper to determine correct login page based on current user role
+function getLoginRedirect() {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+        try {
+            const decoded = jwtDecode(token);
+            if (decoded.role === 'admin') return '/admin/login';
+            if (decoded.role === 'provider') return '/provider/login';
+        } catch (e) { /* ignore */ }
+    }
+    // Check current path as fallback
+    if (window.location.pathname.startsWith('/admin')) return '/admin/login';
+    if (window.location.pathname.startsWith('/Prov') || window.location.pathname.startsWith('/provider')) return '/provider/login';
+    return '/login';
+}
+
+let isBanRedirecting = false;
+
+// Notification bridge — allows React components to register a toast callback
+let _notifyFn = null;
+export function registerNotifier(fn) {
+    _notifyFn = fn;
+}
+function notify(message, type = 'error') {
+    if (_notifyFn) {
+        _notifyFn(message, type);
+    }
+}
+
 export async function authFetch(url, options={}){
     let accessToken= localStorage.getItem('accessToken');
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -109,8 +138,9 @@ export async function authFetch(url, options={}){
                 // Token expired, refresh proactively
                 accessToken = await refreshAccessToken();
                 if (!accessToken) {
-                    window.location.href = '/login';
-                    throw new Error('Session expired. Please log in again.');
+                    notify('A munkamenet lejárt. Kérjük, jelentkezz be újra.', 'warning');
+                    window.location.href = getLoginRedirect();
+                    throw new Error('A munkamenet lejárt. Kérjük, jelentkezz be újra.');
                 }
             }
         } catch (error) {
@@ -135,6 +165,25 @@ export async function authFetch(url, options={}){
         headers,
         credentials: 'include', // Send cookies with request
     });
+
+    // Handle 403 - banned/deleted account: force logout (once)
+    if(response.status===403){
+        if(!isBanRedirecting){
+            isBanRedirecting=true;
+            localStorage.removeItem('accessToken');
+            try {
+                const errorData = await response.clone().json();
+                if(errorData.banned){
+                    notify('A fiókod le lett tiltva vagy törölve. Kijelentkeztetés...', 'error');
+                }
+            } catch(e) { /* ignore parse error */ }
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 600);
+            setTimeout(() => { isBanRedirecting = false; }, 3000);
+        }
+        throw new Error('A fiók le lett tiltva vagy törölve.');
+    }
 
     if(response.status===401){
         if(!isRefreshing){
@@ -162,8 +211,8 @@ export async function authFetch(url, options={}){
                 
             }
             else{
-                window.location.href='/login';
-                throw new Error('Session expired. Please log in again.');
+                window.location.href=getLoginRedirect();
+                throw new Error('A munkamenet lejárt. Kérjük, jelentkezz be újra.');
             }
         }
         else{
@@ -182,8 +231,8 @@ export async function authFetch(url, options={}){
                 });
             }
             else{
-                window.location.href='/login';
-                throw new Error('Session expired. Please log in again.');
+                window.location.href=getLoginRedirect();
+                throw new Error('A munkamenet lejárt. Kérjük, jelentkezz be újra.');
             }
         }
     }
@@ -191,6 +240,32 @@ export async function authFetch(url, options={}){
 }
 
 
+
+// Periodic auth heartbeat — detects deleted/missing refresh tokens in real-time
+let heartbeatInterval = null;
+export function startAuthHeartbeat() {
+    stopAuthHeartbeat();
+    heartbeatInterval = setInterval(async () => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) return;
+        try {
+            const result = await refreshAccessToken();
+            if (!result) {
+                // Refresh failed — cookie missing/invalid — force logout
+                notify('A munkamenet lejárt. Kérjük, jelentkezz be újra.', 'warning');
+                localStorage.removeItem('accessToken');
+            }
+        } catch (e) {
+            // Network error — don't force logout on transient failures
+        }
+    }, 30000); // every 30 seconds
+}
+export function stopAuthHeartbeat() {
+    if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+    }
+}
 
 export const authApi ={
     get: (url , options={})=> authFetch(url,{ method: 'GET', ...options }),

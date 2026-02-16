@@ -345,10 +345,10 @@ router.post('/login', async (request, response) => {
             [provider.id, refreshToken]
         );
 
-        // Update last login and link refresh token to provider
+        // Update last login
         await pool.query(
-            'UPDATE providers SET last_login = NOW(), refresh_token_id = ? WHERE id = ?',
-            [tokenResult.insertId, provider.id]
+            'UPDATE providers SET last_login = NOW() WHERE id = ?',
+            [provider.id]
         );
 
         // Send refresh token as HTTP-only cookie

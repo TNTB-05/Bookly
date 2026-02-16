@@ -5,11 +5,14 @@ import HourIcon from '../../../../icons/HourIcon';
 import TickIcon from '../../../../icons/TickIcon';
 import PlusIcon from '../../../../icons/PlusIcon';
 import DiaryIcon from '../../../../icons/DiaryIcon';
+import LightningIcon from '../../../../icons/LightningIcon';
 import { authApi } from '../../../auth/auth';
 import RatingModal from '../RatingModal';
+import { useNotification } from '../../../../components/NotificationContext';
 
 // Foglalások tab - megjeleníti a felhasználó foglalásait
 export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons }) {
+    const { showToast, showConfirm } = useNotification();
     // Foglalások listája
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -44,7 +47,8 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
 
     // Foglalás lemondása
     async function handleCancelAppointment(appointmentId) {
-        if (!confirm('Biztosan le szeretnéd mondani ezt a foglalást?')) {
+        const confirmed = await showConfirm('Biztosan le szeretnéd mondani ezt a foglalást?', { danger: true });
+        if (!confirmed) {
             return;
         }
 
@@ -54,14 +58,14 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
             const data = await response.json();
             
             if (data.success) {
-                alert('Foglalás sikeresen lemondva');
+                showToast('Foglalás sikeresen lemondva', 'success');
                 loadAppointments(); // Reload appointments
             } else {
-                alert(data.message || 'Hiba történt a foglalás lemondásakor');
+                showToast(data.message || 'Hiba történt a foglalás lemondásakor', 'error');
             }
         } catch (err) {
             console.error('Hiba a foglalás lemondásakor:', err);
-            alert('Hiba történt a foglalás lemondásakor');
+            showToast('Hiba történt a foglalás lemondásakor', 'error');
         } finally {
             setCancelingId(null);
         }
@@ -74,7 +78,8 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
             month: 'long',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
+
         });
     }
 
@@ -215,37 +220,11 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                                         <h3 className="text-lg font-bold text-gray-900">{apt.salon_name}</h3>
                                         <p className="text-gray-600 text-sm">{apt.provider_name} - {apt.service_name}</p>
                                         <div className="flex items-center text-gray-700 mt-1">
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                className="h-4 w-4 mr-1 text-gray-500"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                                />
-                                            </svg>
+                                            <HourIcon className="h-4 w-4 mr-1 text-gray-500" />
                                             {formatDate(apt.appointment_start)}
                                         </div>
                                         <div className="flex items-center text-gray-600 mt-1 text-sm">
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                className="h-4 w-4 mr-1 text-gray-500"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                                                />
-                                            </svg>
+                                            <LightningIcon className="h-4 w-4 mr-1 text-gray-500" />
                                             Időtartam: {apt.duration_minutes} perc
                                         </div>
                                         {apt.comment && <p className="text-gray-500 text-sm mt-1 italic">"{apt.comment}"</p>}

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth';
+import BackArrowIcon from '../../icons/BackArrowIcon';
 
 export default function ProvLogin() {
     const emailRef = useRef(null);
@@ -84,9 +85,7 @@ export default function ProvLogin() {
                         onClick={() => navigate('/provider/landing')}
                         className="mb-4 text-gray-700 hover:text-gray-900 flex items-center gap-2 transition-colors"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                        </svg>
+                        <BackArrowIcon className="w-5 h-5" />
                         Vissza
                     </button>
                     
