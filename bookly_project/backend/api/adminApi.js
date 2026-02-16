@@ -182,14 +182,14 @@ router.post('/users/:id/gdpr-delete', async (req, res) => {
             try { fs.unlinkSync(filePath); } catch (e) { /* file may not exist */ }
         }
 
-        // Anonymize user data
+        // Anonymize user data (email set to NULL for GDPR compliance)
         await pool.query(
             `UPDATE users SET 
-                name = ?, email = ?, phone = NULL, address = NULL,
+                name = ?, email = NULL, phone = NULL, address = NULL,
                 profile_picture_url = NULL, password_hash = NULL,
                 status = 'deleted'
             WHERE id = ?`,
-            [`Törölt felhasználó #${userId}`, `deleted_${userId}@removed.local`, userId]
+            [`Törölt felhasználó #${userId}`, userId]
         );
 
         // Delete all refresh tokens

@@ -136,11 +136,11 @@ export default function SystemLogs() {
             </div>
 
             {/* Log Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="max-h-[600px] overflow-y-auto">
                     <table className="w-full text-sm">
                         <thead className="sticky top-0 bg-gray-50">
-                            <tr className="border-b border-gray-100">
+                            <tr className="border-b-2 border-gray-200">
                                 <th className="text-left px-4 py-3 font-medium text-gray-600">Időpont</th>
                                 <th className="text-left px-4 py-3 font-medium text-gray-600">Szint</th>
                                 <th className="text-left px-4 py-3 font-medium text-gray-600">Művelet</th>

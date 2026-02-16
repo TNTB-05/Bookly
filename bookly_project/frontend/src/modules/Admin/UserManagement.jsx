@@ -249,10 +249,10 @@ export default function UserManagement() {
             </div>
 
             {/* Users Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <table className="w-full text-sm">
                     <thead>
-                        <tr className="bg-gray-50 border-b border-gray-100">
+                        <tr className="bg-gray-50 border-b-2 border-gray-200">
                             <th className="text-left px-4 py-3 font-medium text-gray-600">Név</th>
                             <th className="text-left px-4 py-3 font-medium text-gray-600">Email</th>
                             <th className="text-left px-4 py-3 font-medium text-gray-600">Telefon</th>
@@ -330,8 +330,8 @@ export default function UserManagement() {
 
                                 {/* Expandable detail row */}
                                 {selectedUser?.id === user.id && (
-                                    <tr className="border-b border-gray-100">
-                                        <td colSpan="7" className="px-4 py-4 bg-amber-50/40">
+                                    <tr className="border-t border-b border-gray-200">
+                                        <td colSpan="7" className="px-4 py-4 bg-amber-50/30">
                                             {detailLoading ? (
                                                 <div className="flex justify-center py-6">
                                                     <div className="animate-spin rounded-full h-6 w-6 border-2 border-amber-500 border-t-transparent"></div>
@@ -339,7 +339,7 @@ export default function UserManagement() {
                                             ) : detailData && (
                                                 <div>
                                                     {/* Info grid */}
-                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 p-3 bg-white rounded-lg border border-gray-100">
+                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 p-3 bg-white rounded-lg border border-gray-200">
                                                         <div><p className="text-xs text-gray-500">Email</p><p className="text-sm font-medium">{detailData.user.email}</p></div>
                                                         <div><p className="text-xs text-gray-500">Telefon</p><p className="text-sm font-medium">{detailData.user.phone || '—'}</p></div>
                                                         <div><p className="text-xs text-gray-500">Cím</p><p className="text-sm font-medium">{detailData.user.address || '—'}</p></div>
@@ -367,7 +367,7 @@ export default function UserManagement() {
                                                         <div className="space-y-2 max-h-64 overflow-y-auto">
                                                             {detailData.appointments?.length === 0 && <p className="text-sm text-gray-400">Nincsenek foglalások</p>}
                                                             {detailData.appointments?.map(apt => (
-                                                                <div key={apt.id} className={`flex items-center justify-between p-3 rounded-lg border border-gray-100 ${apt.status === 'deleted' ? 'bg-red-50/60' : 'bg-white'}`}>
+                                                                <div key={apt.id} className={`flex items-center justify-between p-3 rounded-lg border border-gray-200 ${apt.status === 'deleted' ? 'bg-red-50/60' : 'bg-white'}`}>
                                                                     <div>
                                                                         <p className="text-sm font-medium text-gray-900">{apt.service_name}</p>
                                                                         <p className="text-xs text-gray-500">{apt.salon_name} — {apt.provider_name}</p>
@@ -410,7 +410,7 @@ export default function UserManagement() {
                                                         <div className="space-y-2 max-h-64 overflow-y-auto">
                                                             {detailData.ratings?.length === 0 && <p className="text-sm text-gray-400">Nincsenek értékelések</p>}
                                                             {detailData.ratings?.map(r => (
-                                                                <div key={r.id} className={`p-3 rounded-lg border border-gray-100 ${!r.active ? 'bg-gray-50/60' : 'bg-white'}`}>
+                                                                <div key={r.id} className={`p-3 rounded-lg border border-gray-200 ${!r.active ? 'bg-gray-50/60' : 'bg-white'}`}>
                                                                     <div className="flex justify-between mb-1">
                                                                         <div className="flex items-center gap-2">
                                                                             <p className="text-sm font-medium text-gray-900">{r.salon_name}</p>

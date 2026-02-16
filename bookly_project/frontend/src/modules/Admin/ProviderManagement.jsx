@@ -229,10 +229,10 @@ export default function ProviderManagement() {
             </div>
 
             {/* Providers Table with Accordion */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <table className="w-full text-sm">
                     <thead>
-                        <tr className="bg-gray-50 border-b border-gray-100">
+                        <tr className="bg-gray-50 border-b-2 border-gray-200">
                             <th className="text-left px-4 py-3 font-medium text-gray-600">Név</th>
                             <th className="text-left px-4 py-3 font-medium text-gray-600">Email</th>
                             <th className="text-left px-4 py-3 font-medium text-gray-600">Szalon</th>
@@ -299,7 +299,7 @@ export default function ProviderManagement() {
 
                                 {/* Accordion Detail Row */}
                                 {selectedProvider?.id === provider.id && (
-                                    <tr className="bg-amber-50/30">
+                                    <tr className="bg-amber-50/30 border-t border-gray-200">
                                         <td colSpan="6" className="px-4 py-4">
                                             {detailLoading ? (
                                                 <div className="flex justify-center py-6">
@@ -308,7 +308,7 @@ export default function ProviderManagement() {
                                             ) : detailData && (
                                                 <>
                                                     {/* Info Grid */}
-                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 p-3 bg-white/80 rounded-lg">
+                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 p-3 bg-white/80 rounded-lg border border-gray-200">
                                                         <div><p className="text-xs text-gray-500">Email</p><p className="text-sm font-medium">{detailData.provider.email}</p></div>
                                                         <div><p className="text-xs text-gray-500">Telefon</p><p className="text-sm font-medium">{detailData.provider.phone || '—'}</p></div>
                                                         <div><p className="text-xs text-gray-500">Szalon</p><p className="text-sm font-medium">{detailData.provider.salon_name || '—'}</p></div>

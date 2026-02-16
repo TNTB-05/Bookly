@@ -111,6 +111,8 @@ function getLoginRedirect() {
     return '/login';
 }
 
+let isBanRedirecting = false;
+
 export async function authFetch(url, options={}){
     let accessToken= localStorage.getItem('accessToken');
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -152,16 +154,19 @@ export async function authFetch(url, options={}){
         credentials: 'include', // Send cookies with request
     });
 
-    // Handle 403 - banned/deleted account: force logout
+    // Handle 403 - banned/deleted account: force logout (once)
     if(response.status===403){
-        localStorage.removeItem('accessToken');
-        try {
-            const errorData = await response.clone().json();
-            if(errorData.banned){
-                alert('A fiókod le lett tiltva vagy törölve. Kijelentkeztetés...');
-            }
-        } catch(e) { /* ignore parse error */ }
-        window.location.href = '/';
+        if(!isBanRedirecting){
+            isBanRedirecting=true;
+            localStorage.removeItem('accessToken');
+            try {
+                const errorData = await response.clone().json();
+                if(errorData.banned){
+                    alert('A fiókod le lett tiltva vagy törölve. Kijelentkeztetés...');
+                }
+            } catch(e) { /* ignore parse error */ }
+            window.location.href = '/';
+        }
         throw new Error('Account banned or deleted');
     }
 

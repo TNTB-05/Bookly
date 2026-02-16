@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { authApi } from '../auth/auth';
 import RefreshIcon from '../../icons/RefreshIcon';
+import StarFilledIcon from '../../icons/StarFilledIcon';
+import StarOutlineIcon from '../../icons/StarOutlineIcon';
 
 export default function RatingManagement() {
     const [ratings, setRatings] = useState([]);
@@ -65,13 +67,9 @@ export default function RatingManagement() {
         return (
             <div className="flex items-center gap-0.5">
                 {[1, 2, 3, 4, 5].map(i => (
-                    <svg key={i} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                        fill={i <= rating ? 'currentColor' : 'none'}
-                        stroke="currentColor"
-                        strokeWidth={i <= rating ? 0 : 1.5}
-                        className={`w-3.5 h-3.5 ${i <= rating ? 'text-amber-400' : 'text-gray-300'}`}>
-                        <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
-                    </svg>
+                    i <= rating
+                        ? <StarFilledIcon key={i} className="w-3.5 h-3.5 text-amber-400" />
+                        : <StarOutlineIcon key={i} className="w-3.5 h-3.5 text-gray-300" />
                 ))}
                 <span className="ml-1 text-xs font-medium text-gray-600">{rating}</span>
             </div>
@@ -128,19 +126,19 @@ export default function RatingManagement() {
 
             {/* Summary */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                <div className="bg-white rounded-lg border border-gray-100 p-3 text-center">
+                <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
                     <p className="text-2xl font-bold text-gray-900">{ratings.length}</p>
                     <p className="text-xs text-gray-500">Összes</p>
                 </div>
-                <div className="bg-white rounded-lg border border-gray-100 p-3 text-center">
+                <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
                     <p className="text-2xl font-bold text-green-600">{ratings.filter(r => r.active).length}</p>
                     <p className="text-xs text-gray-500">Aktív</p>
                 </div>
-                <div className="bg-white rounded-lg border border-gray-100 p-3 text-center">
+                <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
                     <p className="text-2xl font-bold text-gray-400">{ratings.filter(r => !r.active).length}</p>
                     <p className="text-xs text-gray-500">Deaktiválva</p>
                 </div>
-                <div className="bg-white rounded-lg border border-gray-100 p-3 text-center">
+                <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
                     <p className="text-2xl font-bold text-amber-500">
                         {ratings.length > 0
                             ? (ratings.filter(r => r.active).reduce((sum, r) => sum + ((r.salon_rating || 0) + (r.provider_rating || 0)) / 2, 0) / Math.max(ratings.filter(r => r.active).length, 1)).toFixed(1)
@@ -151,11 +149,11 @@ export default function RatingManagement() {
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100">
+                            <tr className="bg-gray-50 border-b-2 border-gray-200">
                                 <th className="text-left px-4 py-3 font-medium text-gray-600">Felhasználó</th>
                                 <th className="text-left px-4 py-3 font-medium text-gray-600">Szalon</th>
                                 <th className="text-left px-4 py-3 font-medium text-gray-600">Szolgáltató</th>
@@ -204,11 +202,11 @@ export default function RatingManagement() {
 
                                     {/* Accordion Detail Row */}
                                     {expandedRating === r.id && (
-                                        <tr className="bg-amber-50/30">
+                                        <tr className="bg-amber-50/30 border-t border-gray-200">
                                             <td colSpan="8" className="px-4 py-4">
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                     {/* Salon rating details */}
-                                                    <div className="p-3 bg-white/80 rounded-lg">
+                                                    <div className="p-3 bg-white/80 rounded-lg border border-gray-200">
                                                         <p className="text-xs font-medium text-gray-500 mb-2">Szalon értékelés</p>
                                                         <div className="flex items-center gap-2 mb-2">
                                                             {renderStars(r.salon_rating)}
@@ -224,7 +222,7 @@ export default function RatingManagement() {
                                                     </div>
 
                                                     {/* Provider rating details */}
-                                                    <div className="p-3 bg-white/80 rounded-lg">
+                                                    <div className="p-3 bg-white/80 rounded-lg border border-gray-200">
                                                         <p className="text-xs font-medium text-gray-500 mb-2">Szolgáltató értékelés</p>
                                                         <div className="flex items-center gap-2 mb-2">
                                                             {renderStars(r.provider_rating)}

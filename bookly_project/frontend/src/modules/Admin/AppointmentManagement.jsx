@@ -132,29 +132,29 @@ export default function AppointmentManagement() {
 
             {/* Summary */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                <div className="bg-white rounded-lg border border-gray-100 p-3 text-center">
+                <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
                     <p className="text-2xl font-bold text-gray-900">{appointments.length}</p>
                     <p className="text-xs text-gray-500">Összes</p>
                 </div>
-                <div className="bg-white rounded-lg border border-gray-100 p-3 text-center">
+                <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
                     <p className="text-2xl font-bold text-blue-600">{appointments.filter(a => a.status === 'scheduled').length}</p>
                     <p className="text-xs text-gray-500">Foglalt</p>
                 </div>
-                <div className="bg-white rounded-lg border border-gray-100 p-3 text-center">
+                <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
                     <p className="text-2xl font-bold text-green-600">{appointments.filter(a => a.status === 'completed').length}</p>
                     <p className="text-xs text-gray-500">Teljesült</p>
                 </div>
-                <div className="bg-white rounded-lg border border-gray-100 p-3 text-center">
+                <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
                     <p className="text-2xl font-bold text-red-600">{appointments.filter(a => a.status === 'canceled').length}</p>
                     <p className="text-xs text-gray-500">Lemondva</p>
                 </div>
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <table className="w-full text-sm">
                     <thead>
-                        <tr className="bg-gray-50 border-b border-gray-100">
+                        <tr className="bg-gray-50 border-b-2 border-gray-200">
                             <th className="text-left px-4 py-3 font-medium text-gray-600">Időpont</th>
                             <th className="text-left px-4 py-3 font-medium text-gray-600">Ügyfél</th>
                             <th className="text-left px-4 py-3 font-medium text-gray-600">Szolgáltató</th>
