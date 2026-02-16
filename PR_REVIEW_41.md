@@ -124,16 +124,71 @@ The main `ProvDash.jsx` file has been reduced from ~1,599 lines to a much smalle
 
 ### 🔍 Code Quality Concerns
 
+After reviewing the `CalendarSection.jsx` code:
+
 1. **Component Size**
    - `CalendarSection.jsx` at 600 lines is still quite large
-   - Consider further breaking down into smaller sub-components
+   - Consider further breaking down into smaller sub-components:
+     - Extract calendar grid into `CalendarGrid.jsx`
+     - Extract timeline view into `TimelineView.jsx`
+     - Extract appointment list logic
 
-2. **Database Changes**
+2. **User Feedback (Alert vs Toast)**
+   - **Issue:** Code uses `alert()` for validation errors (lines 195-209)
+   - **Impact:** Poor UX with browser native alerts
+   - **Recommendation:** Implement consistent toast notifications throughout
+   ```javascript
+   // Current code:
+   if (!createFormData.user_name || !createFormData.service_id) {
+       alert('Név és szolgáltatás megadása kötelező!');
+       return;
+   }
+   // Should be:
+   if (!createFormData.user_name || !createFormData.service_id) {
+       showToast('Név és szolgáltatás megadása kötelező!', 'warning');
+       return;
+   }
+   ```
+
+3. **State Management Complexity**
+   - 11+ useState hooks in a single component
+   - Complex interdependencies between states
+   - **Recommendation:** Consider using useReducer or a state management library
+
+4. **Error Handling**
+   - `console.error()` used but no user-facing error messages
+   - Failed API calls don't inform the user
+   - **Recommendation:** Show toast notifications on all API errors
+
+5. **Performance Concerns**
+   - Multiple API calls on component mount (4 separate fetch calls)
+   - Re-fetching data after every operation
+   - **Recommendation:** 
+     - Implement debouncing/throttling
+     - Consider optimistic UI updates
+     - Use React Query or SWR for caching
+
+6. **Date Handling**
+   - Manual date string formatting throughout
+   - Potential timezone issues
+   - **Recommendation:** Use date-fns or dayjs library
+
+7. **Hardcoded Strings**
+   - Hungarian strings hardcoded in component
+   - No i18n support
+   - **Recommendation:** Extract to translation files for future internationalization
+
+8. **Missing PropTypes/TypeScript**
+   - No prop validation
+   - No type checking
+   - **Recommendation:** Add PropTypes or migrate to TypeScript
+
+9. **Database Changes**
    - 132 new lines in `database.js` without seeing the actual changes
    - Need to verify these don't introduce SQL injection vulnerabilities or performance issues
 
-3. **Image Assets**
-   - New `slider1.png` added - verify file size and optimization
+10. **Image Assets**
+    - New `slider1.png` added - verify file size and optimization
 
 ### 📋 Testing Recommendations
 
@@ -158,6 +213,61 @@ Before merging, ensure:
    - Database queries are protected against SQL injection
    - User input is properly validated
    - Authentication/authorization still works
+
+---
+
+## Security Review
+
+### ⚠️ Security Concerns Identified
+
+1. **API Endpoint Validation**
+   - Need to verify backend validates all user inputs
+   - Check for SQL injection protection in database.js changes
+   - Ensure proper authentication/authorization on all endpoints
+
+2. **XSS Prevention**
+   - User-generated content (names, comments, notes) is displayed
+   - Verify all user inputs are properly sanitized
+   - React provides some XSS protection, but check for `dangerouslySetInnerHTML`
+
+3. **Date/Time Validation**
+   - Appointment times are user-provided
+   - Verify backend validates:
+     - Dates are not in the past
+     - Times are within working hours
+     - No overlapping appointments
+     - Time blocks don't conflict
+
+4. **Access Control**
+   - Ensure only authenticated providers can access these endpoints
+   - Verify providers can only see/modify their own appointments
+   - Check that users can't access other users' data
+
+5. **CSRF Protection**
+   - Verify API endpoints have CSRF tokens or similar protection
+   - Check authentication token handling in `authApi`
+
+6. **Data Exposure**
+   - Review what data is sent in API responses
+   - Ensure sensitive user information is not leaked
+   - Check that error messages don't expose system internals
+
+### 🔒 Security Recommendations
+
+1. **Backend Validation**
+   - Validate all inputs on the server side
+   - Use parameterized queries (prepared statements) for all database operations
+   - Implement rate limiting on sensitive endpoints
+
+2. **Frontend Improvements**
+   - Add client-side validation to prevent invalid submissions
+   - Sanitize all user-generated content before display
+   - Implement proper error handling without exposing internals
+
+3. **Code Review Required**
+   - **CRITICAL:** Review the 132 lines of database.js changes for SQL injection
+   - Review calendarApi.js changes for proper validation
+   - Check authentication middleware is applied to all new endpoints
 
 ---
 
