@@ -19,6 +19,7 @@ const {
 } = require('../sql/database');
 const { calculateDistance } = require('../services/locationService');
 const { upload, processAndSaveImage, deleteOldImage } = require('../middleware/uploadMiddleware');
+const { sendAppointmentConfirmation } = require('../services/emailService');
 
 // Utazási idő számítása távolság alapján (percben)
 function calculateTravelBuffer(distanceKm) {
@@ -857,19 +858,24 @@ router.post('/appointments', AuthMiddleware, async (req, res) => {
 
             // Get the created appointment details
             const [newAppointment] = await pool.query(
-                `SELECT 
-                    a.id, a.appointment_start, a.appointment_end, 
+                `SELECT
+                    a.id, a.appointment_start, a.appointment_end,
                     a.comment, a.price, a.status, a.created_at,
                     p.name as provider_name,
                     s.name as service_name,
-                    sal.name as salon_name
+                    sal.name as salon_name,
+                    u.email as customer_email,
+                    u.name as customer_name
                 FROM appointments a
                 JOIN providers p ON a.provider_id = p.id
                 JOIN services s ON a.service_id = s.id
                 JOIN salons sal ON p.salon_id = sal.id
+                JOIN users u ON a.user_id = u.id
                 WHERE a.id = ?`,
                 [result.insertId]
             );
+
+            sendAppointmentConfirmation(newAppointment[0]).catch(console.error);
 
             res.status(201).json({
                 success: true,
