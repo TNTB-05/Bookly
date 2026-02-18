@@ -167,7 +167,6 @@ export default function AdminDashboard() {
                         </div>
                         <div>
                             <p className="font-bold text-gray-900 text-sm">Bookly Admin</p>
-                            <p className="text-xs text-gray-500">Adminisztráció</p>
                         </div>
                     </div>
                 </div>

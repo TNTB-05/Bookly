@@ -39,7 +39,7 @@ export default function ProvLogin() {
         }
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3000';
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
             const response = await fetch(`${apiUrl}/auth/provider/login`, {
                 method: 'POST',
                 headers: {

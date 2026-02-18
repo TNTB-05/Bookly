@@ -19,8 +19,8 @@ const requireRole = (allowedRoles) => {
         if (!req.user) {
             return res.status(401).json({
                 success: false,
-                message: 'Authentication required',
-                error: 'No user data found in request. Ensure AuthMiddleware runs before RoleMiddleware.'
+                message: 'Bejelentkezés szükséges',
+                error: 'Nem található felhasználói adat. Győződj meg róla, hogy az AuthMiddleware előbb fut.'
             });
         }
 
@@ -32,8 +32,8 @@ const requireRole = (allowedRoles) => {
             
             return res.status(403).json({
                 success: false,
-                message: 'Access denied. Insufficient permissions.',
-                error: `This resource requires one of the following roles: ${allowedRoles.join(', ')}`
+                message: 'Hozzáférés megtagadva. Nem megfelelő jogosultság.',
+                error: `Ez az erőforrás a következő szerepkörök egyikét igényli: ${allowedRoles.join(', ')}`
             });
         }
 

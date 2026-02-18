@@ -24,7 +24,7 @@ function ToastItem({ toast, onDismiss }) {
     useEffect(() => {
         const dismissTimer = setTimeout(() => {
             setIsExiting(true);
-        }, toast.duration || 4000);
+        }, toast.duration || 10000);
 
         return () => clearTimeout(dismissTimer);
     }, [toast.duration]);

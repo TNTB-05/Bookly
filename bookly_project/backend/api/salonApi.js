@@ -18,7 +18,7 @@ const isManagerMiddleware = async (req, res, next) => {
         if (providers.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'Provider not found'
+                message: 'Szolgáltató nem található'
             });
         }
 
@@ -27,7 +27,7 @@ const isManagerMiddleware = async (req, res, next) => {
         if (!provider.isManager) {
             return res.status(403).json({
                 success: false,
-                message: 'Only managers can perform this action'
+                message: 'Csak menedzserek végezhetik el ezt a műveletet'
             });
         }
 
@@ -37,7 +37,7 @@ const isManagerMiddleware = async (req, res, next) => {
         console.error('Manager check error:', error);
         return res.status(500).json({
             success: false,
-            message: 'Server error'
+            message: 'Szerverhiba'
         });
     }
 };
@@ -55,7 +55,7 @@ router.get('/my-salon', AuthMiddleware, async (req, res) => {
         if (providers.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'Provider not found'
+                message: 'Szolgáltató nem található'
             });
         }
 
@@ -72,7 +72,7 @@ router.get('/my-salon', AuthMiddleware, async (req, res) => {
         if (salons.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'Salon not found'
+                message: 'Szalon nem található'
             });
         }
 
@@ -87,7 +87,7 @@ router.get('/my-salon', AuthMiddleware, async (req, res) => {
         console.error('Get salon error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error'
+            message: 'Szerverhiba'
         });
     }
 });
@@ -102,7 +102,7 @@ router.put('/update', AuthMiddleware, isManagerMiddleware, async (req, res) => {
         if (!name || !address) {
             return res.status(400).json({
                 success: false,
-                message: 'Name and address are required'
+                message: 'A név és cím megadása kötelező'
             });
         }
 
@@ -154,7 +154,7 @@ router.put('/update', AuthMiddleware, isManagerMiddleware, async (req, res) => {
         if (updates.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: 'No fields to update'
+                message: 'Nincs frissítendő mező'
             });
         }
 
@@ -174,14 +174,14 @@ router.put('/update', AuthMiddleware, isManagerMiddleware, async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'Salon updated successfully',
+            message: 'Szalon sikeresen frissítve',
             salon: updatedSalon[0]
         });
     } catch (error) {
         console.error('Update salon error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error'
+            message: 'Szerverhiba'
         });
     }
 });
@@ -199,7 +199,7 @@ router.get('/providers', AuthMiddleware, async (req, res) => {
         if (providers.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'Provider not found'
+                message: 'Szolgáltató nem található'
             });
         }
 
@@ -221,7 +221,7 @@ router.get('/providers', AuthMiddleware, async (req, res) => {
         console.error('Get providers error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error'
+            message: 'Szerverhiba'
         });
     }
 });
@@ -243,7 +243,7 @@ router.put('/provider/:providerId', AuthMiddleware, isManagerMiddleware, async (
         if (targetProviders.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'Provider not found'
+                message: 'Szolgáltató nem található'
             });
         }
 
@@ -252,7 +252,7 @@ router.put('/provider/:providerId', AuthMiddleware, isManagerMiddleware, async (
         if (targetProvider.salon_id !== salonId) {
             return res.status(403).json({
                 success: false,
-                message: 'Cannot modify providers from another salon'
+                message: 'Nem módosíthat másik szalon szolgáltatóját'
             });
         }
 
@@ -266,7 +266,7 @@ router.put('/provider/:providerId', AuthMiddleware, isManagerMiddleware, async (
             if (managerCount[0].count <= 1) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Cannot remove manager status - at least one manager required'
+                    message: 'Nem távolítható el a menedzser státusz – legalább egy menedzser szükséges'
                 });
             }
         }
@@ -301,7 +301,7 @@ router.put('/provider/:providerId', AuthMiddleware, isManagerMiddleware, async (
         if (updates.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: 'No fields to update'
+                message: 'Nincs frissítendő mező'
             });
         }
 
@@ -320,14 +320,14 @@ router.put('/provider/:providerId', AuthMiddleware, isManagerMiddleware, async (
 
         res.status(200).json({
             success: true,
-            message: 'Provider updated successfully',
+            message: 'Szolgáltató sikeresen frissítve',
             provider: updatedProvider[0]
         });
     } catch (error) {
         console.error('Update provider error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error'
+            message: 'Szerverhiba'
         });
     }
 });
@@ -348,7 +348,7 @@ router.delete('/provider/:providerId', AuthMiddleware, isManagerMiddleware, asyn
         if (targetProviders.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'Provider not found'
+                message: 'Szolgáltató nem található'
             });
         }
 
@@ -357,7 +357,7 @@ router.delete('/provider/:providerId', AuthMiddleware, isManagerMiddleware, asyn
         if (targetProvider.salon_id !== salonId) {
             return res.status(403).json({
                 success: false,
-                message: 'Cannot remove providers from another salon'
+                message: 'Nem távolíthat el szolgáltatót másik szalonból'
             });
         }
 
@@ -371,7 +371,7 @@ router.delete('/provider/:providerId', AuthMiddleware, isManagerMiddleware, asyn
             if (managerCount[0].count <= 1) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Cannot remove last manager from salon'
+                    message: 'Nem távolítható el az utolsó menedzser a szalonból'
                 });
             }
         }
@@ -384,13 +384,13 @@ router.delete('/provider/:providerId', AuthMiddleware, isManagerMiddleware, asyn
 
         res.status(200).json({
             success: true,
-            message: 'Provider removed successfully'
+            message: 'Szolgáltató sikeresen eltávolítva'
         });
     } catch (error) {
         console.error('Delete provider error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error'
+            message: 'Szerverhiba'
         });
     }
 });
@@ -404,7 +404,7 @@ router.put('/status', AuthMiddleware, isManagerMiddleware, async (req, res) => {
         if (!status || !['open', 'closed', 'renovation'].includes(status)) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid status value'
+                message: 'Érvénytelen státusz érték'
             });
         }
 
@@ -415,13 +415,13 @@ router.put('/status', AuthMiddleware, isManagerMiddleware, async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'Salon status updated successfully'
+            message: 'Szalon státusz sikeresen frissítve'
         });
     } catch (error) {
         console.error('Update salon status error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error'
+            message: 'Szerverhiba'
         });
     }
 });
@@ -581,7 +581,7 @@ router.post('/branding', AuthMiddleware, isManagerMiddleware, upload.fields([
             [salonId]
         );
         if (currentSalon.length === 0) {
-            return res.status(404).json({ success: false, message: 'Salon not found' });
+            return res.status(404).json({ success: false, message: 'Szalon nem található' });
         }
 
         const updates = [];

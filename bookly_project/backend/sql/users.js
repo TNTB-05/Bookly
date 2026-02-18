@@ -69,7 +69,7 @@ const restoreUser = async (userId) => {
     // Restore user account during grace period
     const query = `
         UPDATE users 
-        SET status = 'inactive',
+        SET status = 'active',
             deleted_at = NULL
         WHERE id = ? 
         AND status = 'deleted' 

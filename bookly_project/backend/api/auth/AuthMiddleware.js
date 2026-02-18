@@ -8,15 +8,15 @@ const AuthMiddleware = async (req, res, next) => {
 
         if (!token) {
             return res.status(401).json({ 
-                message: 'No token provided',
-                error: 'Missing authorization token'
+                message: 'Nincs token megadva',
+                error: 'Hiányzó hitelesítési token'
             });
         }
 
         if (!process.env.JWT_SECRET) {
             console.error('JWT_SECRET not configured');
             return res.status(500).json({ 
-                message: 'Server configuration error' 
+                message: 'Szerver konfigurációs hiba' 
             });
         }
 
@@ -26,8 +26,8 @@ const AuthMiddleware = async (req, res, next) => {
         } catch (err) {
             const statusCode = err.name === 'TokenExpiredError' ? 401 : 403;
             const message = err.name === 'TokenExpiredError' 
-                ? 'Token expired'
-                : 'Invalid token';
+                ? 'A token lejárt'
+                : 'Érvénytelen token';
             
             return res.status(statusCode).json({ 
                 message,
@@ -59,10 +59,24 @@ const AuthMiddleware = async (req, res, next) => {
                 'SELECT status FROM providers WHERE id = ?',
                 [decoded.userId]
             );
-            if (providers.length === 0 || providers[0].status === 'banned' || providers[0].status === 'deleted' || providers[0].status === 'inactive') {
+            if (providers.length === 0 || providers[0].status === 'inactive') {
                 return res.status(403).json({
-                    message: 'A fiók le van tiltva vagy törölve',
+                    message: 'A fiók inaktív vagy nem található',
                     banned: true
+                });
+            }
+            if (providers[0].status === 'banned') {
+                return res.status(403).json({
+                    message: 'A fiókod le lett tiltva.',
+                    banned: true,
+                    reason: 'banned'
+                });
+            }
+            if (providers[0].status === 'deleted') {
+                return res.status(403).json({
+                    message: 'A fiók GDPR törlés miatt megszűnt.',
+                    banned: true,
+                    reason: 'gdpr'
                 });
             }
         } else {
@@ -71,10 +85,24 @@ const AuthMiddleware = async (req, res, next) => {
                 'SELECT status FROM users WHERE id = ?',
                 [decoded.userId]
             );
-            if (users.length === 0 || users[0].status === 'banned' || users[0].status === 'deleted') {
+            if (users.length === 0) {
                 return res.status(403).json({
-                    message: 'A fiók le van tiltva vagy törölve',
+                    message: 'Felhasználó nem található',
                     banned: true
+                });
+            }
+            if (users[0].status === 'banned') {
+                return res.status(403).json({
+                    message: 'A fiókod le lett tiltva.',
+                    banned: true,
+                    reason: 'banned'
+                });
+            }
+            if (users[0].status === 'deleted') {
+                return res.status(403).json({
+                    message: 'A fiók GDPR törlés miatt megszűnt.',
+                    banned: true,
+                    reason: 'gdpr'
                 });
             }
         }
@@ -83,7 +111,7 @@ const AuthMiddleware = async (req, res, next) => {
     } catch (error) {
         console.error('Auth middleware error:', error);
         return res.status(500).json({ 
-            message: 'Authentication error occurred' 
+            message: 'Hitelesítési hiba történt' 
         });
     }
 };

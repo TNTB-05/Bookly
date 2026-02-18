@@ -39,7 +39,7 @@ router.get('/profile', AuthMiddleware, async (req, res) => {
         if (!userId) {
             return res.status(400).json({
                 success: false,
-                message: 'User ID not found in token'
+                message: 'Felhasználó azonosító nem található a tokenben'
             });
         }
 
@@ -48,7 +48,7 @@ router.get('/profile', AuthMiddleware, async (req, res) => {
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: 'User not found'
+                message: 'Felhasználó nem található'
             });
         }
 
@@ -73,7 +73,7 @@ router.get('/profile', AuthMiddleware, async (req, res) => {
         console.error('Get profile error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error while fetching profile'
+            message: 'Szerverhiba a profil lekérése során'
         });
     }
 });
@@ -87,7 +87,7 @@ router.put('/profile', AuthMiddleware, async (req, res) => {
         if (!userId) {
             return res.status(400).json({
                 success: false,
-                message: 'User ID not found in token'
+                message: 'Felhasználó azonosító nem található a tokenben'
             });
         }
 
@@ -95,7 +95,7 @@ router.put('/profile', AuthMiddleware, async (req, res) => {
         if (!name || name.trim() === '') {
             return res.status(400).json({
                 success: false,
-                message: 'Name is required'
+                message: 'A név megadása kötelező'
             });
         }
 
@@ -103,7 +103,7 @@ router.put('/profile', AuthMiddleware, async (req, res) => {
         if (!email || email.trim() === '') {
             return res.status(400).json({
                 success: false,
-                message: 'Email is required'
+                message: 'Az e-mail megadása kötelező'
             });
         }
 
@@ -112,7 +112,7 @@ router.put('/profile', AuthMiddleware, async (req, res) => {
         if (!emailRegex.test(email.trim())) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid email format'
+                message: 'Érvénytelen e-mail formátum'
             });
         }
 
@@ -121,7 +121,7 @@ router.put('/profile', AuthMiddleware, async (req, res) => {
         if (emailExists) {
             return res.status(400).json({
                 success: false,
-                message: 'Email is already in use by another account'
+                message: 'Ez az e-mail cím már használatban van másik fióknál'
             });
         }
 
@@ -147,7 +147,7 @@ router.put('/profile', AuthMiddleware, async (req, res) => {
         if (!updated) {
             return res.status(404).json({
                 success: false,
-                message: 'User not found or update failed'
+                message: 'Felhasználó nem található vagy a frissítés sikertelen'
             });
         }
 
@@ -156,7 +156,7 @@ router.put('/profile', AuthMiddleware, async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'Profile updated successfully',
+            message: 'Profil sikeresen frissítve',
             user: {
                 id: user.id,
                 name: user.name,
@@ -173,7 +173,7 @@ router.put('/profile', AuthMiddleware, async (req, res) => {
         console.error('Update profile error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error while updating profile'
+            message: 'Szerverhiba a profil frissítése során'
         });
     }
 });
@@ -187,7 +187,7 @@ router.put('/password', AuthMiddleware, async (req, res) => {
         if (!userId) {
             return res.status(400).json({
                 success: false,
-                message: 'User ID not found in token'
+                message: 'Felhasználó azonosító nem található a tokenben'
             });
         }
 
@@ -195,7 +195,7 @@ router.put('/password', AuthMiddleware, async (req, res) => {
         if (!currentPassword || !newPassword || !confirmPassword) {
             return res.status(400).json({
                 success: false,
-                message: 'All password fields are required'
+                message: 'Minden jelszó mező kitöltése kötelező'
             });
         }
 
@@ -203,7 +203,7 @@ router.put('/password', AuthMiddleware, async (req, res) => {
         if (newPassword.length < 6) {
             return res.status(400).json({
                 success: false,
-                message: 'New password must be at least 6 characters'
+                message: 'Az új jelszónak legalább 6 karakter hosszúnak kell lennie'
             });
         }
 
@@ -211,7 +211,7 @@ router.put('/password', AuthMiddleware, async (req, res) => {
         if (newPassword !== confirmPassword) {
             return res.status(400).json({
                 success: false,
-                message: 'New passwords do not match'
+                message: 'Az új jelszavak nem egyeznek'
             });
         }
 
@@ -220,7 +220,7 @@ router.put('/password', AuthMiddleware, async (req, res) => {
         if (!currentHash) {
             return res.status(404).json({
                 success: false,
-                message: 'User not found'
+                message: 'Felhasználó nem található'
             });
         }
 
@@ -229,7 +229,7 @@ router.put('/password', AuthMiddleware, async (req, res) => {
         if (!passwordMatch) {
             return res.status(400).json({
                 success: false,
-                message: 'Current password is incorrect'
+                message: 'A jelenlegi jelszó helytelen'
             });
         }
 
@@ -241,19 +241,19 @@ router.put('/password', AuthMiddleware, async (req, res) => {
         if (!updated) {
             return res.status(500).json({
                 success: false,
-                message: 'Failed to update password'
+                message: 'Nem sikerült a jelszó frissítése'
             });
         }
 
         res.status(200).json({
             success: true,
-            message: 'Password changed successfully'
+            message: 'Jelszó sikeresen megváltoztatva'
         });
     } catch (error) {
         console.error('Change password error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error while changing password'
+            message: 'Szerverhiba a jelszó módosítása során'
         });
     }
 });
@@ -333,7 +333,7 @@ router.get('/saved-salons', AuthMiddleware, async (req, res) => {
         console.error('Get saved salons error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error while fetching saved salons'
+            message: 'Szerverhiba a mentett szalonok lekérése során'
         });
     }
 });
@@ -352,7 +352,7 @@ router.get('/saved-salon-ids', AuthMiddleware, async (req, res) => {
         console.error('Get saved salon IDs error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error while fetching saved salon IDs'
+            message: 'Szerverhiba a mentett szalon azonosítók lekérése során'
         });
     }
 });
@@ -366,7 +366,7 @@ router.post('/saved-salons/:salonId', AuthMiddleware, async (req, res) => {
         if (!salonId || isNaN(salonId)) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid salon ID'
+                message: 'Érvénytelen szalon azonosító'
             });
         }
         
@@ -374,13 +374,13 @@ router.post('/saved-salons/:salonId', AuthMiddleware, async (req, res) => {
         
         res.status(200).json({
             success: true,
-            message: 'Salon saved successfully'
+            message: 'Szalon sikeresen mentve'
         });
     } catch (error) {
         console.error('Save salon error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error while saving salon'
+            message: 'Szerverhiba a szalon mentése során'
         });
     }
 });
@@ -394,7 +394,7 @@ router.delete('/saved-salons/:salonId', AuthMiddleware, async (req, res) => {
         if (!salonId || isNaN(salonId)) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid salon ID'
+                message: 'Érvénytelen szalon azonosító'
             });
         }
         
@@ -402,13 +402,13 @@ router.delete('/saved-salons/:salonId', AuthMiddleware, async (req, res) => {
         
         res.status(200).json({
             success: true,
-            message: 'Salon removed from saved list'
+            message: 'Szalon eltávolítva a mentettek közül'
         });
     } catch (error) {
         console.error('Unsave salon error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error while removing saved salon'
+            message: 'Szerverhiba a szalon eltávolítása során'
         });
     }
 });
@@ -422,20 +422,20 @@ router.post('/ratings', AuthMiddleware, async (req, res) => {
         const { appointmentId, salonId, providerId, salonRating, providerRating, salonComment, providerComment } = req.body;
 
         if (!appointmentId || !salonId || !providerId || !salonRating || !providerRating) {
-            return res.status(400).json({ success: false, message: 'Missing required fields' });
+            return res.status(400).json({ success: false, message: 'Hiányzó kötelező mezők' });
         }
 
         if (salonRating < 1 || salonRating > 5 || providerRating < 1 || providerRating > 5) {
-            return res.status(400).json({ success: false, message: 'Ratings must be between 1 and 5' });
+            return res.status(400).json({ success: false, message: 'Az értékelésnek 1 és 5 között kell lennie' });
         }
 
         // Verify the appointment belongs to this user and is completed
         const appointment = await getAppointmentById(appointmentId);
         if (!appointment || appointment.user_id !== userId) {
-            return res.status(403).json({ success: false, message: 'Appointment not found or not yours' });
+            return res.status(403).json({ success: false, message: 'Foglalás nem található vagy nem a tiéd' });
         }
         if (appointment.status !== 'completed') {
-            return res.status(400).json({ success: false, message: 'Only completed appointments can be rated' });
+            return res.status(400).json({ success: false, message: 'Csak befejezett foglalásokat lehet értékelni' });
         }
 
         await createRating(userId, appointmentId, salonId, providerId, salonRating, providerRating, salonComment, providerComment);
@@ -443,7 +443,7 @@ router.post('/ratings', AuthMiddleware, async (req, res) => {
         res.status(200).json({ success: true, message: 'Értékelés mentve!' });
     } catch (error) {
         console.error('Create rating error:', error);
-        res.status(500).json({ success: false, message: 'Server error while saving rating' });
+        res.status(500).json({ success: false, message: 'Szerverhiba az értékelés mentése során' });
     }
 });
 
@@ -457,13 +457,13 @@ router.get('/ratings/appointment/:appointmentId', AuthMiddleware, async (req, re
 
         // Verify rating belongs to this user
         if (rating && rating.user_id !== userId) {
-            return res.status(403).json({ success: false, message: 'Not authorized' });
+            return res.status(403).json({ success: false, message: 'Nincs jogosultságod' });
         }
 
         res.status(200).json({ success: true, rating: rating });
     } catch (error) {
         console.error('Get rating error:', error);
-        res.status(500).json({ success: false, message: 'Server error while fetching rating' });
+        res.status(500).json({ success: false, message: 'Szerverhiba az értékelés lekérése során' });
     }
 });
 
@@ -488,7 +488,7 @@ router.post('/restore-account', AuthMiddleware, async (req, res) => {
         console.error('Restore account error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error while restoring account'
+            message: 'Szerverhiba a fiók visszaállítása során'
         });
     }
 });
@@ -502,7 +502,7 @@ router.delete('/account', AuthMiddleware, async (req, res) => {
         if (!userId) {
             return res.status(400).json({
                 success: false,
-                message: 'User ID not found in token'
+                message: 'Felhasználó azonosító nem található a tokenben'
             });
         }
 
@@ -510,7 +510,7 @@ router.delete('/account', AuthMiddleware, async (req, res) => {
         if (!password) {
             return res.status(400).json({
                 success: false,
-                message: 'Password is required to delete account'
+                message: 'A jelszó megadása kötelező a fiók törléséhez'
             });
         }
 
@@ -519,7 +519,7 @@ router.delete('/account', AuthMiddleware, async (req, res) => {
         if (!currentHash) {
             return res.status(404).json({
                 success: false,
-                message: 'User not found'
+                message: 'Felhasználó nem található'
             });
         }
 
@@ -528,7 +528,7 @@ router.delete('/account', AuthMiddleware, async (req, res) => {
         if (!passwordMatch) {
             return res.status(400).json({
                 success: false,
-                message: 'Incorrect password'
+                message: 'Helytelen jelszó'
             });
         }
 
@@ -557,19 +557,19 @@ router.delete('/account', AuthMiddleware, async (req, res) => {
         if (!deleted) {
             return res.status(500).json({
                 success: false,
-                message: 'Failed to delete account'
+                message: 'Nem sikerült a fiók törlése'
             });
         }
 
         res.status(200).json({
             success: true,
-            message: 'Account deleted successfully'
+            message: 'Fiók sikeresen törölve'
         });
     } catch (error) {
         console.error('Delete account error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error while deleting account'
+            message: 'Szerverhiba a fiók törlése során'
         });
     }
 });

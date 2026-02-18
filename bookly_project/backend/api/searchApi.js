@@ -306,7 +306,7 @@ router.get('/by-name', async (req, res) => {
         if (!query && !service_type) {
             return res.status(400).json({
                 success: false,
-                message: 'query or service_type parameter required'
+                message: 'query vagy service_type paraméter szükséges'
             });
         }
 
@@ -359,7 +359,7 @@ router.get('/by-name', async (req, res) => {
         console.error('Search by name error:', error);
         return res.status(500).json({
             success: false,
-            message: 'problem searching salons by name',
+            message: 'probléma merült fel a szalonok név szerinti keresése során',
             error: error.message
         });
     }
@@ -400,7 +400,7 @@ router.get('/recent-reviews', async (req, res) => {
         console.error('Get recent reviews error:', error);
         return res.status(500).json({
             success: false,
-            message: 'Error fetching recent reviews',
+            message: 'Hiba a legutóbbi értékelések lekérése során',
             error: error.message
         });
     }

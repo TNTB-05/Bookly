@@ -321,10 +321,21 @@ router.post('/login', async (request, response) => {
 
         const provider = providers[0];
 
-        if (provider.status === 'banned' || provider.status === 'deleted') {
+        if (provider.status === 'banned') {
             return response.status(403).json({
                 success: false,
-                message: 'Ez a fiók le van tiltva'
+                message: 'A fiókod le lett tiltva.',
+                banned: true,
+                reason: 'banned'
+            });
+        }
+
+        if (provider.status === 'deleted') {
+            return response.status(403).json({
+                success: false,
+                message: 'A fiók GDPR törlés miatt megszűnt.',
+                banned: true,
+                reason: 'gdpr'
             });
         }
 
@@ -356,6 +367,7 @@ router.post('/login', async (request, response) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+            path: '/',
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
 
