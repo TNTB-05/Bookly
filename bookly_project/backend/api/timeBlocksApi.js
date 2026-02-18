@@ -82,12 +82,17 @@ router.get('/', async (req, res) => {
 router.get('/raw', async (req, res) => {
     try {
         const providerId = req.providerId;
+
         const [rows] = await pool.execute(
             `SELECT id, provider_id, start_datetime, end_datetime, 
                     is_recurring, recurrence_pattern, recurrence_days, 
                     recurrence_end_date, notes, created_at
              FROM provider_time_blocks
              WHERE provider_id = ?
+             AND (
+                 (is_recurring = 0 AND DATE(CONVERT_TZ(end_datetime, '+00:00', '+01:00')) >= DATE(CONVERT_TZ(NOW(), '+00:00', '+01:00')))
+                 OR (is_recurring = 1 AND (recurrence_end_date IS NULL OR recurrence_end_date >= DATE(CONVERT_TZ(NOW(), '+00:00', '+01:00'))))
+             )
              ORDER BY created_at DESC`,
             [providerId]
         );

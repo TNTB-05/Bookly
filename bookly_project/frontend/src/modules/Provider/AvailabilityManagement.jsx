@@ -65,7 +65,7 @@ const AvailabilityManagement = () => {
                 showToast(result.message || 'Hiba történt', 'error');
             }
         } catch (error) {
-            showToast('Hiba történt a törlés során', 'error');
+            showToast('Hiba történt a törlés során', error.message || 'error');
         }
     };
 
