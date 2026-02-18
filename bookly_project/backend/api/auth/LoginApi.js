@@ -83,14 +83,14 @@ router.post('/register', async (request, response) => {
     if (!email || !password || !name) {
         return response.status(400).json({
             success: false,
-            message: 'Name and Email and password are required'
+            message: 'A név, e-mail és jelszó megadása kötelező'
         });
     }
 
     if (password.length < 6) {
         return response.status(400).json({
             success: false,
-            message: 'Password must be at least 6 characters'
+            message: 'A jelszónak legalább 6 karakter hosszúnak kell lennie'
         });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -100,7 +100,7 @@ router.post('/register', async (request, response) => {
         if (existingUser) {
             return response.status(409).json({
                 success: false,
-                message: 'User already exists'
+                message: 'Ez az e-mail cím már használatban van'
             });
         }
 
@@ -109,13 +109,13 @@ router.post('/register', async (request, response) => {
 
         response.status(201).json({
             success: true,
-            message: 'User registered successfully'
+            message: 'Sikeres regisztráció'
         });
     } catch (error) {
         console.error('Registration error:', error);
         response.status(500).json({
             success: false,
-            message: 'Server error'
+            message: 'Szerverhiba'
         });
     }
 });
@@ -127,14 +127,14 @@ router.post('/login', async (request, response) => {
     if (!email || !password) {
         return response.status(400).json({
             success: false,
-            message: 'Email and password are required'
+            message: 'Az e-mail és jelszó megadása kötelező'
         });
     }
 
     if (password.length < 6) {
         return response.status(400).json({
             success: false,
-            message: 'Invalid credentials'
+            message: 'Hibás e-mail vagy jelszó'
         });
     }
 
@@ -144,7 +144,7 @@ router.post('/login', async (request, response) => {
         if (!user) {
             return response.status(422).json({
                 success: false,
-                message: 'Invalid email or password'
+                message: 'Hibás e-mail vagy jelszó'
             });
         }
 
@@ -152,16 +152,42 @@ router.post('/login', async (request, response) => {
         if (!passwordMatch) {
             return response.status(422).json({
                 success: false,
-                message: 'Invalid email or password'
+                message: 'Hibás e-mail vagy jelszó'
             });
         }
 
-        // Check if user account is deleted or banned
-        if (user.status === 'banned' || user.status === 'deleted') {
+        // Check if user account is banned
+        if (user.status === 'banned') {
             return response.status(403).json({
                 success: false,
-                message: 'A fiók le van tiltva vagy törölve',
-                banned: true
+                message: 'A fiókod le lett tiltva.',
+                banned: true,
+                reason: 'banned'
+            });
+        }
+
+        // Check if user account is deleted (self-delete with email still present = reactivatable)
+        if (user.status === 'deleted') {
+            // If email is still present, user self-deleted (not GDPR) — allow reactivation
+            if (user.email) {
+                const reactivationToken = jwt.sign(
+                    { userId: user.id, purpose: 'reactivation' },
+                    process.env.JWT_SECRET,
+                    { expiresIn: '15m' }
+                );
+                return response.status(200).json({
+                    success: true,
+                    needsReactivation: true,
+                    reactivationToken,
+                    message: 'A fiók törölt állapotban van. Újraaktiválás szükséges.'
+                });
+            }
+            // GDPR deleted (no email) — shouldn't match getUserByEmail, but just in case
+            return response.status(403).json({
+                success: false,
+                message: 'A fiók GDPR törlés miatt megszűnt.',
+                banned: true,
+                reason: 'gdpr'
             });
         }
 
@@ -191,14 +217,14 @@ router.post('/login', async (request, response) => {
 
         response.status(200).json({
             success: true,
-            message: 'Login successful',
+            message: 'Sikeres bejelentkezés',
             accessToken
         });
     } catch (error) {
         console.error('Login error:', error);
         response.status(500).json({
             success: false,
-            message: 'Server error'
+            message: 'Szerverhiba'
         });
     }
 });
@@ -210,7 +236,7 @@ router.post('/refresh', async (request, response) => {
     if (!refreshToken) {
         return response.status(400).json({
             success: false,
-            message: 'Refresh token is required'
+            message: 'Frissítő token szükséges'
         });
     }
 
@@ -218,7 +244,7 @@ router.post('/refresh', async (request, response) => {
         console.error('JWT_REFRESH_SECRET not configured');
         return response.status(500).json({
             success: false,
-            message: 'Server configuration error'
+            message: 'Szerver konfigurációs hiba'
         });
     }
 
@@ -239,7 +265,7 @@ router.post('/refresh', async (request, response) => {
             response.clearCookie('refreshToken');
             return response.status(401).json({
                 success: false,
-                message: 'Invalid refresh token'
+                message: 'Érvénytelen frissítő token'
             });
         }
 
@@ -253,7 +279,7 @@ router.post('/refresh', async (request, response) => {
                 response.clearCookie('refreshToken');
                 return response.status(401).json({
                     success: false,
-                    message: 'Invalid token for user type'
+                    message: 'Érvénytelen token típus'
                 });
             }
 
@@ -265,9 +291,12 @@ router.post('/refresh', async (request, response) => {
             if (providers.length === 0 || providers[0].status === 'deleted' || providers[0].status === 'banned') {
                 await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
                 response.clearCookie('refreshToken');
+                const reason = providers.length > 0 && providers[0].status === 'banned' ? 'banned' : 'gdpr';
                 return response.status(401).json({
                     success: false,
-                    message: 'User account is no longer active'
+                    message: reason === 'banned' ? 'A fiókod le lett tiltva.' : 'A fiók GDPR törlés miatt megszűnt.',
+                    banned: true,
+                    reason
                 });
             }
         } else if (decoded.role === 'admin') {
@@ -277,7 +306,7 @@ router.post('/refresh', async (request, response) => {
                 response.clearCookie('refreshToken');
                 return response.status(401).json({
                     success: false,
-                    message: 'Invalid token for user type'
+                    message: 'Érvénytelen token típus'
                 });
             }
 
@@ -291,7 +320,7 @@ router.post('/refresh', async (request, response) => {
                 response.clearCookie('refreshToken');
                 return response.status(401).json({
                     success: false,
-                    message: 'Admin account is no longer active'
+                    message: 'Admin fiók nem található'
                 });
             }
         } else {
@@ -301,7 +330,7 @@ router.post('/refresh', async (request, response) => {
                 response.clearCookie('refreshToken');
                 return response.status(401).json({
                     success: false,
-                    message: 'Invalid token for user type'
+                    message: 'Érvénytelen token típus'
                 });
             }
 
@@ -313,9 +342,12 @@ router.post('/refresh', async (request, response) => {
             if (users.length === 0 || users[0].status === 'banned' || users[0].status === 'deleted') {
                 await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
                 response.clearCookie('refreshToken');
+                const reason = users.length > 0 && users[0].status === 'banned' ? 'banned' : 'gdpr';
                 return response.status(401).json({
                     success: false,
-                    message: 'A fiók le van tiltva vagy törölve'
+                    message: reason === 'banned' ? 'A fiókod le lett tiltva.' : 'A fiók GDPR törlés miatt megszűnt.',
+                    banned: true,
+                    reason
                 });
             }
         }
@@ -331,7 +363,7 @@ router.post('/refresh', async (request, response) => {
 
         response.status(200).json({
             success: true,
-            message: 'Token refreshed successfully',
+            message: 'Token sikeresen frissítve',
             accessToken: newAccessToken
         });
     } catch (error) {
@@ -348,7 +380,7 @@ router.post('/refresh', async (request, response) => {
         
         return response.status(401).json({
             success: false,
-            message: 'Invalid or expired refresh token'
+            message: 'Érvénytelen vagy lejárt frissítő token'
         });
     }
 });
@@ -383,7 +415,7 @@ router.post('/logout', async (request, response) => {
     
     response.status(200).json({
         success: true,
-        message: 'Logged out successfully'
+        message: 'Sikeresen kijelentkezve'
     });
 });
 
@@ -457,6 +489,135 @@ router.post('/admin/login', async (request, response) => {
         response.status(500).json({
             success: false,
             message: 'Szerverhiba'
+        });
+    }
+});
+
+// Reactivate a self-deleted user account
+router.post('/reactivate', async (request, response) => {
+    const { reactivationToken, name, phone, address } = request.body;
+
+    if (!reactivationToken) {
+        return response.status(400).json({
+            success: false,
+            message: 'Újraaktiválási token szükséges'
+        });
+    }
+
+    if (!name || !name.trim()) {
+        return response.status(400).json({
+            success: false,
+            message: 'A név megadása kötelező'
+        });
+    }
+
+    if (!phone || !phone.trim()) {
+        return response.status(400).json({
+            success: false,
+            message: 'A telefonszám megadása kötelező'
+        });
+    }
+
+    try {
+        // Verify the reactivation token
+        const decoded = jwt.verify(reactivationToken, process.env.JWT_SECRET);
+
+        if (decoded.purpose !== 'reactivation') {
+            return response.status(400).json({
+                success: false,
+                message: 'Érvénytelen token'
+            });
+        }
+
+        const userId = decoded.userId;
+
+        // Verify user exists and is still in deleted state
+        const [users] = await pool.query(
+            'SELECT id, email, status, deleted_at FROM users WHERE id = ?',
+            [userId]
+        );
+
+        if (users.length === 0) {
+            return response.status(404).json({
+                success: false,
+                message: 'Felhasználó nem található'
+            });
+        }
+
+        const user = users[0];
+
+        if (user.status !== 'deleted') {
+            return response.status(400).json({
+                success: false,
+                message: 'A fiók nem törölt állapotban van'
+            });
+        }
+
+        // Check if within 30-day grace period
+        if (user.deleted_at) {
+            const deletedAt = new Date(user.deleted_at);
+            const now = new Date();
+            const daysSinceDelete = (now - deletedAt) / (1000 * 60 * 60 * 24);
+            if (daysSinceDelete > 30) {
+                return response.status(400).json({
+                    success: false,
+                    message: 'A törlési határidő (30 nap) lejárt. Kérjük, regisztrálj újra.'
+                });
+            }
+        }
+
+        // Reactivate: update profile and set status to active
+        await pool.query(
+            `UPDATE users 
+             SET status = 'active',
+                 name = ?,
+                 phone = ?,
+                 address = ?,
+                 deleted_at = NULL
+             WHERE id = ?`,
+            [name.trim(), phone?.trim() || null, address?.trim() || null, userId]
+        );
+
+        // Generate tokens for the reactivated user
+        const { accessToken, refreshToken } = generateTokens(user.email, userId, name.trim(), 'customer');
+
+        // Store refresh token in database
+        await pool.query(
+            'INSERT INTO RefTokens (user_id, refresh_token) VALUES (?, ?)',
+            [userId, refreshToken]
+        );
+
+        // Update last_login
+        await pool.query('UPDATE users SET last_login = NOW() WHERE id = ?', [userId]);
+
+        // Log reactivation event
+        await logEvent('INFO', 'USER_REACTIVATION', 'user', userId, 'user', userId, `User ${user.email} reactivated their account`);
+
+        // Send refresh token as HTTP-only cookie
+        response.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        response.status(200).json({
+            success: true,
+            message: 'Fiók sikeresen újraaktiválva!',
+            accessToken
+        });
+    } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            return response.status(401).json({
+                success: false,
+                message: 'Az újraaktiválási token lejárt. Kérjük, jelentkezz be újra.'
+            });
+        }
+        console.error('Reactivation error:', error);
+        response.status(500).json({
+            success: false,
+            message: 'Szerverhiba az újraaktiválás során'
         });
     }
 });

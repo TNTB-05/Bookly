@@ -328,7 +328,7 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
             const data = await response.json();
 
             if (data.success) {
-                localStorage.removeItem('token');
+                localStorage.removeItem('accessToken');
                 navigate('/');
             } else {
                 setDeleteError(data.message || 'Hiba történt a fiók törlése során');

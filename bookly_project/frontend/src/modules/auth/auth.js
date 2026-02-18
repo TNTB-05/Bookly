@@ -118,9 +118,26 @@ let _notifyFn = null;
 export function registerNotifier(fn) {
     _notifyFn = fn;
 }
-function notify(message, type = 'error') {
+function notify(message, type = 'error', duration) {
     if (_notifyFn) {
-        _notifyFn(message, type);
+        _notifyFn(message, type, duration);
+    }
+}
+
+// Navigation bridge — allows non-React code to use react-router navigate
+let _navigateFn = null;
+export function registerNavigator(fn) {
+    _navigateFn = fn;
+}
+function safeNavigate(path, options) {
+    if (_navigateFn) {
+        _navigateFn(path, options);
+    } else {
+        // Fallback: store pending toast in localStorage before hard redirect
+        if (options?.state?.pendingToast) {
+            localStorage.setItem('pendingToast', JSON.stringify(options.state.pendingToast));
+        }
+        window.location.href = path;
     }
 }
 
@@ -138,8 +155,8 @@ export async function authFetch(url, options={}){
                 // Token expired, refresh proactively
                 accessToken = await refreshAccessToken();
                 if (!accessToken) {
-                    notify('A munkamenet lejárt. Kérjük, jelentkezz be újra.', 'warning');
-                    window.location.href = getLoginRedirect();
+                    const toastMsg = { message: 'A munkamenet lejárt. Kérjük, jelentkezz be újra.', type: 'warning', duration: 10000 };
+                    safeNavigate(getLoginRedirect(), { state: { pendingToast: toastMsg } });
                     throw new Error('A munkamenet lejárt. Kérjük, jelentkezz be újra.');
                 }
             }
@@ -171,14 +188,22 @@ export async function authFetch(url, options={}){
         if(!isBanRedirecting){
             isBanRedirecting=true;
             localStorage.removeItem('accessToken');
+            let banMessage = 'A fiókod le lett tiltva vagy törölve. Kijelentkeztetés...';
             try {
                 const errorData = await response.clone().json();
                 if(errorData.banned){
-                    notify('A fiókod le lett tiltva vagy törölve. Kijelentkeztetés...', 'error');
+                    if (errorData.reason === 'gdpr') {
+                        banMessage = 'A fiók GDPR törlés miatt megszűnt.';
+                    } else if (errorData.reason === 'banned') {
+                        banMessage = 'A fiókod le lett tiltva.';
+                    } else {
+                        banMessage = 'A fiókod le lett tiltva vagy törölve. Kijelentkeztetés...';
+                    }
                 }
             } catch(e) { /* ignore parse error */ }
+            const toastMsg = { message: banMessage, type: 'error', duration: 10000 };
             setTimeout(() => {
-                window.location.href = '/';
+                safeNavigate('/', { state: { pendingToast: toastMsg } });
             }, 600);
             setTimeout(() => { isBanRedirecting = false; }, 3000);
         }
@@ -211,7 +236,8 @@ export async function authFetch(url, options={}){
                 
             }
             else{
-                window.location.href=getLoginRedirect();
+                const toastMsg = { message: 'A munkamenet lejárt. Kérjük, jelentkezz be újra.', type: 'warning', duration: 10000 };
+                safeNavigate(getLoginRedirect(), { state: { pendingToast: toastMsg } });
                 throw new Error('A munkamenet lejárt. Kérjük, jelentkezz be újra.');
             }
         }
@@ -231,7 +257,8 @@ export async function authFetch(url, options={}){
                 });
             }
             else{
-                window.location.href=getLoginRedirect();
+                const toastMsg = { message: 'A munkamenet lejárt. Kérjük, jelentkezz be újra.', type: 'warning', duration: 10000 };
+                safeNavigate(getLoginRedirect(), { state: { pendingToast: toastMsg } });
                 throw new Error('A munkamenet lejárt. Kérjük, jelentkezz be újra.');
             }
         }
@@ -252,8 +279,9 @@ export function startAuthHeartbeat() {
             const result = await refreshAccessToken();
             if (!result) {
                 // Refresh failed — cookie missing/invalid — force logout
-                notify('A munkamenet lejárt. Kérjük, jelentkezz be újra.', 'warning');
                 localStorage.removeItem('accessToken');
+                const toastMsg = { message: 'A munkamenet lejárt. Kérjük, jelentkezz be újra.', type: 'warning', duration: 10000 };
+                safeNavigate(getLoginRedirect(), { state: { pendingToast: toastMsg } });
             }
         } catch (e) {
             // Network error — don't force logout on transient failures

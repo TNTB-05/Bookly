@@ -184,8 +184,6 @@ export default function ProvDash() {
 
     const handleLogout = async () => {
         await logout();
-        localStorage.removeItem('accessToken');
-        logout();
         setIsAuthenticated(false);
         navigate('/');
     };

@@ -52,6 +52,14 @@ export default function Login() {
             const data = await response.json();
 
             if (response.ok) {
+                // Check if user needs reactivation (self-deleted account)
+                if (data.needsReactivation) {
+                    sessionStorage.setItem('reactivationToken', data.reactivationToken);
+                    setSuccess('A fiókod újraaktiválásra vár. Átirányítás...');
+                    setTimeout(() => navigate('/reactivate'), 1500);
+                    return;
+                }
+
                 setSuccess(data.message || 'Sikeres bejelentkezés!');
                 console.log('Login successful:', data);
 

@@ -37,7 +37,6 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
     // Kijelentkezés kezelése
     async function handleLogout() {
         await logout();
-        localStorage.removeItem('accessToken');
         navigate('/');
     }
 

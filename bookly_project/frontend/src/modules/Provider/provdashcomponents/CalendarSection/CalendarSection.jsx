@@ -4,6 +4,7 @@ import TimeBlockModal from '../../TimeBlockModal';
 import { timeBlocksService } from '../../../../services/timeBlocksService';
 import AppointmentDetailModal from './AppointmentDetailModal';
 import CreateAppointmentModal from './CreateAppointmentModal';
+import { useNotification } from '../../../../components/NotificationContext';
 
 const CalendarSection = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -39,7 +40,7 @@ const CalendarSection = () => {
     const [timeBlocks, setTimeBlocks] = useState([]);
     const [showTimeBlockModal, setShowTimeBlockModal] = useState(false);
     const [selectedTimeBlock, setSelectedTimeBlock] = useState(null);
-    const [toast, setToast] = useState(null);
+    const { showToast } = useNotification();
 
     // Derived timeline constants
     const START_HOUR = workingHours.openingHour;
@@ -119,12 +120,6 @@ const CalendarSection = () => {
             console.error('Error fetching time blocks:', error);
         }
     }, [currentDate]);
-
-    // Toast notification helper
-    const showToast = (message, type = 'success') => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 3000);
-    };
 
     // Fetch working hours on mount
     useEffect(() => {
@@ -557,14 +552,6 @@ const CalendarSection = () => {
                     </div>
                 </div>
             </div>
-
-            {toast && (
-                <div className={`fixed bottom-6 right-6 z-[9999] px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white transition-all animate-fade-in ${
-                    toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-                }`}>
-                    {toast.message}
-                </div>
-            )}
 
             <TimeBlockModal
                 isOpen={showTimeBlockModal}
