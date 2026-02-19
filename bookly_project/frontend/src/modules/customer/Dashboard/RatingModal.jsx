@@ -88,21 +88,24 @@ export default function RatingModal({ appointment, onClose, onSaved }) {
     }
 
     return createPortal(
-        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 overflow-y-auto">
             <div 
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                 onClick={onClose}
-            ></div>
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg my-8">
+            />
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg my-8 animate-fade-in overflow-hidden">
                 {/* Header */}
-                <div className="p-6 border-b border-gray-100 bg-amber-50">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-bold text-amber-900">
-                            {isEdit ? 'Értékelés módosítása' : 'Értékelés'}
-                        </h3>
+                <div className="p-5 bg-amber-50 border-b border-amber-100">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <h3 className="text-lg font-bold text-amber-900">
+                                {isEdit ? 'Értékelés módosítása' : 'Értékelés'}
+                            </h3>
+                            <p className="text-sm font-medium mt-0.5 opacity-80 text-amber-800">{appointment.salon_name}</p>
+                        </div>
                         <button 
                             onClick={onClose}
-                            className="p-1 hover:bg-amber-100 rounded-lg transition-colors text-amber-700"
+                            className="p-1 hover:bg-white/50 rounded-lg transition-colors text-amber-700"
                         >
                             <CloseIcon className="w-5 h-5" />
                         </button>
@@ -116,17 +119,17 @@ export default function RatingModal({ appointment, onClose, onSaved }) {
                     </div>
                 ) : (
                     <>
-                        {/* Appointment info */}
-                        <div className="px-6 pt-5 pb-3">
-                            <div className="bg-gray-50 rounded-lg p-3">
-                                <h4 className="font-semibold text-gray-900">{appointment.salon_name}</h4>
-                                <p className="text-sm text-gray-600">{appointment.provider_name} – {appointment.service_name}</p>
+                {/* Appointment info */}
+                        <div className="px-5 pt-5 pb-3">
+                            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                                <h4 className="font-semibold text-gray-900">{appointment.service_name}</h4>
+                                <p className="text-sm text-gray-600">{appointment.provider_name} – {appointment.salon_name}</p>
                                 <p className="text-xs text-gray-500 mt-1">{formatDate(appointment.appointment_start)}</p>
                             </div>
                         </div>
 
                         {/* Rating form */}
-                        <div className="px-6 pb-2 space-y-5">
+                        <div className="px-5 pb-2 space-y-5">
                             {error && (
                                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
                                     {error}
@@ -167,7 +170,7 @@ export default function RatingModal({ appointment, onClose, onSaved }) {
                         </div>
 
                         {/* Footer */}
-                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-3">
+                        <div className="p-5 border-t border-gray-100 bg-gray-50 flex gap-3 rounded-b-2xl">
                             <button
                                 onClick={onClose}
                                 disabled={loading}
