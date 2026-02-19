@@ -89,7 +89,7 @@ export default function SystemLogs() {
                 <select
                     value={levelFilter}
                     onChange={e => setLevelFilter(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 >
                     <option value="all">Minden szint</option>
                     <option value="INFO">INFO</option>
@@ -99,7 +99,7 @@ export default function SystemLogs() {
                 <select
                     value={actionFilter}
                     onChange={e => setActionFilter(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 >
                     <option value="">Minden művelet</option>
                     {uniqueActions.map(a => (

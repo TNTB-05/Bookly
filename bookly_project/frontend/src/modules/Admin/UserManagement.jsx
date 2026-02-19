@@ -215,7 +215,7 @@ export default function UserManagement() {
                 <select
                     value={searchField}
                     onChange={e => setSearchField(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 >
                     <option value="all">Minden mező</option>
                     <option value="name">Név</option>
@@ -227,12 +227,12 @@ export default function UserManagement() {
                     placeholder="Keresés..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="flex-1 min-w-[200px] px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 />
                 <select
                     value={statusFilter}
                     onChange={e => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 >
                     <option value="all">Minden státusz</option>
                     <option value="active">Aktív</option>
@@ -282,7 +282,7 @@ export default function UserManagement() {
                                             {user.name}
                                         </div>
                                     </td>
-                                    <td className="px-4 py-3 text-gray-600">{user.email}</td>
+                                    <td className="px-4 py-3 text-gray-600">{user.email || '—'}</td>
                                     <td className="px-4 py-3 text-gray-600">{user.phone || '—'}</td>
                                     <td className="px-4 py-3 text-gray-600">{user.role}</td>
                                     <td className="px-4 py-3">{statusBadge(user.status)}</td>
@@ -461,7 +461,7 @@ export default function UserManagement() {
                             value={deleteReason}
                             onChange={e => setDeleteReason(e.target.value)}
                             placeholder="Törlés oka (kötelező)..."
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500 resize-none"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500 resize-none"
                             rows={3}
                             autoFocus
                         />

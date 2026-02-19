@@ -94,7 +94,7 @@ export default function AppointmentManagement() {
                 <select
                     value={searchField}
                     onChange={e => setSearchField(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 >
                     <option value="all">Minden mező</option>
                     <option value="customer">Ügyfél</option>
@@ -107,12 +107,12 @@ export default function AppointmentManagement() {
                     placeholder="Keresés..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="flex-1 min-w-[200px] px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 />
                 <select
                     value={statusFilter}
                     onChange={e => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 >
                     <option value="all">Minden státusz</option>
                     <option value="scheduled">Foglalt</option>
@@ -132,20 +132,20 @@ export default function AppointmentManagement() {
 
             {/* Summary */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
-                    <p className="text-2xl font-bold text-gray-900">{appointments.length}</p>
+                <div className="bg-white rounded-lg border border-gray-200 px-3 py-2 text-center">
+                    <p className="text-lg font-bold text-gray-900">{appointments.length}</p>
                     <p className="text-xs text-gray-500">Összes</p>
                 </div>
-                <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
-                    <p className="text-2xl font-bold text-blue-600">{appointments.filter(a => a.status === 'scheduled').length}</p>
+                <div className="bg-white rounded-lg border border-gray-200 px-3 py-2 text-center">
+                    <p className="text-lg font-bold text-blue-600">{appointments.filter(a => a.status === 'scheduled').length}</p>
                     <p className="text-xs text-gray-500">Foglalt</p>
                 </div>
-                <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
-                    <p className="text-2xl font-bold text-green-600">{appointments.filter(a => a.status === 'completed').length}</p>
+                <div className="bg-white rounded-lg border border-gray-200 px-3 py-2 text-center">
+                    <p className="text-lg font-bold text-green-600">{appointments.filter(a => a.status === 'completed').length}</p>
                     <p className="text-xs text-gray-500">Teljesült</p>
                 </div>
-                <div className="bg-white rounded-lg border border-gray-200 p-3 text-center">
-                    <p className="text-2xl font-bold text-red-600">{appointments.filter(a => a.status === 'canceled').length}</p>
+                <div className="bg-white rounded-lg border border-gray-200 px-3 py-2 text-center">
+                    <p className="text-lg font-bold text-red-600">{appointments.filter(a => a.status === 'canceled').length}</p>
                     <p className="text-xs text-gray-500">Lemondva</p>
                 </div>
             </div>
@@ -217,7 +217,7 @@ export default function AppointmentManagement() {
                             value={deleteReason}
                             onChange={e => setDeleteReason(e.target.value)}
                             placeholder="Törlés oka (kötelező)..."
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500 resize-none"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500 resize-none"
                             rows={3}
                             autoFocus
                         />
