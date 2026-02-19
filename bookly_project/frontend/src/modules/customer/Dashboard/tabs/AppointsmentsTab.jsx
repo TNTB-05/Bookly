@@ -503,7 +503,7 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                                                 </div>
                                             </div>
                                             <div className="flex flex-row items-center justify-between md:flex-col md:items-end gap-2 mt-4 md:mt-0 w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0 border-gray-100">
-                                                <p className="text-xl font-bold text-indigo-600">{Number(apt.price).toLocaleString()} Ft</p>
+                                                <p className="text-xl font-bold text-gray-900">{apt.price} Ft</p>
                                                 <div className="flex flex-col items-end gap-2">
                                                     {getStatusBadge(apt.status, apt)}
                                                     <button
@@ -576,7 +576,7 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-row items-center justify-between md:flex-col md:items-end gap-2 mt-4 md:mt-0 w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0 border-gray-100">
-                                                    <p className="text-xl font-bold text-indigo-600">{Number(apt.price).toLocaleString()} Ft</p>
+                                                    <p className="text-xl font-bold text-gray-900">{apt.price} Ft</p>
                                                     {getStatusBadge(apt.status, apt)}
                                                 </div>
                                             </div>

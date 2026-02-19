@@ -216,8 +216,8 @@ export default function OverviewTab({
                                 {/* Search Bar with Suggestions */}
                                 <div ref={searchContainerRef} className="flex-1 relative">
                                     <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 overflow-hidden">
-                                        <div className="pl-4">
-                                            <SearchIcon />
+                                        <div className="pl-4 shrink-0">
+                                            <SearchIcon className="w-5 h-5 text-gray-400" />
                                         </div>
                                         <input
                                             type="text"
@@ -268,8 +268,8 @@ export default function OverviewTab({
                             <div className="flex flex-col sm:flex-row gap-3">
                                 {/* Location Input */}
                                 <div className="flex-1 flex items-center bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 overflow-hidden">
-                                    <div className="pl-4 text-gray-500">
-                                        <LocationIcon />
+                                    <div className="pl-4 text-gray-500 shrink-0">
+                                        <LocationIcon className="w-5 h-5 text-gray-400" />
                                     </div>
                                     <input
                                         type="text"

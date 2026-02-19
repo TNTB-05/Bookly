@@ -582,7 +582,7 @@ export default function SalonModal() {
                                                 </p>
                                             </div>
                                             <div className="text-right ml-4">
-                                                <p className="text-lg font-bold text-indigo-600">{service.price} Ft</p>
+                                                <p className="text-lg font-bold text-indigo-600">{Number(service.price).toLocaleString()} Ft</p>
                                             </div>
                                         </div>
                                     </button>
