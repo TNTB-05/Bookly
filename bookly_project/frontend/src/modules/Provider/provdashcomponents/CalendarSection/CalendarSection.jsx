@@ -512,34 +512,49 @@ const CalendarSection = () => {
                                                 );
                                             })}
                                             {todayAppointments.map((apt) => {
+                                                const start = new Date(apt.appointment_start);
+                                                const end = new Date(apt.appointment_end);
+                                                const blockPx = Math.max(
+                                                    (end.getHours() * 60 + end.getMinutes() - (start.getHours() * 60 + start.getMinutes())) * MINUTES_PER_PIXEL,
+                                                    30
+                                                );
+                                                const isShort = blockPx <= 50;
                                                 const style = getAppointmentStyle(apt);
                                                 return (
                                                     <button
                                                         key={apt.id}
                                                         onClick={() => handleAppointmentClick(apt)}
                                                         className={`
-                                                            absolute left-1 right-1 sm:left-2 sm:right-2 
-                                                            px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg border transition-all overflow-hidden
+                                                            absolute left-1 right-1 sm:left-2 sm:right-2
+                                                            px-2 rounded-lg border-l-2 border transition-all
                                                             hover:shadow-md hover:z-10 active:scale-[0.98]
                                                             ${getStatusColor(apt.status)}
                                                         `}
-                                                        style={style}
+                                                        style={{ ...style, paddingTop: '3px', paddingBottom: '3px' }}
                                                     >
-                                                        <div className="flex flex-col h-full justify-between">
-                                                            <div className="flex items-center justify-between gap-1">
-                                                                <p className="font-semibold text-[10px] sm:text-xs truncate">
+                                                        {isShort ? (
+                                                            <div className="flex items-center gap-1.5 w-full min-w-0 overflow-hidden">
+                                                                <span className="text-[15px] font-semibold leading-none truncate shrink min-w-0">
                                                                     {apt.user_name}
-                                                                </p>
-                                                                <span className="text-[10px] sm:text-xs font-medium whitespace-nowrap shrink-0">
-                                                                    {apt.price.toLocaleString()} Ft
+                                                                </span>
+                                                                <span className="text-xs leading-none opacity-60 truncate shrink min-w-0">
+                                                                    {apt.user_phone}
+                                                                </span>
+                                                                <span className="text-xs font-semibold leading-none whitespace-nowrap shrink-0 ml-auto">
+                                                                    {Number(apt.price).toLocaleString()} Ft
                                                                 </span>
                                                             </div>
-                                                            {apt.service_name && (
-                                                                <p className="text-[9px] sm:text-[10px] text-gray-600 truncate">
-                                                                    {apt.service_name}
+                                                        ) : (
+                                                            <div className="flex flex-col gap-px text-left w-full min-w-0 overflow-hidden">
+                                                                <p className="text-[10px] sm:text-xs font-semibold leading-tight truncate">
+                                                                    {apt.user_name}
                                                                 </p>
-                                                            )}
-                                                        </div>
+                                                                <p className="text-[9px] sm:text-[10px] leading-tight truncate opacity-70">{apt.user_phone}</p>
+                                                                <p className="text-[9px] sm:text-[10px] font-semibold leading-tight">
+                                                                    {Number(apt.price).toLocaleString()} Ft
+                                                                </p>
+                                                            </div>
+                                                        )}
                                                     </button>
                                                 );
                                             })}

@@ -29,8 +29,8 @@ const ProfileModal = ({
     return createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose}></div>
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md my-8 max-h-[calc(100vh-4rem)] overflow-y-auto">
-                <div className="p-6 border-b border-gray-100">
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md my-8 max-h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
+                <div className="p-6 border-b border-gray-100 shrink-0">
                     <div className="flex items-center justify-between">
                         <h3 className="text-xl font-bold text-dark-blue">Profil szerkesztése</h3>
                         <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
@@ -40,7 +40,7 @@ const ProfileModal = ({
                         </button>
                     </div>
                 </div>
-                <div className="p-6 space-y-5">
+                <div className="p-6 space-y-5 overflow-y-auto flex-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full">
                     {profileSuccess && (
                         <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 shrink-0">
@@ -147,7 +147,7 @@ const ProfileModal = ({
                         </button>
                     </div>
                 </div>
-                <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-3">
+                <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-3 shrink-0">
                     <button 
                         onClick={onClose} 
                         className="flex-1 py-2.5 px-4 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-100 transition-colors" 

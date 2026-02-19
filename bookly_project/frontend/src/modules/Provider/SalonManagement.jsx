@@ -50,7 +50,7 @@ const SalonManagement = () => {
                 setBrandingColor(data.salon.banner_color || '#3B82F6');
                 // Set manager status from the API response
                 if (data.provider && data.provider.isManager !== undefined) {
-                    setIsManager(data.provider.isManager);
+                    setIsManager(!!data.provider.isManager);
                 }
             } else {
                 setError(data.message);
@@ -746,7 +746,7 @@ const SalonManagement = () => {
                             <div className="flex-1">
                                 <div className="text-lg font-semibold mb-2 flex items-center gap-2.5">
                                     {provider.name}
-                                    {provider.isManager && (
+                                    {!!provider.isManager && (
                                         <span className="bg-yellow-400 text-black px-2 py-0.5 rounded text-xs">Manager</span>
                                     )}
                                 </div>
