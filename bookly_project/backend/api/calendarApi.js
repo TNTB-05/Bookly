@@ -3,6 +3,7 @@ const router = express.Router();
 const { pool, getSalonHoursByProviderId, getExpandedTimeBlocksForDate, getFullyBookedDays } = require('../sql/database.js');
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
 const { requireRole } = require('./auth/RoleMiddleware.js');
+const { sendAppointmentCancellation } = require('../services/emailService.js');
 
 // Middleware to verify provider exists and is active in database
 const verifyProvider = async (req, res, next) => {
@@ -525,9 +526,19 @@ router.delete('/appointments/:id', async (request, response) => {
             });
         }
 
-        // First check if appointment exists and belongs to this provider
+        // First check if appointment exists and belongs to this provider, and get details for email
         const [appointments] = await pool.query(
-            'SELECT id, status, provider_id FROM appointments WHERE id = ?',
+            `SELECT
+                a.id, a.status, a.provider_id, a.user_id, a.appointment_start,
+                u.email as customer_email,
+                u.name as customer_name,
+                sal.name as salon_name,
+                s.name as service_name
+            FROM appointments a
+            LEFT JOIN users u ON a.user_id = u.id
+            LEFT JOIN services s ON a.service_id = s.id
+            LEFT JOIN salons sal ON sal.id = (SELECT salon_id FROM providers WHERE id = a.provider_id)
+            WHERE a.id = ?`,
             [appointmentId]
         );
 
@@ -538,16 +549,18 @@ router.delete('/appointments/:id', async (request, response) => {
             });
         }
 
+        const appointment = appointments[0];
+
         // Security check: verify appointment belongs to this provider
-        if (appointments[0].provider_id !== providerId) {
-            console.warn(`Security: Provider ${providerId} attempted to delete appointment ${appointmentId} belonging to provider ${appointments[0].provider_id}`);
+        if (appointment.provider_id !== providerId) {
+            console.warn(`Security: Provider ${providerId} attempted to delete appointment ${appointmentId} belonging to provider ${appointment.provider_id}`);
             return response.status(403).json({
                 success: false,
                 message: 'Nincs jogosultságod törölni ezt a foglalást'
             });
         }
 
-        if (appointments[0].status === 'canceled') {
+        if (appointment.status === 'canceled') {
             return response.status(400).json({
                 success: false,
                 message: 'Ez a foglalás már törölve van'
@@ -559,6 +572,19 @@ router.delete('/appointments/:id', async (request, response) => {
             'DELETE from appointments WHERE id = ?',
             [appointmentId]
         );
+
+        // Send cancellation email only if user is registered (has user_id and email)
+        if (appointment.user_id && appointment.customer_email) {
+            sendAppointmentCancellation({
+                customer_email: appointment.customer_email,
+                customer_name: appointment.customer_name,
+                salon_name: appointment.salon_name,
+                service_name: appointment.service_name,
+                appointment_start: appointment.appointment_start
+            }).catch(err => {
+                console.error('Failed to send cancellation email:', err);
+            });
+        }
 
         response.status(200).json({
             success: true,

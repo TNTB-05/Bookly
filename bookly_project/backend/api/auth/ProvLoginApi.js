@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs'); //?npm install bcrypt
 const jwt = require('jsonwebtoken'); //?npm install jsonwebtoken
 const crypto = require('crypto');
 const locationService = require('../../services/locationService.js');
+const { sendWelcomeEmail } = require('../../services/emailService.js');
 
 
 
@@ -265,6 +266,11 @@ router.post('/register', async (request, response) => {
         );
 
         await connection.commit();
+
+        // Send welcome email (don't block response if it fails)
+        sendWelcomeEmail({ email: email.trim().toLowerCase(), name: name.trim(), role: 'provider' }).catch(err => {
+            console.error('Failed to send welcome email:', err);
+        });
 
         response.status(201).json({
             success: true,

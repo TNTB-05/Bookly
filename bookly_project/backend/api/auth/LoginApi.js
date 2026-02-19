@@ -9,6 +9,7 @@ const addUser = require('../../sql/users.js').addUser;
 const getUserByEmail = require('../../sql/users.js').getUserByEmail;
 const getUsers = require('../../sql/users.js').getUsers;
 const { logEvent } = require('../../services/logService.js');
+const { sendWelcomeEmail } = require('../../services/emailService.js');
 
 
 //!Multer
@@ -105,7 +106,11 @@ router.post('/register', async (request, response) => {
         }
 
         await addUser(name, email, hashedPassword, 'customer');
-        
+
+        // Send welcome email (don't block response if it fails)
+        sendWelcomeEmail({ email, name, role: 'customer' }).catch(err => {
+            console.error('Failed to send welcome email:', err);
+        });
 
         response.status(201).json({
             success: true,

@@ -19,7 +19,7 @@ const {
 } = require('../sql/database');
 const { calculateDistance } = require('../services/locationService');
 const { upload, processAndSaveImage, deleteOldImage } = require('../middleware/uploadMiddleware');
-const { sendAppointmentConfirmation } = require('../services/emailService');
+const { sendAppointmentConfirmation, sendPasswordChangeConfirmation, sendAppointmentCancellation } = require('../services/emailService');
 
 // Utazási idő számítása távolság alapján (percben)
 function calculateTravelBuffer(distanceKm) {
@@ -242,6 +242,15 @@ router.put('/password', AuthMiddleware, async (req, res) => {
             return res.status(500).json({
                 success: false,
                 message: 'Nem sikerült a jelszó frissítése'
+            });
+        }
+
+        // Get user details for email
+        const user = await getUserById(userId);
+        if (user) {
+            // Send password change confirmation email (don't block response if it fails)
+            sendPasswordChangeConfirmation({ email: user.email, name: user.name }).catch(err => {
+                console.error('Failed to send password change email:', err);
             });
         }
 
@@ -936,11 +945,35 @@ router.delete('/appointments/:id', AuthMiddleware, async (req, res) => {
             });
         }
 
+        // Get appointment details for email before canceling
+        const [appointmentDetails] = await pool.query(
+            `SELECT
+                a.appointment_start,
+                u.email as customer_email,
+                u.name as customer_name,
+                sal.name as salon_name,
+                s.name as service_name
+            FROM appointments a
+            JOIN users u ON a.user_id = u.id
+            JOIN services s ON a.service_id = s.id
+            JOIN providers p ON a.provider_id = p.id
+            JOIN salons sal ON p.salon_id = sal.id
+            WHERE a.id = ?`,
+            [appointmentId]
+        );
+
         // Update appointment status to canceled
         await pool.query(
             `UPDATE appointments SET status = 'canceled' WHERE id = ?`,
             [appointmentId]
         );
+
+        // Send cancellation email (don't block response if it fails)
+        if (appointmentDetails.length > 0) {
+            sendAppointmentCancellation(appointmentDetails[0]).catch(err => {
+                console.error('Failed to send cancellation email:', err);
+            });
+        }
 
         res.status(200).json({
             success: true,
