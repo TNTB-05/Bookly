@@ -8,10 +8,12 @@ import OverviewIcon from '../../icons/OverviewIcon';
 import CalendarIcon from '../../icons/CalendarIcon';
 import ServicesIcon from '../../icons/ServicesIcon';
 import SalonIcon from '../../icons/SalonIcon';
+import UsersIcon from '../../icons/UsersIcon';
 import HourIcon from '../../icons/HourIcon';
 import SalonManagement from './SalonManagement';
 import AvailabilityManagement from './AvailabilityManagement';
 import OverviewSection from './provdashcomponents/OverviewSection';
+import CustomersSection from './provdashcomponents/CustomersSection/CustomersSection';
 import CalendarSection from './provdashcomponents/CalendarSection/CalendarSection';
 import ServicesSection from './provdashcomponents/ServicesSection/ServicesSection';
 import NavButton from './provdashcomponents/NavButton';
@@ -195,6 +197,7 @@ export default function ProvDash() {
             case 'services': return <ServicesSection />;
             case 'availability': return <AvailabilityManagement />;
             case 'salon': return <SalonManagement />;
+            case 'customers': return <CustomersSection />;
             default: return <OverviewSection />;
         }
     };
@@ -265,12 +268,19 @@ export default function ProvDash() {
                         icon={<HourIcon />} 
                         onClick={setActiveTab} 
                     />
-                    <NavButton 
-                        activeTab={activeTab} 
-                        tabId="salon" 
-                        label="Szalon kezelés" 
-                        icon={<SalonIcon />} 
-                        onClick={setActiveTab} 
+                    <NavButton
+                        activeTab={activeTab}
+                        tabId="salon"
+                        label="Szalon kezelés"
+                        icon={<SalonIcon />}
+                        onClick={setActiveTab}
+                    />
+                    <NavButton
+                        activeTab={activeTab}
+                        tabId="customers"
+                        label="Ügyfelek"
+                        icon={<UsersIcon />}
+                        onClick={setActiveTab}
                     />
                 </aside>
 
@@ -315,12 +325,20 @@ export default function ProvDash() {
                         onClick={setActiveTab} 
                         isMobile={true}
                     />
-                    <NavButton 
-                        activeTab={activeTab} 
-                        tabId="salon" 
-                        label="Szalon" 
-                        icon={<SalonIcon />} 
-                        onClick={setActiveTab} 
+                    <NavButton
+                        activeTab={activeTab}
+                        tabId="salon"
+                        label="Szalon"
+                        icon={<SalonIcon />}
+                        onClick={setActiveTab}
+                        isMobile={true}
+                    />
+                    <NavButton
+                        activeTab={activeTab}
+                        tabId="customers"
+                        label="Ügyfelek"
+                        icon={<UsersIcon />}
+                        onClick={setActiveTab}
                         isMobile={true}
                     />
                 </nav>

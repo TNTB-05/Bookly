@@ -882,4 +882,231 @@ router.delete('/services/:id', async (request, response) => {
     }
 });
 
+// Get customer stats for the stats strip
+router.get('/customers/stats', async (request, response) => {
+    try {
+        const providerId = request.providerId;
+
+        const [registeredResult] = await pool.query(
+            `SELECT COUNT(DISTINCT user_id) as count FROM appointments
+             WHERE provider_id = ? AND user_id IS NOT NULL AND deleted_at IS NULL`,
+            [providerId]
+        );
+
+        const [guestResult] = await pool.query(
+            `SELECT COUNT(DISTINCT guest_email) as count FROM appointments
+             WHERE provider_id = ? AND user_id IS NULL AND guest_email IS NOT NULL AND deleted_at IS NULL`,
+            [providerId]
+        );
+
+        const [returningRegistered] = await pool.query(
+            `SELECT COUNT(*) as count FROM (
+                SELECT user_id FROM appointments
+                WHERE provider_id = ? AND user_id IS NOT NULL AND deleted_at IS NULL
+                GROUP BY user_id HAVING COUNT(*) > 1
+             ) t`,
+            [providerId]
+        );
+
+        const [returningGuests] = await pool.query(
+            `SELECT COUNT(*) as count FROM (
+                SELECT guest_email FROM appointments
+                WHERE provider_id = ? AND user_id IS NULL AND guest_email IS NOT NULL AND deleted_at IS NULL
+                GROUP BY guest_email HAVING COUNT(*) > 1
+             ) t`,
+            [providerId]
+        );
+
+        const [topServices] = await pool.query(
+            `SELECT s.name, COUNT(a.id) as booking_count
+             FROM appointments a
+             JOIN services s ON a.service_id = s.id
+             WHERE a.provider_id = ? AND a.deleted_at IS NULL
+             GROUP BY s.id, s.name
+             ORDER BY booking_count DESC
+             LIMIT 3`,
+            [providerId]
+        );
+
+        const totalCustomers = registeredResult[0].count + guestResult[0].count;
+        const returningCount = returningRegistered[0].count + returningGuests[0].count;
+        const returningRate = totalCustomers > 0 ? Math.round((returningCount / totalCustomers) * 100) : 0;
+
+        response.status(200).json({
+            success: true,
+            stats: {
+                total_customers: totalCustomers,
+                returning_rate: returningRate,
+                top_services: topServices
+            }
+        });
+    } catch (error) {
+        console.error('Get customer stats error:', error);
+        response.status(500).json({ success: false, message: 'Hiba történt a statisztikák lekérdezésekor' });
+    }
+});
+
+// Get all customers (registered + guests) for this provider
+router.get('/customers', async (request, response) => {
+    try {
+        const providerId = request.providerId;
+        const search = request.query.search ? `%${request.query.search}%` : null;
+
+        let registeredQuery = `
+            SELECT u.id, u.name, u.email, u.phone, u.profile_picture_url,
+                   0 as is_guest,
+                   COUNT(a.id) as total_bookings,
+                   MAX(a.appointment_start) as last_booking_date,
+                   COALESCE(SUM(a.price), 0) as total_spent
+            FROM appointments a
+            JOIN users u ON a.user_id = u.id
+            WHERE a.provider_id = ? AND a.deleted_at IS NULL`;
+        const registeredParams = [providerId];
+
+        if (search) {
+            registeredQuery += ` AND (u.name LIKE ? OR u.email LIKE ?)`;
+            registeredParams.push(search, search);
+        }
+        registeredQuery += ` GROUP BY u.id ORDER BY last_booking_date DESC`;
+
+        const [registeredCustomers] = await pool.query(registeredQuery, registeredParams);
+
+        let guestQuery = `
+            SELECT NULL as id, MAX(a.guest_name) as name, a.guest_email as email,
+                   MAX(a.guest_phone) as phone, NULL as profile_picture_url,
+                   1 as is_guest,
+                   COUNT(a.id) as total_bookings,
+                   MAX(a.appointment_start) as last_booking_date,
+                   COALESCE(SUM(a.price), 0) as total_spent
+            FROM appointments a
+            WHERE a.provider_id = ? AND a.user_id IS NULL
+                  AND a.guest_email IS NOT NULL AND a.deleted_at IS NULL`;
+        const guestParams = [providerId];
+
+        if (search) {
+            guestQuery += ` AND (a.guest_name LIKE ? OR a.guest_email LIKE ?)`;
+            guestParams.push(search, search);
+        }
+        guestQuery += ` GROUP BY a.guest_email ORDER BY last_booking_date DESC`;
+
+        const [guestCustomers] = await pool.query(guestQuery, guestParams);
+
+        const customers = [...registeredCustomers, ...guestCustomers].sort(
+            (a, b) => new Date(b.last_booking_date) - new Date(a.last_booking_date)
+        );
+
+        response.status(200).json({ success: true, customers });
+    } catch (error) {
+        console.error('Get customers error:', error);
+        response.status(500).json({ success: false, message: 'Hiba történt az ügyfelek lekérdezésekor' });
+    }
+});
+
+// Get full detail for a registered customer
+router.get('/customers/registered/:userId', async (request, response) => {
+    try {
+        const providerId = request.providerId;
+        const userId = parseInt(request.params.userId);
+
+        if (isNaN(userId)) {
+            return response.status(400).json({ success: false, message: 'Érvénytelen felhasználó azonosító' });
+        }
+
+        const [users] = await pool.query(
+            `SELECT id, name, email, phone, profile_picture_url, created_at FROM users WHERE id = ?`,
+            [userId]
+        );
+
+        if (users.length === 0) {
+            return response.status(404).json({ success: false, message: 'Felhasználó nem található' });
+        }
+
+        const [appointments] = await pool.query(
+            `SELECT a.id, a.appointment_start, a.appointment_end, a.status, a.price, a.comment,
+                    s.name as service_name
+             FROM appointments a
+             JOIN services s ON a.service_id = s.id
+             WHERE a.provider_id = ? AND a.user_id = ? AND a.deleted_at IS NULL
+             ORDER BY a.appointment_start DESC`,
+            [providerId, userId]
+        );
+
+        const totalSpent = appointments.reduce((sum, a) => sum + (parseFloat(a.price) || 0), 0);
+
+        const [ratings] = await pool.query(
+            `SELECT r.provider_rating as rating, r.provider_comment as comment, r.created_at
+             FROM ratings r
+             WHERE r.provider_id = ? AND r.user_id = ? AND r.active = TRUE
+             ORDER BY r.created_at DESC LIMIT 1`,
+            [providerId, userId]
+        );
+
+        response.status(200).json({
+            success: true,
+            customer: {
+                ...users[0],
+                is_guest: false,
+                total_bookings: appointments.length,
+                total_spent: totalSpent,
+                first_booking_date: appointments.length > 0 ? appointments[appointments.length - 1].appointment_start : null,
+                rating: ratings.length > 0 ? ratings[0] : null,
+                appointments
+            }
+        });
+    } catch (error) {
+        console.error('Get registered customer error:', error);
+        response.status(500).json({ success: false, message: 'Hiba történt az ügyfél lekérdezésekor' });
+    }
+});
+
+// Get full detail for a guest customer by email
+router.get('/customers/guest', async (request, response) => {
+    try {
+        const providerId = request.providerId;
+        const email = request.query.email;
+
+        if (!email) {
+            return response.status(400).json({ success: false, message: 'Email cím megadása kötelező' });
+        }
+
+        const [appointments] = await pool.query(
+            `SELECT a.id, a.appointment_start, a.appointment_end, a.status, a.price,
+                    a.guest_name as name, a.guest_email as email, a.guest_phone as phone,
+                    s.name as service_name
+             FROM appointments a
+             JOIN services s ON a.service_id = s.id
+             WHERE a.provider_id = ? AND a.guest_email = ? AND a.user_id IS NULL AND a.deleted_at IS NULL
+             ORDER BY a.appointment_start DESC`,
+            [providerId, email]
+        );
+
+        if (appointments.length === 0) {
+            return response.status(404).json({ success: false, message: 'Vendég ügyfél nem található' });
+        }
+
+        const totalSpent = appointments.reduce((sum, a) => sum + (parseFloat(a.price) || 0), 0);
+        const first = appointments[appointments.length - 1];
+
+        response.status(200).json({
+            success: true,
+            customer: {
+                id: null,
+                name: first.name,
+                email: first.email,
+                phone: first.phone,
+                profile_picture_url: null,
+                is_guest: true,
+                total_bookings: appointments.length,
+                total_spent: totalSpent,
+                first_booking_date: first.appointment_start,
+                rating: null,
+                appointments
+            }
+        });
+    } catch (error) {
+        console.error('Get guest customer error:', error);
+        response.status(500).json({ success: false, message: 'Hiba történt a vendég ügyfél lekérdezésekor' });
+    }
+});
+
 module.exports = router;
