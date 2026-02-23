@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { authApi } from '../../../auth/auth';
+import { SkeletonCard, SkeletonAvatar, SkeletonText } from '../../../../components/skeletons';
 import TimeBlockModal from '../../TimeBlockModal';
 import { timeBlocksService } from '../../../../services/timeBlocksService';
 import AppointmentDetailModal from './AppointmentDetailModal';
@@ -455,8 +456,17 @@ const CalendarSection = () => {
                         </div>
                         <div className="max-h-100 sm:max-h-125 lg:max-h-150 overflow-y-auto">
                             {loading ? (
-                                <div className="flex items-center justify-center py-12">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dark-blue"></div>
+                                <div className="p-3 space-y-3">
+                                    {Array(3).fill(0).map((_, i) => (
+                                        <SkeletonCard key={i} className="p-3">
+                                            <div className="flex items-center gap-3">
+                                                <SkeletonAvatar size="md" />
+                                                <div className="flex-1">
+                                                    <SkeletonText lines={2} />
+                                                </div>
+                                            </div>
+                                        </SkeletonCard>
+                                    ))}
                                 </div>
                             ) : (
                                 <div className="flex" style={{ height: `${TOTAL_MINUTES * MINUTES_PER_PIXEL}px` }}>
