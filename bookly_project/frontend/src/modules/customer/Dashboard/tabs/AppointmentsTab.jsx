@@ -425,7 +425,7 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                                                         }}
                                                         className={`
                                                             absolute left-1 right-1 sm:left-2 sm:right-2
-                                                            px-2 rounded-lg border-l-2 border transition-all
+                                                            px-2 rounded-lg border-l-2 border transition-all overflow-hidden
                                                             hover:shadow-md hover:z-10 active:scale-[0.98]
                                                             ${statusColors[apt.status] || 'bg-gray-100 text-gray-700 border-gray-200'}
                                                         `}

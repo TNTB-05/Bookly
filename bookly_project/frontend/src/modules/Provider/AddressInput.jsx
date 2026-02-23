@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Marker, useMap } from 'react-leaflet';
 import BaseMap from '../../components/BaseMap';
 import TickIcon from '../../icons/TickIcon';
+import { useAddressAutocomplete, formatSuggestion } from '../../hooks/useAddressAutocomplete';
 
 // Component to recenter the map when position changes
 function MapRecenter({ lat, lng }) {
@@ -50,16 +51,22 @@ export default function AddressInput({
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
     const [inputValue, setInputValue] = useState(initialAddress);
-    const [suggestions, setSuggestions] = useState([]);
-    const [showSuggestions, setShowSuggestions] = useState(false);
     const [selectedLat, setSelectedLat] = useState(initialLat);
     const [selectedLng, setSelectedLng] = useState(initialLng);
     const [isValidated, setIsValidated] = useState(!!(initialLat && initialLng));
-    const [loading, setLoading] = useState(false);
     const [reverseLoading, setReverseLoading] = useState(false);
 
+    // Address autocomplete via shared hook
+    const {
+        suggestions,
+        showSuggestions,
+        setShowSuggestions,
+        loading,
+        debouncedFetch,
+        clearSuggestions,
+    } = useAddressAutocomplete({ apiUrl });
+
     const containerRef = useRef(null);
-    const debounceTimerRef = useRef(null);
 
     // Default center: Budapest
     const defaultCenter = [47.4979, 19.0402];
@@ -87,79 +94,26 @@ export default function AddressInput({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Debounced autocomplete fetch
-    const fetchSuggestions = useCallback(async (query) => {
-        if (!query || query.trim().length < 3) {
-            setSuggestions([]);
-            setShowSuggestions(false);
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const response = await fetch(
-                `${apiUrl}/api/search/address-autocomplete?q=${encodeURIComponent(query.trim())}`
-            );
-            const data = await response.json();
-
-            if (data.success && data.suggestions.length > 0) {
-                setSuggestions(data.suggestions);
-                setShowSuggestions(true);
-            } else {
-                setSuggestions([]);
-                setShowSuggestions(false);
-            }
-        } catch (error) {
-            console.error('Address autocomplete error:', error);
-            setSuggestions([]);
-        } finally {
-            setLoading(false);
-        }
-    }, [apiUrl]);
-
-    // Handle input change with debounce
+    // Handle input change with debounce (uses hook)
     function handleInputChange(e) {
         const value = e.target.value;
         setInputValue(value);
         setIsValidated(false);
-
-        // Clear previous timer
-        if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
-        }
-
-        // Set new debounce timer
-        debounceTimerRef.current = setTimeout(() => {
-            fetchSuggestions(value);
-        }, 400);
+        debouncedFetch(value);
     }
 
     // Handle suggestion selection
     function handleSelectSuggestion(suggestion) {
-        // Format short address from suggestion
-        const addr = suggestion.address;
-        const parts = [];
-        const city = addr?.city || addr?.town || addr?.village || '';
-        if (city) parts.push(city);
-        const street = addr?.road || '';
-        const houseNumber = addr?.house_number || '';
-        if (street) {
-            parts.push(houseNumber ? `${street} ${houseNumber}` : street);
-        }
-        const postalCode = addr?.postcode || '';
-        if (postalCode) parts.push(postalCode);
-
-        const shortAddress = parts.length > 0 ? parts.join(', ') : suggestion.display_name;
+        const { shortAddress, lat, lon } = formatSuggestion(suggestion);
 
         setInputValue(shortAddress);
-        setSelectedLat(suggestion.lat);
-        setSelectedLng(suggestion.lon);
+        setSelectedLat(lat);
+        setSelectedLng(lon);
         setIsValidated(true);
-        setShowSuggestions(false);
-        setSuggestions([]);
+        clearSuggestions();
 
         if (onChange) {
-            onChange(shortAddress, suggestion.lat, suggestion.lon);
+            onChange(shortAddress, lat, lon);
         }
     }
 

@@ -252,7 +252,17 @@ export default function ProviderManagement() {
                                     <td className="px-4 py-3 font-medium text-gray-900">
                                         <div className="flex items-center gap-2">
                                             {provider.profile_picture_url ? (
-                                                <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${provider.profile_picture_url}`} className="w-7 h-7 rounded-full object-cover" />
+                                                <>
+                                                    <img
+                                                        src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${provider.profile_picture_url.startsWith('/') ? '' : '/'}${provider.profile_picture_url}`}
+                                                        alt={provider.name || ''}
+                                                        className="w-7 h-7 rounded-full object-cover"
+                                                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                                    />
+                                                    <div className="w-7 h-7 rounded-full bg-purple-100 items-center justify-center text-xs font-bold text-purple-600" style={{ display: 'none' }}>
+                                                        {provider.name?.charAt(0)?.toUpperCase()}
+                                                    </div>
+                                                </>
                                             ) : (
                                                 <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-600">
                                                     {provider.name?.charAt(0)?.toUpperCase()}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../../auth/auth';
@@ -52,6 +52,9 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
     const [avatarError, setAvatarError] = useState(null);
     const [avatarSuccess, setAvatarSuccess] = useState(null);
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+    // Snapshot of original profile data for dirty-state detection
+    const originalProfileData = useRef(null);
 
     // Profilkép feltöltés
     async function handleAvatarUpload(e) {
@@ -143,10 +146,37 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
         });
         setProfileError(null);
         setShowProfileModal(true);
+
+        // Save snapshot for dirty-state comparison
+        originalProfileData.current = {
+            name: userProfile?.name || '',
+            email: userProfile?.email || '',
+            phone: userProfile?.phone || '',
+            postalCode,
+            city,
+            street
+        };
     }
 
     // Profil mentése
     async function handleProfileSave() {
+        // Dirty-state check — skip API call if nothing changed
+        if (originalProfileData.current) {
+            const o = originalProfileData.current;
+            const c = profileFormData;
+            const isUnchanged =
+                o.name === c.name.trim() &&
+                o.email === c.email.trim() &&
+                (o.phone || '') === (c.phone?.trim() || '') &&
+                (o.postalCode || '') === (c.postalCode?.trim() || '') &&
+                (o.city || '') === (c.city?.trim() || '') &&
+                (o.street || '') === (c.street?.trim() || '');
+            if (isUnchanged) {
+                showToast('Nem történt módosítás.', 'info');
+                setShowProfileModal(false);
+                return;
+            }
+        }
         if (!profileFormData.name.trim()) {
             setProfileError('A név megadása kötelező');
             return;

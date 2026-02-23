@@ -265,6 +265,7 @@ export default function Dashboard() {
                             savedSalonIds={savedSalonIds}
                             toggleSaveSalon={toggleSaveSalon}
                             loadTopRatedSalons={loadTopRatedSalons}
+                            serviceTypes={serviceTypes}
                         />
                     )}
                 </div>

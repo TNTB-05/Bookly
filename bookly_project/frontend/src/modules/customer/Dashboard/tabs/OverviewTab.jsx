@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { searchSalons, getSuggestions } from '../../../../services/searchService';
 import { useDebounce } from '../../../../hooks/useDebounce';
+import { useAddressAutocomplete, formatSuggestion } from '../../../../hooks/useAddressAutocomplete';
 
 // Ikonok
 import SearchIcon from '../../../../icons/SearchIcon';
@@ -41,6 +42,17 @@ export default function OverviewTab({
     const [suggestions, setSuggestions] = useState({ salons: [], serviceTypes: [] });
     const [showSuggestions, setShowSuggestions] = useState(false);
     const searchContainerRef = useRef(null);
+    const locationContainerRef = useRef(null);
+
+    // Address autocomplete for the location input (shared hook)
+    const {
+        suggestions: addressSuggestions,
+        showSuggestions: showAddressSuggestions,
+        setShowSuggestions: setShowAddressSuggestions,
+        loading: addressLoading,
+        debouncedFetch: debouncedAddressFetch,
+        clearSuggestions: clearAddressSuggestions,
+    } = useAddressAutocomplete({ debounceMs: 400, minLength: 3 });
     
     // Reactive map data: fetch salons whenever service filter changes
     useEffect(() => {
@@ -195,7 +207,37 @@ export default function OverviewTab({
         setServiceFilter('all');
         setSearchResults([]);
         setUserLocation(null);
+        clearAddressSuggestions();
     }
+
+    // Handle location input change — trigger address autocomplete
+    function handleLocationInputChange(e) {
+        const value = e.target.value;
+        setLocationSearch(value);
+        if (userLocation) {
+            setUserLocation(null);
+        }
+        debouncedAddressFetch(value);
+    }
+
+    // Handle selecting an address suggestion
+    function handleSelectAddress(suggestion) {
+        const { shortAddress, lat, lon } = formatSuggestion(suggestion);
+        setLocationSearch(shortAddress);
+        setUserLocation({ latitude: parseFloat(lat), longitude: parseFloat(lon) });
+        clearAddressSuggestions();
+    }
+
+    // Close address suggestions on outside click
+    useEffect(() => {
+        function handleClickOutside(e) {
+            if (locationContainerRef.current && !locationContainerRef.current.contains(e.target)) {
+                setShowAddressSuggestions(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     return (
         <div>
@@ -211,7 +253,7 @@ export default function OverviewTab({
                         </p>
 
                         {/* Enhanced Search Bar */}
-                        <div className="max-w-4xl mx-auto space-y-3">
+                        <div className="max-w-4xl mx-auto space-y-3 relative z-[1000]">
                             {/* First Line: Search Bar + Service Filter */}
                             <div className="flex flex-col sm:flex-row gap-3">
                                 {/* Search Bar with Suggestions */}
@@ -267,24 +309,58 @@ export default function OverviewTab({
 
                             {/* Second Line: Location + Jelenlegi helyzetem + Keresés */}
                             <div className="flex flex-col sm:flex-row gap-3">
-                                {/* Location Input */}
-                                <div className="flex-1 flex items-center bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 overflow-hidden">
-                                    <div className="pl-4 text-gray-500 shrink-0">
-                                        <LocationIcon className="w-5 h-5 text-gray-400" />
+                                {/* Location Input with Address Autocomplete */}
+                                <div ref={locationContainerRef} className="flex-1 relative">
+                                    <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 overflow-hidden">
+                                        <div className="pl-4 text-gray-500 shrink-0">
+                                            <LocationIcon className="w-5 h-5 text-gray-400" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            placeholder="Helyszín (pl. Budapest, Kossuth utca 12)"
+                                            value={locationSearch}
+                                            onChange={handleLocationInputChange}
+                                            onFocus={() => {
+                                                if (addressSuggestions.length > 0) setShowAddressSuggestions(true);
+                                            }}
+                                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                            className="flex-1 px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none bg-transparent"
+                                        />
+                                        {addressLoading && (
+                                            <div className="pr-3">
+                                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+                                            </div>
+                                        )}
                                     </div>
-                                    <input
-                                        type="text"
-                                        placeholder="Helyszín (pl. Budapest, sample street 12, 1111)"
-                                        value={locationSearch}
-                                        onChange={(e) => {
-                                            setLocationSearch(e.target.value);
-                                            if (userLocation) {
-                                                setUserLocation(null);
-                                            }
-                                        }}
-                                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                                        className="flex-1 px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none bg-transparent"
-                                    />
+
+                                    {/* Address Suggestions Dropdown */}
+                                    {showAddressSuggestions && addressSuggestions.length > 0 && (
+                                        <div className="absolute z-50 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto">
+                                            {addressSuggestions.map((suggestion, index) => {
+                                                const addr = suggestion.address;
+                                                const city = addr?.city || addr?.town || addr?.village || '';
+                                                const street = addr?.road || '';
+                                                const houseNumber = addr?.house_number || '';
+                                                const postalCode = addr?.postcode || '';
+
+                                                return (
+                                                    <button
+                                                        key={index}
+                                                        type="button"
+                                                        onClick={() => handleSelectAddress(suggestion)}
+                                                        className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0"
+                                                    >
+                                                        <p className="text-sm font-medium text-gray-900">
+                                                            {[city, street && (houseNumber ? `${street} ${houseNumber}` : street), postalCode].filter(Boolean).join(', ') || suggestion.display_name}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 truncate mt-0.5">
+                                                            {suggestion.display_name}
+                                                        </p>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Jelenlegi helyzetem Button */}

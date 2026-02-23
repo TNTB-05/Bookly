@@ -273,7 +273,17 @@ export default function UserManagement() {
                                     <td className="px-4 py-3 font-medium text-gray-900">
                                         <div className="flex items-center gap-2">
                                             {user.profile_picture_url ? (
-                                                <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${user.profile_picture_url}`} className="w-7 h-7 rounded-full object-cover" />
+                                                <>
+                                                    <img
+                                                        src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${user.profile_picture_url.startsWith('/') ? '' : '/'}${user.profile_picture_url}`}
+                                                        alt={user.name || ''}
+                                                        className="w-7 h-7 rounded-full object-cover"
+                                                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                                    />
+                                                    <div className="w-7 h-7 rounded-full bg-gray-200 items-center justify-center text-xs font-bold text-gray-500" style={{ display: 'none' }}>
+                                                        {user.name?.charAt(0)?.toUpperCase()}
+                                                    </div>
+                                                </>
                                             ) : (
                                                 <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">
                                                     {user.name?.charAt(0)?.toUpperCase()}
