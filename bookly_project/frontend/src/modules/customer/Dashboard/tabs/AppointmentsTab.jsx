@@ -293,8 +293,8 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                                         </svg>
                                     </button>
-                                    <h3 className="text-lg font-bold text-gray-900">
-                                        {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                                    <h3 className="text-lg font-semibold text-gray-900">
+                                        {currentDate.getFullYear()}. {monthNames[currentDate.getMonth()]}
                                     </h3>
                                     <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                                         <svg

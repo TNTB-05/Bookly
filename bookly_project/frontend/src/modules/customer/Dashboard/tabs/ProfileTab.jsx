@@ -228,11 +228,11 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
                 setShowProfileModal(false);
                 showToast('Adatok sikeresen frissítve.', 'success');
             } else {
-                setProfileError(data.message || 'Hiba történt a mentés során');
+                showToast(data.message || 'Hiba történt a mentés során', 'error');
             }
         } catch (error) {
             console.error('Hiba a profil mentésekor:', error);
-            setProfileError('Hiba történt a mentés során');
+            showToast('Hiba történt a mentés során', 'error');
         } finally {
             setProfileSaving(false);
         }
@@ -288,11 +288,11 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
                     setPasswordSuccess(null);
                 }, 2000);
             } else {
-                setPasswordError(data.message || 'Hiba történt a jelszó módosítása során');
+                showToast(data.message || 'Hiba történt a jelszó módosítása során', 'error');
             }
         } catch (error) {
             console.error('Hiba a jelszó módosításakor:', error);
-            setPasswordError('Hiba történt a jelszó módosítása során');
+            showToast('Hiba történt a jelszó módosítása során', 'error');
         } finally {
             setPasswordSaving(false);
         }
@@ -328,14 +328,15 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
             const data = await response.json();
 
             if (data.success) {
+                showToast('A fiókod törlésre lett ütemezve. 30 napon belül véglegesen törlődik.', 'success');
                 localStorage.removeItem('accessToken');
                 navigate('/');
             } else {
-                setDeleteError(data.message || 'Hiba történt a fiók törlése során');
+                showToast(data.message || 'Hiba történt a fiók törlése során', 'error');
             }
         } catch (error) {
             console.error('Hiba a fiók törlésekor:', error);
-            setDeleteError('Hiba történt a fiók törlése során');
+            showToast('Hiba történt a fiók törlése során', 'error');
         } finally {
             setDeleteLoading(false);
         }
@@ -690,12 +691,12 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
                                 </div>
                             )}
 
-                            {passwordSuccess && (
+                            {/* {passwordSuccess && (
                                 <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-center gap-2">
                                     <CheckCircleIcon />
                                     {passwordSuccess}
                                 </div>
-                            )}
+                            )} */}
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">

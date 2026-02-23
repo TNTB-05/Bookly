@@ -74,6 +74,13 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                                 setActiveTab={setActiveTab}
                                 setIsMobileMenuOpen={setIsMobileMenuOpen}
                             />
+                            <NavItem
+                                tab="featured"
+                                label="Kiemelt szalonok"
+                                activeTab={activeTab}
+                                setActiveTab={setActiveTab}
+                                setIsMobileMenuOpen={setIsMobileMenuOpen}
+                            />
                         </div>
 
                         {/* Desktop Profile Dropdown */}
@@ -223,6 +230,15 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                     tab="book"
                     label="Helyeim"
                     icon="➕"
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    setIsMobileMenuOpen={setIsMobileMenuOpen}
+                    isMobile={true}
+                />
+                <NavItem
+                    tab="featured"
+                    label="Kiemelt"
+                    icon="⭐"
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                     setIsMobileMenuOpen={setIsMobileMenuOpen}

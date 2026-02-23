@@ -5,9 +5,6 @@ import { useDebounce } from '../../../../hooks/useDebounce';
 // Ikonok
 import SearchIcon from '../../../../icons/SearchIcon';
 import LocationIcon from '../../../../icons/LocationIcon';
-
-import LeftArrowIcon from '../../../../icons/LeftArrowIcon';
-import RightArrowIcon from '../../../../icons/RightArrowIcon';
 import BuildingIcon from '../../../../icons/BuildingIcon';
 import CalendarSimpleIcon from '../../../../icons/CalendarSimpleIcon';
 import ClipboardCheckIcon from '../../../../icons/ClipboardCheckIcon';
@@ -15,17 +12,16 @@ import StarSmallIcon from '../../../../icons/StarSmallIcon';
 
 // Komponensek
 import SalonCard from '../SalonCard';
+import SalonMap from '../SalonMap';
 import SearchSuggestions from './SearchSuggestions';
 import { useNotification } from '../../../../components/NotificationContext';
 
-// Áttekintés tab - keresés, kiemelt szalonok és szolgáltatások
+// Áttekintés tab - keresés, térkép és szolgáltatások
 export default function OverviewTab({
     setActiveTab,
     serviceTypes,
-    topRatedSalons,
     savedSalonIds,
-    toggleSaveSalon,
-    loadTopRatedSalons
+    toggleSaveSalon
 }) {
     const { showToast } = useNotification();
     // UseState változók a kereséshez
@@ -35,16 +31,47 @@ export default function OverviewTab({
     const [userLocation, setUserLocation] = useState(null);
     const [searchActive, setSearchActive] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
-    const [showAllFeatured, setShowAllFeatured] = useState(false);
-    const [salonLimit, setSalonLimit] = useState(12);
     const [recentReviews, setRecentReviews] = useState([]);
-    const carouselRef = useRef(null);
+
+    // Map state
+    const [mapSalons, setMapSalons] = useState([]);
+    const [mapLoading, setMapLoading] = useState(false);
     
     // Suggestions state
     const [suggestions, setSuggestions] = useState({ salons: [], serviceTypes: [] });
     const [showSuggestions, setShowSuggestions] = useState(false);
     const searchContainerRef = useRef(null);
     
+    // Reactive map data: fetch salons whenever service filter changes
+    useEffect(() => {
+        async function fetchMapSalons() {
+            setMapLoading(true);
+            try {
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                const params = new URLSearchParams();
+                if (serviceFilter !== 'all') {
+                    params.append('service_type', serviceFilter);
+                }
+                const url = params.toString()
+                    ? `${apiUrl}/api/search/by-name?${params.toString()}`
+                    : `${apiUrl}/api/search/by-name`;
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.success) {
+                    setMapSalons(data.salons);
+                } else {
+                    setMapSalons([]);
+                }
+            } catch (error) {
+                console.error('Hiba a térkép szalonok betöltésekor:', error);
+                setMapSalons([]);
+            } finally {
+                setMapLoading(false);
+            }
+        }
+        fetchMapSalons();
+    }, [serviceFilter]);
+
     // Legújabb értékelések betöltése
     useEffect(() => {
         async function fetchRecentReviews() {
@@ -160,32 +187,6 @@ export default function OverviewTab({
         );
     }
 
-    // === KARUSSZEL ÉS LAPOZÁS FUNKCIÓK ===
-
-    /**
-     * Karusszel görgetése balra vagy jobbra
-     * @param {string} direction - Görgetés iránya ('left' vagy 'right')
-     */
-    function scrollCarousel(direction) {
-        if (carouselRef.current) {
-            const cardWidth = 320; // w-80 = 320px
-            const gap = 24; // gap-6 = 24px
-            const scrollAmount = cardWidth + gap;
-            const newScrollPosition = carouselRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
-            carouselRef.current.scrollTo({
-                left: newScrollPosition,
-                behavior: 'smooth'
-            });
-        }
-    }
-
-    // További szalonok betöltése
-    function handleLoadMore() {
-        const newLimit = salonLimit + 12;
-        setSalonLimit(newLimit);
-        loadTopRatedSalons(newLimit);
-    }
-
     // Keresés visszaállítása alapállapotba
     function resetSearch() {
         setSearchActive(false);
@@ -254,7 +255,7 @@ export default function OverviewTab({
                                     <select
                                         value={serviceFilter}
                                         onChange={(e) => setServiceFilter(e.target.value)}
-                                        className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
+                                        className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm rounded-xl shadow-md border-l-4 border-dark-blue text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
                                     >
                                         <option value="all">Összes szolgáltatás</option>
                                         {serviceTypes.map((type) => (
@@ -313,7 +314,21 @@ export default function OverviewTab({
                                     ✕ Keresés törlése
                                 </button>
                             )}
+
+                            {/* Helper text */}
+                            <p className="text-sm text-gray-500 text-center mt-1">
+                                A térképen a kiválasztott szolgáltatás szalonjai jelennek meg.
+                            </p>
                         </div>
+                    </div>
+
+                    {/* Map Section */}
+                    <div className="max-w-4xl mx-auto mt-8">
+                        {mapLoading ? (
+                            <div className="h-96 rounded-2xl animate-pulse bg-gray-200" />
+                        ) : (
+                            <SalonMap salons={mapSalons} userLocation={userLocation} />
+                        )}
                     </div>
                 </div>
             </div>
@@ -354,92 +369,6 @@ export default function OverviewTab({
                     </div>
                 </div>
             )}
-
-            {/* Kiemelt szalonok - Always visible */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h2 className="text-2xl font-bold text-dark-blue">Kiemelt szalonok</h2>
-                        <p className="text-gray-600 mt-1">A legjobban értékelt partnereink</p>
-                    </div>
-                    <button
-                        onClick={() => setShowAllFeatured(!showAllFeatured)}
-                        className="text-dark-blue font-medium hover:text-blue-800 flex items-center transition-colors"
-                    >
-                        {showAllFeatured ? 'Kevesebb mutatása' : 'Összes megtekintése'}
-                        <RightArrowIcon />
-                    </button>
-                </div>
-                
-                {!showAllFeatured ? (
-                    /* Carousel view */
-                    <div className="relative group">
-                        {/* Left Arrow */}
-                        <button
-                            onClick={() => scrollCarousel('left')}
-                            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
-                            aria-label="Scroll left"
-                        >
-                            <LeftArrowIcon />
-                        </button>
-
-                        {/* Right Arrow */}
-                        <button
-                            onClick={() => scrollCarousel('right')}
-                            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
-                            aria-label="Scroll right"
-                        >
-                            <RightArrowIcon/>
-                        </button>
-
-                        <div ref={carouselRef} className="overflow-x-auto pb-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                            <div className="flex gap-6" style={{ minWidth: 'min-content' }}>
-                                {topRatedSalons.map((salon) => (
-                                    <div key={salon.id} className="shrink-0 w-80">
-                                        <SalonCard
-                                            salon={salon}
-                                            savedSalonIds={savedSalonIds}
-                                            toggleSaveSalon={toggleSaveSalon}
-                                            showDistance={false}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    /* Grid view */
-                    <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {topRatedSalons.map((salon) => (
-                                <SalonCard
-                                    key={salon.id}
-                                    salon={salon}
-                                    savedSalonIds={savedSalonIds}
-                                    toggleSaveSalon={toggleSaveSalon}
-                                    showDistance={false}
-                                />
-                            ))}
-                        </div>
-                        {topRatedSalons.length >= salonLimit && (
-                            <div className="mt-8 text-center">
-                                <button
-                                    onClick={handleLoadMore}
-                                    className="px-8 py-3 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors shadow-lg hover:shadow-xl"
-                                >
-                                    Még több mutatása
-                                </button>
-                            </div>
-                        )}
-                    </>
-                )}
-                
-                {topRatedSalons.length === 0 && (
-                    <div className="col-span-full text-center py-12 bg-white/40 backdrop-blur-md rounded-xl border border-white/50">
-                        <p className="text-gray-500">Szalonok betöltése...</p>
-                    </div>
-                )}
-            </div>
 
             {/* Hogyan működik? */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

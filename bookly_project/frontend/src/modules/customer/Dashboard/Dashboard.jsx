@@ -12,6 +12,7 @@ import OverviewTab from './tabs/OverviewTab';
 import AppointmentsTab from './tabs/AppointmentsTab';
 import SavedSalonsTab from './tabs/SavedSalonsTab';
 import ProfileTab from './tabs/ProfileTab';
+import FeaturedSalonsTab from './tabs/FeaturedSalonsTab';
 
 // Fő irányítópult komponens - kezeli a tabokat és az adatbetöltést
 export default function Dashboard() {
@@ -102,6 +103,7 @@ export default function Dashboard() {
             if (data.success) {
                 // Reload profile to get updated status
                 await loadUserProfile();
+                showToast('Fiókod sikeresen visszaállítva.', 'success');
                 setDaysRemaining(null);
                 setDeletionDate(null);
             } else {
@@ -223,10 +225,8 @@ export default function Dashboard() {
                         <OverviewTab
                             setActiveTab={setActiveTab}
                             serviceTypes={serviceTypes}
-                            topRatedSalons={topRatedSalons}
                             savedSalonIds={savedSalonIds}
                             toggleSaveSalon={toggleSaveSalon}
-                            loadTopRatedSalons={loadTopRatedSalons}
                         />
                     )}
 
@@ -255,6 +255,16 @@ export default function Dashboard() {
                             user={user}
                             userProfile={userProfile}
                             setUserProfile={setUserProfile}
+                        />
+                    )}
+
+                    {/* KIEMELT SZALONOK TAB */}
+                    {activeTab === 'featured' && (
+                        <FeaturedSalonsTab
+                            topRatedSalons={topRatedSalons}
+                            savedSalonIds={savedSalonIds}
+                            toggleSaveSalon={toggleSaveSalon}
+                            loadTopRatedSalons={loadTopRatedSalons}
                         />
                     )}
                 </div>

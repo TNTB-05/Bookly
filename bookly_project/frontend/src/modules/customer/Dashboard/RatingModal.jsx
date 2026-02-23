@@ -3,9 +3,11 @@ import { createPortal } from 'react-dom';
 import { authApi } from '../../auth/auth';
 import StarRatingInput from './StarRatingInput';
 import CloseIcon from '../../../icons/CloseIcon';
+import { useNotification } from '../../../components/NotificationContext';
 
 // Értékelés modal - szalon és szolgáltató értékelése
 export default function RatingModal({ appointment, onClose, onSaved }) {
+    const { showToast } = useNotification();
     const [salonRating, setSalonRating] = useState(0);
     const [providerRating, setProviderRating] = useState(0);
     const [salonComment, setSalonComment] = useState('');
@@ -64,11 +66,14 @@ export default function RatingModal({ appointment, onClose, onSaved }) {
             if (data.success) {
                 onSaved?.();
                 onClose();
+                showToast(isEdit ? 'Értékelés sikeresen módosítva.' : 'Értékelés sikeresen mentődve.', 'success');
             } else {
+                showToast(data.message || 'Hiba történt az értékelés mentésekor', 'error');
                 setError(data.message || 'Hiba történt az értékelés mentésekor');
             }
         } catch (err) {
             console.error('Rating submit error:', err);
+            showToast('Hiba történt az értékelés mentésekor', 'error');
             setError('Hiba történt az értékelés mentésekor');
         } finally {
             setLoading(false);
