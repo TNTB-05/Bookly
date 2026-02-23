@@ -358,7 +358,7 @@ export default function SalonModal() {
                             )}
                         </div>
                         <button
-                            onClick={() => navigate(-1)}
+                            onClick={() => navigate('/Dashboard')}
                             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                             title="Bezárás"
                         >

@@ -1,19 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { Marker, useMap } from 'react-leaflet';
+import BaseMap from '../../components/BaseMap';
 import TickIcon from '../../icons/TickIcon';
-
-// Fix for default marker icon in Leaflet + bundlers
-const defaultIcon = L.icon({
-    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
 
 // Component to recenter the map when position changes
 function MapRecenter({ lat, lng }) {
@@ -26,7 +14,7 @@ function MapRecenter({ lat, lng }) {
     return null;
 }
 
-// Component for draggable marker
+// Draggable marker — uses the global default icon patched in BaseMap
 function DraggableMarker({ position, onDragEnd }) {
     const markerRef = useRef(null);
 
@@ -37,7 +25,7 @@ function DraggableMarker({ position, onDragEnd }) {
                 const { lat, lng } = marker.getLatLng();
                 onDragEnd(lat, lng);
             }
-        }
+        },
     };
 
     return (
@@ -46,7 +34,6 @@ function DraggableMarker({ position, onDragEnd }) {
             eventHandlers={eventHandlers}
             position={position}
             ref={markerRef}
-            icon={defaultIcon}
         />
     );
 }
@@ -278,30 +265,23 @@ export default function AddressInput({
                 </p>
             )}
 
-            {/* Leaflet Map */}
-            <div className="relative z-10 rounded-xl overflow-hidden border-2 border-white/50 shadow-sm" style={{ height: '280px' }}>
-                <MapContainer
-                    center={mapCenter}
-                    zoom={selectedLat ? 16 : 7}
-                    style={{ height: '100%', width: '100%' }}
-                    scrollWheelZoom={true}
-                >
-                    <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    
-                    {selectedLat && selectedLng && (
-                        <>
-                            <MapRecenter lat={selectedLat} lng={selectedLng} />
-                            <DraggableMarker
-                                position={[selectedLat, selectedLng]}
-                                onDragEnd={handleMarkerDragEnd}
-                            />
-                        </>
-                    )}
-                </MapContainer>
-            </div>
+            {/* Map */}
+            <BaseMap
+                center={mapCenter}
+                zoom={selectedLat ? 16 : 7}
+                height="280px"
+                className="relative z-10 rounded-xl border-2 border-white/50 shadow-sm"
+            >
+                {selectedLat && selectedLng && (
+                    <>
+                        <MapRecenter lat={selectedLat} lng={selectedLng} />
+                        <DraggableMarker
+                            position={[selectedLat, selectedLng]}
+                            onDragEnd={handleMarkerDragEnd}
+                        />
+                    </>
+                )}
+            </BaseMap>
             
             <p className="text-xs text-gray-500">
                 💡 Húzd a jelölőt a térképen a pontos hely megadásához

@@ -61,6 +61,13 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                                 setIsMobileMenuOpen={setIsMobileMenuOpen}
                             />
                             <NavItem
+                                tab="featured"
+                                label="Kiemelt szalonok"
+                                activeTab={activeTab}
+                                setActiveTab={setActiveTab}
+                                setIsMobileMenuOpen={setIsMobileMenuOpen}
+                            />
+                            <NavItem
                                 tab="appointments"
                                 label="Foglalásaim"
                                 activeTab={activeTab}
@@ -70,13 +77,6 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                             <NavItem
                                 tab="book"
                                 label="Helyeim"
-                                activeTab={activeTab}
-                                setActiveTab={setActiveTab}
-                                setIsMobileMenuOpen={setIsMobileMenuOpen}
-                            />
-                            <NavItem
-                                tab="featured"
-                                label="Kiemelt szalonok"
                                 activeTab={activeTab}
                                 setActiveTab={setActiveTab}
                                 setIsMobileMenuOpen={setIsMobileMenuOpen}
@@ -218,6 +218,15 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                     isMobile={true}
                 />
                 <NavItem
+                    tab="featured"
+                    label="Kiemelt"
+                    icon="⭐"
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    setIsMobileMenuOpen={setIsMobileMenuOpen}
+                    isMobile={true}
+                />
+                <NavItem
                     tab="appointments"
                     label="Foglalásaim"
                     icon="📅"
@@ -230,15 +239,6 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                     tab="book"
                     label="Helyeim"
                     icon="➕"
-                    activeTab={activeTab}
-                    setActiveTab={setActiveTab}
-                    setIsMobileMenuOpen={setIsMobileMenuOpen}
-                    isMobile={true}
-                />
-                <NavItem
-                    tab="featured"
-                    label="Kiemelt"
-                    icon="⭐"
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                     setIsMobileMenuOpen={setIsMobileMenuOpen}

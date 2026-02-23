@@ -691,12 +691,12 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
                                 </div>
                             )}
 
-                            {/* {passwordSuccess && (
+                            {passwordSuccess && (
                                 <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-center gap-2">
                                     <CheckCircleIcon />
                                     {passwordSuccess}
                                 </div>
-                            )} */}
+                            )}
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
