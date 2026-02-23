@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { authApi } from '../../auth/auth';
 import CalendarIcon from '../../../icons/CalendarIcon';
+import { SkeletonStat, SkeletonCard, SkeletonAvatar, SkeletonText } from '../../../components/skeletons';
 
 const OverviewSection = () => {
     const [statistics, setStatistics] = useState({
@@ -73,8 +74,24 @@ const OverviewSection = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dark-blue"></div>
+            <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {Array(3).fill(0).map((_, i) => (
+                        <SkeletonStat key={i} />
+                    ))}
+                </div>
+                <div className="space-y-3">
+                    {Array(3).fill(0).map((_, i) => (
+                        <SkeletonCard key={i} className="p-4">
+                            <div className="flex items-center gap-4">
+                                <SkeletonAvatar size="md" />
+                                <div className="flex-1">
+                                    <SkeletonText lines={2} />
+                                </div>
+                            </div>
+                        </SkeletonCard>
+                    ))}
+                </div>
             </div>
         );
     }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { authApi } from '../../../auth/auth';
 import ServicesIcon from '../../../../icons/ServicesIcon';
+import { SkeletonCard, SkeletonBlock, SkeletonText } from '../../../../components/skeletons';
 import ServiceFormModal from './ServiceFormModal';
 import DeleteServiceModal from './DeleteServiceModal';
 
@@ -154,8 +155,19 @@ const ServicesSection = () => {
             </div>
 
             {loading ? (
-                <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dark-blue"></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {Array(3).fill(0).map((_, i) => (
+                        <SkeletonCard key={i} className="p-6">
+                            <div className="flex justify-between items-start mb-4">
+                                <SkeletonBlock className="h-12 w-12 rounded-lg" />
+                            </div>
+                            <SkeletonText lines={2} className="mb-3" />
+                            <div className="flex justify-between pt-3 border-t border-gray-100">
+                                <SkeletonBlock className="h-3 w-16" />
+                                <SkeletonBlock className="h-3 w-20" />
+                            </div>
+                        </SkeletonCard>
+                    ))}
                 </div>
             ) : error ? (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">

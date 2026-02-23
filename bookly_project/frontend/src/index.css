@@ -7,6 +7,7 @@
         --color-dark-blue: #0A8CBA;
         --color-light-gray: #F5F5F5;
         --color-dark-gray: #2D2D2D;
+        --animate-shimmer: shimmer 1.5s infinite linear;
 };
 
 /* Hide scrollbar while maintaining scroll functionality */
@@ -22,6 +23,11 @@
 @import "./typography.css";
 
 /* Global animations */
+@keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SkeletonCard, SkeletonAvatar, SkeletonText } from '../../../../components/skeletons';
 // Ikonok
 import SaveIcon from '../../../../icons/SaveIcon';
 import DiaryIcon from '../../../../icons/DiaryIcon';
@@ -112,9 +113,17 @@ export default function SavedSalonsTab({ savedSalons, savedSalonIds, toggleSaveS
                 </div>
 
                 {loadingAppointments ? (
-                    <div className="text-center py-16 bg-white/40 backdrop-blur-md rounded-xl border border-white/50">
-                        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-                        <p className="text-gray-500 mt-4">Betöltés...</p>
+                    <div className="space-y-4">
+                        {Array(3).fill(0).map((_, i) => (
+                            <SkeletonCard key={i} className="p-6">
+                                <div className="flex items-start gap-4">
+                                    <SkeletonAvatar size="lg" />
+                                    <div className="flex-1">
+                                        <SkeletonText lines={2} />
+                                    </div>
+                                </div>
+                            </SkeletonCard>
+                        ))}
                     </div>
                 ) : pastAppointments.length > 0 ? (
                     <div className="space-y-4">

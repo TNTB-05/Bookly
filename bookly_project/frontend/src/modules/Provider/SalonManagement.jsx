@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { authApi } from '../auth/auth';
 import AddressInput from './AddressInput';
 import { useNotification } from '../../components/NotificationContext';
+import { SkeletonBlock } from '../../components/skeletons';
 
 const PRESET_COLORS = [
     '#3B82F6', '#1E40AF', '#6366F1', '#8B5CF6', '#A855F7',
@@ -311,7 +312,19 @@ const SalonManagement = () => {
     };
 
     if (loading) {
-        return <div className="text-center py-10 text-gray-600">Loading salon data...</div>;
+        return (
+            <div className="p-5 max-w-6xl mx-auto space-y-6">
+                <SkeletonBlock className="h-9 w-64 mb-2" />
+                <div className="bg-white rounded-xl p-6 shadow-lg space-y-5">
+                    {Array(3).fill(0).map((_, i) => (
+                        <div key={i} className="flex flex-col gap-2">
+                            <SkeletonBlock className="h-3 w-24" />
+                            <SkeletonBlock className="h-10 w-full rounded-md" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
     }
 
     if (!salon) {
