@@ -38,14 +38,21 @@ const getStatusText = (status) => {
     }
 };
 
-const CustomerDetailDrawer = ({ customer, onClose }) => {
+const CustomerDetailDrawer = ({ customer, onClose, onRemind }) => {
     const [detail, setDetail] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [reminding, setReminding] = useState(false);
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
     const formatDate = (d) => d ? new Date(d).toLocaleDateString('hu-HU', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Europe/Budapest' }) : '–';
     const formatDateShort = (d) => d ? new Date(d).toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Budapest' }) : '–';
     const formatPrice = (p) => new Intl.NumberFormat('hu-HU').format(p) + ' Ft';
+
+    const handleRemind = async () => {
+        setReminding(true);
+        await onRemind(customer);
+        setReminding(false);
+    };
 
     useEffect(() => {
         if (!customer) { setDetail(null); return; }
@@ -131,6 +138,25 @@ const CustomerDetailDrawer = ({ customer, onClose }) => {
                                     {detail.phone && <p className="text-sm text-gray-500">{detail.phone}</p>}
                                 </div>
                             </div>
+
+                            {/* Reminder button */}
+                            {detail && (
+                                <button
+                                    onClick={handleRemind}
+                                    disabled={reminding || !detail.email}
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-orange-200 bg-orange-50 hover:bg-orange-100 text-orange-700 font-medium text-sm rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    title={!detail.email ? 'Nincs email cím' : undefined}
+                                >
+                                    {reminding ? (
+                                        <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                                        </svg>
+                                    )}
+                                    Emlékeztető küldése
+                                </button>
+                            )}
 
                             {/* Summary stats */}
                             <div className="grid grid-cols-3 gap-3">

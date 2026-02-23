@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { authApi } from '../../../auth/auth';
 import { SkeletonStat, SkeletonCard, SkeletonAvatar, SkeletonText } from '../../../../components/skeletons';
+import { useNotification } from '../../../../components/NotificationContext';
 import CustomerStatsStrip from './CustomerStatsStrip';
 import CustomerListItem from './CustomerListItem';
 import CustomerDetailDrawer from './CustomerDetailDrawer';
@@ -35,6 +36,27 @@ const CustomersSection = () => {
             setError('Hiba történt az adatok betöltésekor');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const { showToast } = useNotification();
+
+    const handleRemind = async (customer) => {
+        try {
+            const body = customer.is_guest
+                ? { guestEmail: customer.email }
+                : { userId: customer.id };
+
+            const res = await authApi.post('/api/provider/calendar/customers/remind', body);
+            const data = await res.json();
+
+            if (data.success) {
+                showToast('Emlékeztető sikeresen elküldve');
+            } else {
+                showToast(data.message || 'Hiba történt az emlékeztető küldésekor');
+            }
+        } catch {
+            showToast('Hiba történt az emlékeztető küldésekor');
         }
     };
 
@@ -113,6 +135,7 @@ const CustomersSection = () => {
                             key={customer.id ? `reg-${customer.id}` : `guest-${customer.email}-${index}`}
                             customer={customer}
                             onClick={() => setSelectedCustomer(customer)}
+                            onRemind={handleRemind}
                         />
                     ))
                 )}
@@ -122,6 +145,7 @@ const CustomersSection = () => {
             <CustomerDetailDrawer
                 customer={selectedCustomer}
                 onClose={() => setSelectedCustomer(null)}
+                onRemind={handleRemind}
             />
         </div>
     );

@@ -3,7 +3,7 @@ const router = express.Router();
 const { pool, getSalonHoursByProviderId, getExpandedTimeBlocksForDate, getFullyBookedDays } = require('../sql/database.js');
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
 const { requireRole } = require('./auth/RoleMiddleware.js');
-const { sendAppointmentCancellation } = require('../services/emailService.js');
+const { sendAppointmentCancellation, sendCustomerReminder } = require('../services/emailService.js');
 
 // Middleware to verify provider exists and is active in database
 const verifyProvider = async (req, res, next) => {
@@ -1106,6 +1106,69 @@ router.get('/customers/guest', async (request, response) => {
     } catch (error) {
         console.error('Get guest customer error:', error);
         response.status(500).json({ success: false, message: 'Hiba történt a vendég ügyfél lekérdezésekor' });
+    }
+});
+
+// Send reminder email to a customer
+router.post('/customers/remind', async (request, response) => {
+    try {
+        const providerId = request.providerId;
+        const { userId, guestEmail } = request.body;
+
+        if (!userId && !guestEmail) {
+            return response.status(400).json({ success: false, message: 'userId vagy guestEmail megadása kötelező' });
+        }
+
+        // Get salon name for the email
+        const [salonResult] = await pool.query(
+            `SELECT s.name FROM salons s JOIN providers p ON p.salon_id = s.id WHERE p.id = ?`,
+            [providerId]
+        );
+
+        if (salonResult.length === 0) {
+            return response.status(404).json({ success: false, message: 'Szalon nem található' });
+        }
+
+        const salonName = salonResult[0].name;
+        let customerEmail, customerName;
+
+        if (userId) {
+            // Registered user — verify they have a booking with this provider
+            const [users] = await pool.query(
+                `SELECT u.name, u.email FROM users u
+                 INNER JOIN appointments a ON a.user_id = u.id
+                 WHERE u.id = ? AND a.provider_id = ? LIMIT 1`,
+                [userId, providerId]
+            );
+            if (users.length === 0) {
+                return response.status(404).json({ success: false, message: 'Ügyfél nem található' });
+            }
+            customerEmail = users[0].email;
+            customerName = users[0].name;
+        } else {
+            // Guest — verify they have a booking with this provider
+            const [guests] = await pool.query(
+                `SELECT guest_name, guest_email FROM appointments
+                 WHERE guest_email = ? AND provider_id = ? AND user_id IS NULL LIMIT 1`,
+                [guestEmail, providerId]
+            );
+            if (guests.length === 0) {
+                return response.status(404).json({ success: false, message: 'Vendég ügyfél nem található' });
+            }
+            customerEmail = guests[0].guest_email;
+            customerName = guests[0].guest_name;
+        }
+
+        if (!customerEmail) {
+            return response.status(400).json({ success: false, message: 'Az ügyfélnek nincs email címe' });
+        }
+
+        await sendCustomerReminder({ customer_email: customerEmail, customer_name: customerName, salon_name: salonName });
+
+        response.status(200).json({ success: true, message: 'Emlékeztető sikeresen elküldve' });
+    } catch (error) {
+        console.error('Send reminder error:', error);
+        response.status(500).json({ success: false, message: 'Hiba történt az emlékeztető küldésekor' });
     }
 });
 
