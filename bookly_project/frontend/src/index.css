@@ -9,6 +9,10 @@
         --color-dark-gray: #2D2D2D;
 };
 
+html {
+    scrollbar-gutter: stable;
+}
+
 /* Hide scrollbar while maintaining scroll functionality */
 .scrollbar-none {
     -ms-overflow-style: none;  /* IE and Edge */

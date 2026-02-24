@@ -432,26 +432,30 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                                                         style={{ ...style, paddingTop: '3px', paddingBottom: '3px' }}
                                                     >
                                                         {isShort ? (
-                                                            <div className="flex items-center gap-1.5 w-full min-w-0 overflow-hidden">
-                                                                <span className="text-[15px] font-semibold leading-none truncate shrink min-w-0">
+                                                            <div className="flex items-center gap-3 w-full min-w-0 h-full">
+                                                                <span className="sm:text-sm font-semibold leading-none truncate shrink min-w-0">
                                                                     {apt.service_name}
                                                                 </span>
-                                                                <span className="text-xs leading-none opacity-60 truncate shrink min-w-0">
+                                                                <span className="sm:text-xs leading-none opacity-60 truncate shrink min-w-0">
                                                                     {apt.salon_name}
                                                                 </span>
-                                                                <span className="text-xs font-semibold leading-none whitespace-nowrap shrink-0 ml-auto">
+                                                                <span className="sm:text-xs font-semibold leading-none whitespace-nowrap shrink-0 ml-auto">
                                                                     {Number(apt.price).toLocaleString()} Ft
                                                                 </span>
                                                             </div>
                                                         ) : (
-                                                            <div className="flex flex-col gap-px text-left w-full min-w-0 overflow-hidden">
-                                                                <p className="text-[10px] sm:text-xs font-semibold leading-tight truncate">
-                                                                    {apt.service_name}
-                                                                </p>
-                                                                <p className="text-[9px] sm:text-[10px] leading-tight truncate opacity-70">{apt.salon_name}</p>
-                                                                <p className="text-[9px] sm:text-[10px] font-semibold leading-tight">
+                                                            <div className="flex items-center h-full w-full min-w-0 text-left">
+                                                                <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                                                    <span className="sm:text-sm font-semibold leading-tight truncate block">
+                                                                        {apt.service_name}
+                                                                    </span>
+                                                                    <span className="sm:text-xs leading-tight truncate block opacity-70">
+                                                                        {apt.salon_name}
+                                                                    </span>
+                                                                </div>
+                                                                <span className="sm:text-xs font-semibold leading-tight whitespace-nowrap shrink-0 ml-3">
                                                                     {Number(apt.price).toLocaleString()} Ft
-                                                                </p>
+                                                                </span>
                                                             </div>
                                                         )}
                                                     </button>

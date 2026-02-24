@@ -25,7 +25,7 @@ export const MARKER_ICON_RED_URL = markerIconRed;
 export const MARKER_ICON_2X_RED_URL = markerIcon2xRed;
 
 // MapTiler tile configuration
-const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY || '';
+const MAPTILER_KEY = 'aujVd9Kfe6UMcgbKOJkK';
 export const TILE_URL = `https://api.maptiler.com/maps/streets-v4/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`;
 
 /**
