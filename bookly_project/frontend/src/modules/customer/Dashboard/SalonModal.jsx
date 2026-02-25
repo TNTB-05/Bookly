@@ -45,6 +45,7 @@ export default function SalonModal() {
     const [bookingResult, setBookingResult] = useState(null);
     const [userProfile, setUserProfile] = useState(null);
     const [loadingUser, setLoadingUser] = useState(true);
+    const [lightboxImage, setLightboxImage] = useState(null);
 
     // Szalon adatok betöltése
     useEffect(() => {
@@ -334,7 +335,7 @@ export default function SalonModal() {
         );
     }
 
-    return (
+    return <>
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto"
             onClick={handleBackdropClick}
@@ -585,6 +586,22 @@ export default function SalonModal() {
                                                 <p className="text-lg font-bold text-indigo-600">{service.price} Ft</p>
                                             </div>
                                         </div>
+                                        {service.images && service.images.length > 0 && (
+                                            <div className="flex gap-1.5 mt-2 overflow-x-auto pb-1">
+                                                {service.images.map((img) => (
+                                                    <img
+                                                        key={img.id}
+                                                        src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + img.image_url}
+                                                        alt=""
+                                                        className="h-16 w-20 object-cover rounded flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setLightboxImage(img.image_url);
+                                                        }}
+                                                    />
+                                                ))}
+                                            </div>
+                                        )}
                                     </button>
                                 ))}
                                 {(!selectedProvider.services || selectedProvider.services.length === 0) && (
@@ -846,5 +863,26 @@ export default function SalonModal() {
                 </div>
             </div>
         </div>
-    );
+        {lightboxImage && (
+            <div
+                className="fixed inset-0 z-[99999] bg-black/90 flex items-center justify-center p-4"
+                onClick={() => setLightboxImage(null)}
+            >
+                <button
+                    className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
+                    onClick={() => setLightboxImage(null)}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                <img
+                    src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + lightboxImage}
+                    alt=""
+                    className="max-w-full max-h-full object-contain rounded-lg"
+                    onClick={(e) => e.stopPropagation()}
+                />
+            </div>
+        )}
+    </>;
 }

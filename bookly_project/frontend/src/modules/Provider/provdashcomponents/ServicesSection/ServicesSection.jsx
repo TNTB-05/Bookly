@@ -210,6 +210,18 @@ const ServicesSection = () => {
                             {service.description && (
                                 <p className="text-gray-600 text-sm mt-1 line-clamp-2">{service.description}</p>
                             )}
+                            {service.images && service.images.length > 0 && (
+                                <div className="flex gap-1.5 mt-2 flex-wrap">
+                                    {service.images.slice(0, 5).map((img) => (
+                                        <img
+                                            key={img.id}
+                                            src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + img.image_url}
+                                            alt=""
+                                            className="w-14 h-14 object-cover rounded-lg border border-gray-200"
+                                        />
+                                    ))}
+                                </div>
+                            )}
                             <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
                                 <span className="text-gray-500 text-sm">{service.duration_minutes} perc</span>
                                 <span className="font-bold text-dark-blue">{formatPrice(service.price)} Ft</span>

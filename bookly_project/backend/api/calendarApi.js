@@ -4,6 +4,7 @@ const { pool, getSalonHoursByProviderId, getExpandedTimeBlocksForDate, getFullyB
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
 const { requireRole } = require('./auth/RoleMiddleware.js');
 const { sendAppointmentCancellation, sendCustomerReminder } = require('../services/emailService.js');
+const { upload, processServiceImage, deleteOldSalonImage } = require('../middleware/uploadMiddleware.js');
 
 // Middleware to verify provider exists and is active in database
 const verifyProvider = async (req, res, next) => {
@@ -669,22 +670,32 @@ router.get('/services', async (request, response) => {
 
         const [services] = await pool.query(
             `SELECT 
-                id,
-                name,
-                description,
-                duration_minutes,
-                price,
-                status,
-                created_at
-            FROM services
-            WHERE provider_id = ?
-            ORDER BY name ASC`,
+                s.id,
+                s.name,
+                s.description,
+                s.duration_minutes,
+                s.price,
+                s.status,
+                s.created_at,
+                JSON_ARRAYAGG(
+                    IF(si.id IS NOT NULL, JSON_OBJECT('id', si.id, 'image_url', si.image_url, 'sort_order', si.sort_order), NULL)
+                ) AS images
+            FROM services s
+            LEFT JOIN service_images si ON si.service_id = s.id
+            WHERE s.provider_id = ?
+            GROUP BY s.id, s.name, s.description, s.duration_minutes, s.price, s.status, s.created_at
+            ORDER BY s.name ASC`,
             [providerId]
         );
 
+        const servicesWithImages = services.map(s => ({
+            ...s,
+            images: (s.images || []).filter(img => img !== null)
+        }));
+
         response.status(200).json({
             success: true,
-            services
+            services: servicesWithImages
         });
     } catch (error) {
         console.error('Get services error:', error);
@@ -879,6 +890,96 @@ router.delete('/services/:id', async (request, response) => {
             success: false,
             message: 'Hiba történt a szolgáltatás törlésekor'
         });
+    }
+});
+
+
+// Get images for a service
+router.get('/services/:id/images', async (request, response) => {
+    try {
+        const providerId = request.providerId;
+        const serviceId = parseInt(request.params.id);
+        if (isNaN(serviceId)) {
+            return response.status(400).json({ success: false, message: 'Érvénytelen szolgáltatás azonosító' });
+        }
+        // Ownership check
+        const [services] = await pool.query('SELECT id FROM services WHERE id = ? AND provider_id = ?', [serviceId, providerId]);
+        if (services.length === 0) {
+            return response.status(404).json({ success: false, message: 'Szolgáltatás nem található' });
+        }
+        const [images] = await pool.query(
+            'SELECT id, image_url, sort_order FROM service_images WHERE service_id = ? ORDER BY sort_order ASC, id ASC',
+            [serviceId]
+        );
+        response.status(200).json({ success: true, images });
+    } catch (error) {
+        console.error('Get service images error:', error);
+        response.status(500).json({ success: false, message: 'Hiba történt a képek lekérdezésekor' });
+    }
+});
+
+// Upload a new image for a service
+router.post('/services/:id/images', upload.single('serviceImage'), async (request, response) => {
+    try {
+        const providerId = request.providerId;
+        const serviceId = parseInt(request.params.id);
+        if (isNaN(serviceId)) {
+            return response.status(400).json({ success: false, message: 'Érvénytelen szolgáltatás azonosító' });
+        }
+        if (!request.file) {
+            return response.status(400).json({ success: false, message: 'Kép feltöltése kötelező' });
+        }
+        // Ownership check
+        const [services] = await pool.query('SELECT id FROM services WHERE id = ? AND provider_id = ?', [serviceId, providerId]);
+        if (services.length === 0) {
+            return response.status(404).json({ success: false, message: 'Szolgáltatás nem található' });
+        }
+        // Max 5 images
+        const [countResult] = await pool.query('SELECT COUNT(*) as count FROM service_images WHERE service_id = ?', [serviceId]);
+        if (countResult[0].count >= 5) {
+            return response.status(400).json({ success: false, message: 'Maximum 5 kép tölthető fel szolgáltatásonként' });
+        }
+        const imageUrl = await processServiceImage(request.file.buffer, serviceId);
+        const sortOrder = countResult[0].count;
+        const [result] = await pool.query(
+            'INSERT INTO service_images (service_id, image_url, sort_order) VALUES (?, ?, ?)',
+            [serviceId, imageUrl, sortOrder]
+        );
+        response.status(201).json({
+            success: true,
+            image: { id: result.insertId, image_url: imageUrl, sort_order: sortOrder }
+        });
+    } catch (error) {
+        console.error('Upload service image error:', error);
+        response.status(500).json({ success: false, message: 'Hiba történt a kép feltöltésekor' });
+    }
+});
+
+// Delete an image from a service
+router.delete('/services/:serviceId/images/:imageId', async (request, response) => {
+    try {
+        const providerId = request.providerId;
+        const serviceId = parseInt(request.params.serviceId);
+        const imageId = parseInt(request.params.imageId);
+        if (isNaN(serviceId) || isNaN(imageId)) {
+            return response.status(400).json({ success: false, message: 'Érvénytelen azonosító' });
+        }
+        // Ownership check: service belongs to provider
+        const [services] = await pool.query('SELECT id FROM services WHERE id = ? AND provider_id = ?', [serviceId, providerId]);
+        if (services.length === 0) {
+            return response.status(404).json({ success: false, message: 'Szolgáltatás nem található' });
+        }
+        // Image belongs to service
+        const [images] = await pool.query('SELECT id, image_url FROM service_images WHERE id = ? AND service_id = ?', [imageId, serviceId]);
+        if (images.length === 0) {
+            return response.status(404).json({ success: false, message: 'Kép nem található' });
+        }
+        deleteOldSalonImage(images[0].image_url);
+        await pool.query('DELETE FROM service_images WHERE id = ?', [imageId]);
+        response.status(200).json({ success: true, message: 'Kép sikeresen törölve' });
+    } catch (error) {
+        console.error('Delete service image error:', error);
+        response.status(500).json({ success: false, message: 'Hiba történt a kép törlésekor' });
     }
 });
 
