@@ -293,10 +293,49 @@ async function sendPasswordChangeConfirmation(user) {
     });
 }
 
+async function sendCustomerReminder({ customer_email, customer_name, salon_name }) {
+    const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+            <div style="background: #4f46e5; padding: 32px 24px; text-align: center;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Hiányozol! 👋</h1>
+            </div>
+            <div style="padding: 32px 24px;">
+                <p style="font-size: 16px; color: #374151; margin: 0 0 24px;">
+                    Kedves <strong>${customer_name}</strong>,
+                </p>
+                <p style="font-size: 16px; color: #374151; margin: 0 0 24px; line-height: 1.6;">
+                    Már egy ideje nem jártál nálunk a <strong>${salon_name}</strong>-ban, és hiányozol!
+                    Szeretnénk újra látni — foglalj időpontot, és gondoskodunk rólad.
+                </p>
+                <div style="text-align: center; margin: 32px 0;">
+                    <p style="font-size: 14px; color: #6b7280; margin: 0;">
+                        Nyisd meg a Bookly alkalmazást, keresd meg a szalont, és foglalj egy időpontot neked megfelelő időpontban.
+                    </p>
+                </div>
+                <p style="font-size: 14px; color: #6b7280; margin: 0;">
+                    Várunk szeretettel!<br/>
+                    <strong>${salon_name}</strong> csapata
+                </p>
+            </div>
+            <div style="background: #f9fafb; padding: 16px 24px; text-align: center; border-top: 1px solid #e5e7eb;">
+                <p style="font-size: 12px; color: #9ca3af; margin: 0;">© 2026 Bookly — Automatikus értesítő, erre a címre ne válaszolj.</p>
+            </div>
+        </div>
+    `;
+
+    await transporter.sendMail({
+        from: process.env.EMAIL_FROM,
+        to: customer_email,
+        subject: `Hiányozol a ${salon_name}-tól!`,
+        html
+    });
+}
+
 module.exports = {
     sendAppointmentConfirmation,
     sendWelcomeEmail,
     sendAppointmentModification,
     sendAppointmentCancellation,
-    sendPasswordChangeConfirmation
+    sendPasswordChangeConfirmation,
+    sendCustomerReminder
 };
