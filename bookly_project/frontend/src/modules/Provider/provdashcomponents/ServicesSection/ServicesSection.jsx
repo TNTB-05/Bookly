@@ -109,8 +109,13 @@ const ServicesSection = () => {
 
             const data = await response.json();
             if (data.success) {
-                handleCloseModal();
                 fetchServices();
+                if (editingService) {
+                    handleCloseModal();
+                } else {
+                    // Stay open in edit mode so images can be uploaded
+                    setEditingService({ ...formData, id: data.serviceId, images: [] });
+                }
             } else {
                 alert(data.message || 'Hiba történt a mentés során');
             }

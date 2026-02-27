@@ -162,7 +162,7 @@ const ServiceFormModal = ({ isOpen, onClose, editingService, formData, setFormDa
                         </select>
                     </div>
 
-                    {editingService && (
+                    {editingService?.id && (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Referencia képek</label>
                             <div className="flex flex-wrap gap-2">
