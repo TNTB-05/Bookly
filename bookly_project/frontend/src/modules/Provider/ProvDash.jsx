@@ -10,12 +10,14 @@ import ServicesIcon from '../../icons/ServicesIcon';
 import SalonIcon from '../../icons/SalonIcon';
 import UsersIcon from '../../icons/UsersIcon';
 import HourIcon from '../../icons/HourIcon';
+import TeamIcon from '../../icons/TeamIcon';
 import SalonManagement from './SalonManagement';
 import AvailabilityManagement from './AvailabilityManagement';
 import OverviewSection from './provdashcomponents/OverviewSection';
 import CustomersSection from './provdashcomponents/CustomersSection/CustomersSection';
 import CalendarSection from './provdashcomponents/CalendarSection/CalendarSection';
 import ServicesSection from './provdashcomponents/ServicesSection/ServicesSection';
+import StaffManagement from './provdashcomponents/StaffManagement';
 import NavButton from './provdashcomponents/NavButton';
 import UserDropdown from './provdashcomponents/UserDropdown';
 import ProfileModal from './provdashcomponents/ProfileModal';
@@ -27,6 +29,7 @@ export default function ProvDash() {
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
     const { setIsAuthenticated } = useAuth();
+    const { showToast } = useNotification();
     const user = getUserFromToken();
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -184,6 +187,14 @@ export default function ProvDash() {
         };
     }, [dropdownRef]);
 
+    const handleStaffTabClick = () => {
+        if (!providerProfile?.isManager) {
+            showToast('Csak menedzserek férhetnek hozzá a csapat kezelőhöz', 'error');
+            return;
+        }
+        setActiveTab('staff');
+    };
+
     const handleLogout = async () => {
         await logout();
         setIsAuthenticated(false);
@@ -198,6 +209,7 @@ export default function ProvDash() {
             case 'availability': return <AvailabilityManagement />;
             case 'salon': return <SalonManagement />;
             case 'customers': return <CustomersSection />;
+            case 'staff': return <StaffManagement />;
             default: return <OverviewSection />;
         }
     };
@@ -282,6 +294,13 @@ export default function ProvDash() {
                         icon={<UsersIcon />}
                         onClick={setActiveTab}
                     />
+                    <NavButton
+                        activeTab={activeTab}
+                        tabId="staff"
+                        label="Csapat"
+                        icon={<TeamIcon />}
+                        onClick={handleStaffTabClick}
+                    />
                 </aside>
 
                 {/* Main Content Area */}
@@ -339,6 +358,14 @@ export default function ProvDash() {
                         label="Ügyfelek"
                         icon={<UsersIcon />}
                         onClick={setActiveTab}
+                        isMobile={true}
+                    />
+                    <NavButton
+                        activeTab={activeTab}
+                        tabId="staff"
+                        label="Csapat"
+                        icon={<TeamIcon />}
+                        onClick={handleStaffTabClick}
                         isMobile={true}
                     />
                 </nav>

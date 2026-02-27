@@ -165,6 +165,15 @@ CREATE TABLE IF NOT EXISTS system_logs (
   INDEX idx_level (level)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
+CREATE TABLE IF NOT EXISTS service_images (
+  `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+  `service_id` INT NOT NULL,
+  `image_url` VARCHAR(500) NOT NULL,
+  `sort_order` INT NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
+
 -- RefTokens table (created last to reference users, providers, and admins)
 CREATE TABLE IF NOT EXISTS RefTokens(
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,

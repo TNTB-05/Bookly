@@ -85,6 +85,20 @@ async function processSalonBanner(buffer, salonId) {
     return `/uploads/salons/${filename}`;
 }
 
+
+// Process service reference image with sharp (800x600)
+async function processServiceImage(buffer, serviceId) {
+    const filename = `service-${serviceId}-${Date.now()}.jpg`;
+    const filepath = path.join(SALON_UPLOAD_DIR, filename);
+
+    await sharp(buffer)
+        .resize(800, 600, { fit: 'cover', position: 'center' })
+        .jpeg({ quality: 85 })
+        .toFile(filepath);
+
+    return `/uploads/salons/${filename}`;
+}
+
 // Delete old salon image from disk
 function deleteOldSalonImage(imageUrl) {
     if (!imageUrl) return;
@@ -99,4 +113,4 @@ function deleteOldSalonImage(imageUrl) {
     }
 }
 
-module.exports = { upload, processAndSaveImage, deleteOldImage, processSalonLogo, processSalonBanner, deleteOldSalonImage };
+module.exports = { upload, processAndSaveImage, deleteOldImage, processSalonLogo, processSalonBanner, deleteOldSalonImage, processServiceImage };
