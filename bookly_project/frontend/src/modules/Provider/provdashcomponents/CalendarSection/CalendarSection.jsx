@@ -7,7 +7,7 @@ import AppointmentDetailModal from './AppointmentDetailModal';
 import CreateAppointmentModal from './CreateAppointmentModal';
 import { useNotification } from '../../../../components/NotificationContext';
 
-const CalendarSection = () => {
+const CalendarSection = ({ onOpenChat }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [appointments, setAppointments] = useState([]);
@@ -572,12 +572,15 @@ const CalendarSection = () => {
                 selectedDate={selectedDate}
             />
 
-            <AppointmentDetailModal 
+            <AppointmentDetailModal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
                 appointment={selectedAppointment}
                 deleteLoading={deleteLoading}
                 onDelete={handleDeleteAppointment}
+                onOpenChat={onOpenChat && selectedAppointment?.user_id
+                    ? () => { setShowModal(false); onOpenChat(selectedAppointment.user_id, selectedAppointment.user_name); }
+                    : null}
             />
 
             <CreateAppointmentModal

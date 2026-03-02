@@ -10,7 +10,7 @@ import ExitIcon from '../../../icons/ExitIcon';
 
 
 // Navigációs sáv komponens - desktop és mobil nézet
-export default function DashboardNavbar({ activeTab, setActiveTab, user, userProfile }) {
+export default function DashboardNavbar({ activeTab, setActiveTab, user, userProfile, messagesUnread = 0 }) {
     // UseState változók a menü kezeléséhez
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -74,6 +74,20 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                                 setActiveTab={setActiveTab}
                                 setIsMobileMenuOpen={setIsMobileMenuOpen}
                             />
+                            <div className="relative">
+                                <NavItem
+                                    tab="messages"
+                                    label="Üzenetek"
+                                    activeTab={activeTab}
+                                    setActiveTab={setActiveTab}
+                                    setIsMobileMenuOpen={setIsMobileMenuOpen}
+                                />
+                                {messagesUnread > 0 && (
+                                    <span className="absolute -top-1 -right-3 inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 text-white text-[10px] font-bold">
+                                        {messagesUnread > 9 ? '9+' : messagesUnread}
+                                    </span>
+                                )}
+                            </div>
                         </div>
 
                         {/* Desktop Profile Dropdown */}
@@ -228,6 +242,22 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                     setIsMobileMenuOpen={setIsMobileMenuOpen}
                     isMobile={true}
                 />
+                <div className="relative">
+                    <NavItem
+                        tab="messages"
+                        label="Üzenetek"
+                        icon="💬"
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab}
+                        setIsMobileMenuOpen={setIsMobileMenuOpen}
+                        isMobile={true}
+                    />
+                    {messagesUnread > 0 && (
+                        <span className="absolute top-1 right-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 text-white text-[10px] font-bold pointer-events-none">
+                            {messagesUnread > 9 ? '9+' : messagesUnread}
+                        </span>
+                    )}
+                </div>
             </nav>
         </>
     );

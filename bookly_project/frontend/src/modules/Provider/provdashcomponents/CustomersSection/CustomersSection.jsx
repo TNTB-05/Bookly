@@ -6,7 +6,7 @@ import CustomerStatsStrip from './CustomerStatsStrip';
 import CustomerListItem from './CustomerListItem';
 import CustomerDetailDrawer from './CustomerDetailDrawer';
 
-const CustomersSection = () => {
+const CustomersSection = ({ onOpenChat }) => {
     const [customers, setCustomers] = useState([]);
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -146,6 +146,9 @@ const CustomersSection = () => {
                 customer={selectedCustomer}
                 onClose={() => setSelectedCustomer(null)}
                 onRemind={handleRemind}
+                onOpenChat={onOpenChat && selectedCustomer && !selectedCustomer.is_guest
+                    ? () => { setSelectedCustomer(null); onOpenChat(selectedCustomer.id, selectedCustomer.name); }
+                    : null}
             />
         </div>
     );
