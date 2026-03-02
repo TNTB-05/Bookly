@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../../auth/auth';
 import HourIcon from '../../../../icons/HourIcon';
 import TickIcon from '../../../../icons/TickIcon';
@@ -41,6 +42,7 @@ const statusLabels = {
 // ========================
 export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons }) {
     const { showToast, showConfirm } = useNotification();
+    const navigate = useNavigate();
 
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -581,7 +583,32 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                                                 </div>
                                                 <div className="flex flex-row items-center justify-between md:flex-col md:items-end gap-2 mt-4 md:mt-0 w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0 border-gray-100">
                                                     <p className="text-xl font-bold text-indigo-600">{Number(apt.price).toLocaleString()} Ft</p>
-                                                    {getStatusBadge(apt.status, apt)}
+                                                    <div className="flex flex-col items-end gap-2">
+                                                        {getStatusBadge(apt.status, apt)}
+                                                        {apt.status === 'completed' && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    navigate(`/dashboard/salon/${apt.salon_id}`, {
+                                                                        state: {
+                                                                            fastBooking: {
+                                                                                providerId: apt.provider_id,
+                                                                                providerName: apt.provider_name,
+                                                                                serviceId: apt.service_id,
+                                                                                serviceName: apt.service_name,
+                                                                                servicePrice: apt.price,
+                                                                                serviceDuration: apt.duration_minutes,
+                                                                            }
+                                                                        }
+                                                                    });
+                                                                }}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 font-medium transition-colors"
+                                                            >
+                                                                <LightningIcon className="h-3.5 w-3.5" />
+                                                                Gyors foglalás
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         );

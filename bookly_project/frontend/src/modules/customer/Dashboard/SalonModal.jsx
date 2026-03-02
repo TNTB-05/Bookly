@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { hu } from 'date-fns/locale';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -27,6 +27,8 @@ const STEPS = {
 export default function SalonModal() {
     const { salonId } = useParams();
     const navigate = useNavigate();
+    const { state: routerState } = useLocation();
+    const fastBooking = routerState?.fastBooking ?? null;
     const { showToast } = useNotification();
     const [salon, setSalon] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -45,6 +47,27 @@ export default function SalonModal() {
     const [bookingResult, setBookingResult] = useState(null);
     const [userProfile, setUserProfile] = useState(null);
     const [loadingUser, setLoadingUser] = useState(true);
+
+    // Fast booking: once salon data loads, prefill provider/service and jump to datetime step
+    useEffect(() => {
+        if (!fastBooking || !salon || !salon.providers) return;
+
+        const provider = salon.providers.find(p => p.id === fastBooking.providerId);
+        if (!provider) {
+            showToast('A korábbi szolgáltató már nem elérhető ebben a szalonban.', 'warning');
+            return;
+        }
+
+        const service = provider.services?.find(s => s.id === fastBooking.serviceId);
+        if (!service) {
+            showToast('A korábbi szolgáltatás már nem elérhető ennél a szolgáltatónál.', 'warning');
+            return;
+        }
+
+        setSelectedProvider(provider);
+        setSelectedService(service);
+        setCurrentStep(STEPS.SELECT_DATETIME);
+    }, [salon]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Szalon adatok betöltése
     useEffect(() => {
@@ -165,7 +188,14 @@ export default function SalonModal() {
                 setSelectedService(null);
                 break;
             case STEPS.SELECT_DATETIME:
-                setCurrentStep(STEPS.SELECT_SERVICE);
+                // In fast booking mode, back goes to salon info (skip provider/service steps)
+                if (fastBooking) {
+                    setCurrentStep(STEPS.SALON_INFO);
+                    setSelectedProvider(null);
+                    setSelectedService(null);
+                } else {
+                    setCurrentStep(STEPS.SELECT_SERVICE);
+                }
                 setSelectedDate(null);
                 setSelectedTime(null);
                 setAvailableSlots([]);
@@ -599,6 +629,16 @@ export default function SalonModal() {
                     {/* STEP: Select Date & Time */}
                     {currentStep === STEPS.SELECT_DATETIME && selectedProvider && selectedService && (
                         <div className="p-6">
+                            {/* Fast booking banner */}
+                            {fastBooking && (
+                                <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2">
+                                    <span className="text-amber-600 text-lg">⚡</span>
+                                    <div>
+                                        <p className="text-sm font-semibold text-amber-800">Gyors foglalás</p>
+                                        <p className="text-xs text-amber-600">Szolgáltató és szolgáltatás automatikusan kiválasztva. Válassz új időpontot!</p>
+                                    </div>
+                                </div>
+                            )}
                             {/* Selected info */}
                             <div className="flex items-center gap-3 mb-6 p-3 bg-indigo-50 rounded-xl">
                                 <div className="w-10 h-10 rounded-full bg-indigo-200 flex items-center justify-center font-bold text-indigo-700 overflow-hidden">

@@ -1,3 +1,4 @@
+import React from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -28,6 +29,11 @@ export const MARKER_ICON_2X_RED_URL = markerIcon2xRed;
 const MAPTILER_KEY = 'aujVd9Kfe6UMcgbKOJkK';
 export const TILE_URL = `https://api.maptiler.com/maps/streets-v4/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`;
 
+// Memoized TileLayer — never re-mounts on parent re-renders
+const MemoTileLayer = React.memo(function MemoTileLayer() {
+    return <TileLayer url={TILE_URL} />;
+});
+
 /**
  * Shared base map component.
  *
@@ -40,7 +46,7 @@ export const TILE_URL = `https://api.maptiler.com/maps/streets-v4/{z}/{x}/{y}.pn
  *   attributionControl – boolean       (default: false)
  *   children           – rendered inside MapContainer
  */
-export default function BaseMap({
+const BaseMap = React.memo(function BaseMap({
     center,
     zoom,
     height = '500px',
@@ -59,9 +65,11 @@ export default function BaseMap({
                 attributionControl={attributionControl}
                 style={{ height: '100%', width: '100%' }}
             >
-                <TileLayer url={TILE_URL} />
+                <MemoTileLayer />
                 {children}
             </MapContainer>
         </div>
     );
-}
+});
+
+export default BaseMap;

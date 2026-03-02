@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -64,7 +64,7 @@ function FitBounds({ salons }) {
     return null;
 }
 
-export default function SalonMap({ salons, userLocation }) {
+function SalonMap({ salons, userLocation }) {
     const navigate = useNavigate();
 
     // Filter salons that have valid coordinates
@@ -80,11 +80,24 @@ export default function SalonMap({ salons, userLocation }) {
         [salons]
     );
 
-    const mapCenter = userLocation
-        ? [userLocation.latitude, userLocation.longitude]
-        : DEFAULT_CENTER;
+    // Memoize map center and zoom to avoid unnecessary recalculations
+    const mapCenter = useMemo(
+        () => userLocation
+            ? [userLocation.latitude, userLocation.longitude]
+            : DEFAULT_CENTER,
+        [userLocation]
+    );
 
-    const mapZoom = userLocation ? USER_ZOOM : DEFAULT_ZOOM;
+    const mapZoom = useMemo(
+        () => userLocation ? USER_ZOOM : DEFAULT_ZOOM,
+        [userLocation]
+    );
+
+    // Stable callback for navigating to salon detail
+    const handleNavigateToSalon = useCallback(
+        (salonId) => navigate(`/dashboard/salon/${salonId}`),
+        [navigate]
+    );
 
     return (
         <BaseMap
@@ -186,7 +199,7 @@ export default function SalonMap({ salons, userLocation }) {
 
                                 {/* Open salon button */}
                                 <button
-                                    onClick={() => navigate(`/dashboard/salon/${salon.id}`)}
+                                    onClick={() => handleNavigateToSalon(salon.id)}
                                     className="mt-1 w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors"
                                 >
                                     Megnyitás
@@ -199,3 +212,5 @@ export default function SalonMap({ salons, userLocation }) {
         </BaseMap>
     );
 }
+
+export default React.memo(SalonMap);

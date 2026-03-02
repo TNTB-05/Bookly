@@ -661,6 +661,14 @@ router.get('/visited-salons', AuthMiddleware, async (req, res) => {
 router.get('/appointments', AuthMiddleware, async (req, res) => {
     try {
         const userId = req.user.userId;
+
+        // Safety layer: auto-complete past-due appointments for this user
+        await pool.query(
+            `UPDATE appointments SET status = 'completed'
+             WHERE user_id = ? AND status = 'scheduled' AND appointment_end < NOW()`,
+            [userId]
+        );
+
         const appointments = await getUserAppointments(userId);
         
         res.status(200).json({

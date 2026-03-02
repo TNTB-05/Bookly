@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { searchSalons, getSuggestions } from '../../../../services/searchService';
 import { useDebounce } from '../../../../hooks/useDebounce';
 import { useAddressAutocomplete, formatSuggestion } from '../../../../hooks/useAddressAutocomplete';
@@ -210,6 +210,12 @@ export default function OverviewTab({
         clearAddressSuggestions();
     }
 
+    // Derived: show only search results on map when search is active, otherwise all salons
+    const displayedMapSalons = useMemo(
+        () => searchActive && searchResults.length > 0 ? searchResults : mapSalons,
+        [searchActive, searchResults, mapSalons]
+    );
+
     // Handle location input change — trigger address autocomplete
     function handleLocationInputChange(e) {
         const value = e.target.value;
@@ -398,26 +404,32 @@ export default function OverviewTab({
                         </div>
                     </div>
 
+                    {/* Keresési eredmények heading - between search and map */}
+                    {searchActive && (
+                        <div className="max-w-7xl mx-auto mt-8 px-4 sm:px-6 lg:px-8">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-dark-blue">Keresési eredmények</h2>
+                                    <p className="text-gray-600 mt-1">{searchResults.length} találat</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Map Section */}
-                    <div className="max-w-7xl mx-auto mt-8 px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-7xl mx-auto mt-6 px-4 sm:px-6 lg:px-8">
                         {mapLoading ? (
                             <div className="h-125 rounded-2xl animate-pulse bg-gray-200" />
                         ) : (
-                            <SalonMap salons={mapSalons} userLocation={userLocation} />
+                            <SalonMap salons={displayedMapSalons} userLocation={userLocation} />
                         )}
                     </div>
                 </div>
             </div>
 
-            {/* Keresési eredmények - Show when search is active */}
+            {/* Keresési eredmények cards - Show when search is active */}
             {searchActive && (
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h2 className="text-2xl font-bold text-dark-blue">Keresési eredmények</h2>
-                            <p className="text-gray-600 mt-1">{searchResults.length} találat</p>
-                        </div>
-                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {searchResults.map((salon) => (
                             <SalonCard
