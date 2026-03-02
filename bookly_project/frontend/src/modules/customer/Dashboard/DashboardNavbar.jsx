@@ -61,6 +61,13 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                                 setIsMobileMenuOpen={setIsMobileMenuOpen}
                             />
                             <NavItem
+                                tab="featured"
+                                label="Kiemelt szalonok"
+                                activeTab={activeTab}
+                                setActiveTab={setActiveTab}
+                                setIsMobileMenuOpen={setIsMobileMenuOpen}
+                            />
+                            <NavItem
                                 tab="appointments"
                                 label="Foglalásaim"
                                 activeTab={activeTab}
@@ -219,6 +226,15 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                     tab="overview"
                     label="Áttekintés"
                     icon="🏠"
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    setIsMobileMenuOpen={setIsMobileMenuOpen}
+                    isMobile={true}
+                />
+                <NavItem
+                    tab="featured"
+                    label="Kiemelt"
+                    icon="⭐"
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                     setIsMobileMenuOpen={setIsMobileMenuOpen}

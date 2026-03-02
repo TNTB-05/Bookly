@@ -215,7 +215,7 @@ export default function UserManagement() {
                 <select
                     value={searchField}
                     onChange={e => setSearchField(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 >
                     <option value="all">Minden mező</option>
                     <option value="name">Név</option>
@@ -227,12 +227,12 @@ export default function UserManagement() {
                     placeholder="Keresés..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="flex-1 min-w-[200px] px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 />
                 <select
                     value={statusFilter}
                     onChange={e => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
                 >
                     <option value="all">Minden státusz</option>
                     <option value="active">Aktív</option>
@@ -273,7 +273,17 @@ export default function UserManagement() {
                                     <td className="px-4 py-3 font-medium text-gray-900">
                                         <div className="flex items-center gap-2">
                                             {user.profile_picture_url ? (
-                                                <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${user.profile_picture_url}`} className="w-7 h-7 rounded-full object-cover" />
+                                                <>
+                                                    <img
+                                                        src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${user.profile_picture_url.startsWith('/') ? '' : '/'}${user.profile_picture_url}`}
+                                                        alt={user.name || ''}
+                                                        className="w-7 h-7 rounded-full object-cover"
+                                                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                                    />
+                                                    <div className="w-7 h-7 rounded-full bg-gray-200 items-center justify-center text-xs font-bold text-gray-500" style={{ display: 'none' }}>
+                                                        {user.name?.charAt(0)?.toUpperCase()}
+                                                    </div>
+                                                </>
                                             ) : (
                                                 <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">
                                                     {user.name?.charAt(0)?.toUpperCase()}
@@ -282,7 +292,7 @@ export default function UserManagement() {
                                             {user.name}
                                         </div>
                                     </td>
-                                    <td className="px-4 py-3 text-gray-600">{user.email}</td>
+                                    <td className="px-4 py-3 text-gray-600">{user.email || '—'}</td>
                                     <td className="px-4 py-3 text-gray-600">{user.phone || '—'}</td>
                                     <td className="px-4 py-3 text-gray-600">{user.role}</td>
                                     <td className="px-4 py-3">{statusBadge(user.status)}</td>
@@ -461,7 +471,7 @@ export default function UserManagement() {
                             value={deleteReason}
                             onChange={e => setDeleteReason(e.target.value)}
                             placeholder="Törlés oka (kötelező)..."
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500 resize-none"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500 resize-none"
                             rows={3}
                             autoFocus
                         />

@@ -14,9 +14,6 @@ import StorefrontIcon from '../../icons/StorefrontIcon';
 import CalendarIcon from '../../icons/CalendarIcon';
 import BanknoteIcon from '../../icons/BanknoteIcon';
 import UserPlusIcon from '../../icons/UserPlusIcon';
-import OverviewIcon from '../../icons/OverviewIcon';
-import StarOutlineIcon from '../../icons/StarOutlineIcon';
-import DocumentIcon from '../../icons/DocumentIcon';
 import ShieldCheckIcon from '../../icons/ShieldCheckIcon';
 import LogoutIcon from '../../icons/LogoutIcon';
 import StarFilledIcon from '../../icons/StarFilledIcon';
@@ -49,17 +46,16 @@ function StatCard({ title, value, icon, color = 'blue', subtitle }) {
 }
 
 // Sidebar navigation item
-function NavItem({ icon, label, active, onClick }) {
+function NavItem({ label, active, onClick }) {
     return (
         <button
             onClick={onClick}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150
+            className={`w-full flex items-center px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-150
                 ${active
-                    ? 'bg-amber-500/10 text-amber-600 border-l-[3px] border-amber-500 pl-[9px]'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-l-[3px] border-transparent pl-[9px]'
+                    ? 'bg-white/10 text-amber-400 border-l-[3px] border-amber-500 pl-[13px]'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-200 border-l-[3px] border-transparent pl-[13px]'
                 }`}
         >
-            {icon && <span className="w-5 h-5 shrink-0 flex items-center justify-center">{icon}</span>}
             {label}
         </button>
     );
@@ -138,9 +134,6 @@ export default function AdminDashboard() {
         calendar: <CalendarIcon className="w-5 h-5 text-white" />,
         revenue: <BanknoteIcon className="w-5 h-5 text-white" />,
         newUsers: <UserPlusIcon className="w-5 h-5 text-white" />,
-        dashboard: <OverviewIcon className="w-5 h-5" />,
-        star: <StarOutlineIcon className="w-5 h-5" />,
-        logs: <DocumentIcon className="w-5 h-5" />,
     };
 
     // Loading skeleton
@@ -156,67 +149,56 @@ export default function AdminDashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex">
+        <div className="min-h-screen bg-gray-200 flex">
             {/* Sidebar */}
-            <aside className="w-64 bg-white border-r-2 border-gray-200 shadow-sm flex flex-col fixed h-full">
+            <aside className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col fixed h-full">
                 {/* Logo area */}
-                <div className="p-4 border-b border-gray-200">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
-                            <ShieldCheckIcon className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                            <p className="font-bold text-gray-900 text-sm">Bookly Admin</p>
-                        </div>
+                <div className="px-5 py-[14px] border-b border-gray-800 flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shrink-0">
+                        <ShieldCheckIcon className="w-4 h-4 text-white" />
                     </div>
+                    <span className="font-semibold text-white text-sm tracking-wide">Bookly Admin</span>
                 </div>
 
                 {/* Navigation */}
                 <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
                     <NavItem
-                        icon={<OverviewIcon className="w-5 h-5" />}
                         label="Áttekintés"
                         active={activeSection === 'dashboard'}
                         onClick={() => setActiveSection('dashboard')}
                     />
 
-                    <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Kezelés</p>
+                    <p className="px-4 pt-5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-600">Kezelés</p>
 
                     <NavItem
-                        icon={<UsersIcon className="w-5 h-5" />}
                         label="Felhasználók"
                         active={activeSection === 'users'}
                         onClick={() => setActiveSection('users')}
                     />
                     <NavItem
-                        icon={<BriefcaseIcon className="w-5 h-5" />}
                         label="Szolgáltatók"
                         active={activeSection === 'providers'}
                         onClick={() => setActiveSection('providers')}
                     />
                     <NavItem
-                        icon={<StorefrontIcon className="w-5 h-5" />}
                         label="Szalonok"
                         active={activeSection === 'salons'}
                         onClick={() => setActiveSection('salons')}
                     />
                     <NavItem
-                        icon={<CalendarIcon className="w-5 h-5" />}
                         label="Foglalások"
                         active={activeSection === 'appointments'}
                         onClick={() => setActiveSection('appointments')}
                     />
                     <NavItem
-                        icon={<StarOutlineIcon className="w-5 h-5" />}
                         label="Értékelések"
                         active={activeSection === 'ratings'}
                         onClick={() => setActiveSection('ratings')}
                     />
 
-                    <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Rendszer</p>
+                    <p className="px-4 pt-5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-600">Rendszer</p>
 
                     <NavItem
-                        icon={<DocumentIcon className="w-5 h-5" />}
                         label="Naplók"
                         active={activeSection === 'logs'}
                         onClick={() => setActiveSection('logs')}
@@ -224,23 +206,16 @@ export default function AdminDashboard() {
                 </nav>
 
                 {/* User/Logout */}
-                <div className="p-3 border-t border-gray-200">
-                    <div className="flex items-center gap-3 px-3 py-2 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
-                            <span className="text-amber-700 font-bold text-sm">
-                                {user?.name?.charAt(0)?.toUpperCase() || 'A'}
-                            </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{user?.name || 'Admin'}</p>
-                            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-                        </div>
+                <div className="p-3 border-t border-gray-800">
+                    <div className="px-4 py-2 mb-2">
+                        <p className="text-sm font-medium text-white truncate">{user?.name || 'Admin'}</p>
+                        <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                     </div>
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                        className="w-full flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"
                     >
-                        <LogoutIcon className="w-5 h-5" />
+                        <LogoutIcon className="w-4 h-4" />
                         Kijelentkezés
                     </button>
                 </div>

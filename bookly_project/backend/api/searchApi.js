@@ -303,13 +303,6 @@ router.get('/by-name', async (req, res) => {
     try {
         const { query, service_type } = req.query;
 
-        if (!query && !service_type) {
-            return res.status(400).json({
-                success: false,
-                message: 'query vagy service_type paraméter szükséges'
-            });
-        }
-
         // Build WHERE conditions dynamically
         let whereConditions = ['s.status = ?'];
         let queryParams = ['open'];
@@ -326,6 +319,7 @@ router.get('/by-name', async (req, res) => {
 
         const salonQuery = `
             SELECT s.id, s.name, s.address, s.type, s.description, s.banner_color, s.logo_url, s.banner_image_url,
+                   s.latitude, s.longitude, s.phone, s.email, s.opening_hours, s.closing_hours,
                    COALESCE(AVG(r.salon_rating), 0) as average_rating,
                    COUNT(DISTINCT r.id) as rating_count
             FROM salons s

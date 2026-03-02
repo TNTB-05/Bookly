@@ -51,7 +51,7 @@ const SalonManagement = () => {
                 setBrandingColor(data.salon.banner_color || '#3B82F6');
                 // Set manager status from the API response
                 if (data.provider && data.provider.isManager !== undefined) {
-                    setIsManager(data.provider.isManager);
+                    setIsManager(!!data.provider.isManager);
                 }
             } else {
                 setError(data.message);

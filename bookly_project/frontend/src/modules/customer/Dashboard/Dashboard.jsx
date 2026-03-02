@@ -12,6 +12,7 @@ import OverviewTab from './tabs/OverviewTab';
 import AppointmentsTab from './tabs/AppointmentsTab';
 import SavedSalonsTab from './tabs/SavedSalonsTab';
 import ProfileTab from './tabs/ProfileTab';
+import FeaturedSalonsTab from './tabs/FeaturedSalonsTab';
 import MessagesTab from './tabs/MessagesTab';
 
 // Fő irányítópult komponens - kezeli a tabokat és az adatbetöltést
@@ -104,6 +105,7 @@ export default function Dashboard() {
             if (data.success) {
                 // Reload profile to get updated status
                 await loadUserProfile();
+                showToast('Fiókod sikeresen visszaállítva.', 'success');
                 setDaysRemaining(null);
                 setDeletionDate(null);
             } else {
@@ -218,6 +220,17 @@ export default function Dashboard() {
             )}
 
             {/* Főoldal */}
+            <main className={`${userProfile?.status === 'deleted' && daysRemaining !== null ? 'pt-28' : 'pt-16'} pb-24 md:pb-12`}>
+                <div className="animate-fade-in">
+                    {/* ÁTTEKINTÉS TAB */}
+                    {activeTab === 'overview' && (
+                        <OverviewTab
+                            setActiveTab={setActiveTab}
+                            serviceTypes={serviceTypes}
+                            savedSalonIds={savedSalonIds}
+                            toggleSaveSalon={toggleSaveSalon}
+                        />
+                    )}
             {activeTab === 'messages' ? (
                 <main className={`${userProfile?.status === 'deleted' && daysRemaining !== null ? 'pt-28' : 'pt-16'} pb-16 sm:pb-0 flex flex-col`} style={{ height: '100dvh' }}>
                     <MessagesTab onUnreadChange={setMessagesUnread} />
@@ -256,17 +269,27 @@ export default function Dashboard() {
                             />
                         )}
 
-                        {/* PROFIL TAB */}
-                        {activeTab === 'profile' && (
-                            <ProfileTab
-                                user={user}
-                                userProfile={userProfile}
-                                setUserProfile={setUserProfile}
-                            />
-                        )}
-                    </div>
-                </main>
-            )}
+                    {/* PROFIL TAB */}
+                    {activeTab === 'profile' && (
+                        <ProfileTab
+                            user={user}
+                            userProfile={userProfile}
+                            setUserProfile={setUserProfile}
+                        />
+                    )}
+
+                    {/* KIEMELT SZALONOK TAB */}
+                    {activeTab === 'featured' && (
+                        <FeaturedSalonsTab
+                            topRatedSalons={topRatedSalons}
+                            savedSalonIds={savedSalonIds}
+                            toggleSaveSalon={toggleSaveSalon}
+                            loadTopRatedSalons={loadTopRatedSalons}
+                            serviceTypes={serviceTypes}
+                        />
+                    )}
+                </div>
+            </main>
         </div>
     );
 }

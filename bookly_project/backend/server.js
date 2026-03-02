@@ -104,8 +104,12 @@ server.listen(port, ip, () => {
 });
 
 //!Adatbázis kapcsolat ellenőrzése
+const { startExpirationJob } = require('./services/appointmentExpirationService.js');
+
 pool.query('SELECT 1').then(() => {
     console.log('✓ Database connected');
+    // Start the appointment expiration heartbeat after DB is ready
+    startExpirationJob();
 }).catch(err => {
     console.error('✗ Database connection failed:', err.message);
     process.exit(1);

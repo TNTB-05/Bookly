@@ -219,6 +219,7 @@ async function getUserAppointments(userId) {
             a.comment,
             a.price,
             a.status,
+            a.deleted_reason,
             a.created_at,
             p.id as provider_id,
             p.name as provider_name,

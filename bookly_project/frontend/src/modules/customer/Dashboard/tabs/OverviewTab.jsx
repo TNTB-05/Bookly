@@ -1,14 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { searchSalons, getSuggestions } from '../../../../services/searchService';
 import { useDebounce } from '../../../../hooks/useDebounce';
+import { useAddressAutocomplete, formatSuggestion } from '../../../../hooks/useAddressAutocomplete';
 import { SkeletonCard, SkeletonBlock, SkeletonText } from '../../../../components/skeletons';
 
 // Ikonok
 import SearchIcon from '../../../../icons/SearchIcon';
 import LocationIcon from '../../../../icons/LocationIcon';
-
-import LeftArrowIcon from '../../../../icons/LeftArrowIcon';
-import RightArrowIcon from '../../../../icons/RightArrowIcon';
 import BuildingIcon from '../../../../icons/BuildingIcon';
 import CalendarSimpleIcon from '../../../../icons/CalendarSimpleIcon';
 import ClipboardCheckIcon from '../../../../icons/ClipboardCheckIcon';
@@ -16,17 +14,16 @@ import StarSmallIcon from '../../../../icons/StarSmallIcon';
 
 // Komponensek
 import SalonCard from '../SalonCard';
+import SalonMap from '../SalonMap';
 import SearchSuggestions from './SearchSuggestions';
 import { useNotification } from '../../../../components/NotificationContext';
 
-// Áttekintés tab - keresés, kiemelt szalonok és szolgáltatások
+// Áttekintés tab - keresés, térkép és szolgáltatások
 export default function OverviewTab({
     setActiveTab,
     serviceTypes,
-    topRatedSalons,
     savedSalonIds,
-    toggleSaveSalon,
-    loadTopRatedSalons
+    toggleSaveSalon
 }) {
     const { showToast } = useNotification();
     // UseState változók a kereséshez
@@ -40,13 +37,57 @@ export default function OverviewTab({
     const [showAllFeatured, setShowAllFeatured] = useState(false);
     const [salonLimit, setSalonLimit] = useState(12);
     const [recentReviews, setRecentReviews] = useState([]);
-    const carouselRef = useRef(null);
+
+    // Map state
+    const [mapSalons, setMapSalons] = useState([]);
+    const [mapLoading, setMapLoading] = useState(false);
     
     // Suggestions state
     const [suggestions, setSuggestions] = useState({ salons: [], serviceTypes: [] });
     const [showSuggestions, setShowSuggestions] = useState(false);
     const searchContainerRef = useRef(null);
+    const locationContainerRef = useRef(null);
+
+    // Address autocomplete for the location input (shared hook)
+    const {
+        suggestions: addressSuggestions,
+        showSuggestions: showAddressSuggestions,
+        setShowSuggestions: setShowAddressSuggestions,
+        loading: addressLoading,
+        debouncedFetch: debouncedAddressFetch,
+        clearSuggestions: clearAddressSuggestions,
+    } = useAddressAutocomplete({ debounceMs: 400, minLength: 3 });
     
+    // Reactive map data: fetch salons whenever service filter changes
+    useEffect(() => {
+        async function fetchMapSalons() {
+            setMapLoading(true);
+            try {
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                const params = new URLSearchParams();
+                if (serviceFilter !== 'all') {
+                    params.append('service_type', serviceFilter);
+                }
+                const url = params.toString()
+                    ? `${apiUrl}/api/search/by-name?${params.toString()}`
+                    : `${apiUrl}/api/search/by-name`;
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.success) {
+                    setMapSalons(data.salons);
+                } else {
+                    setMapSalons([]);
+                }
+            } catch (error) {
+                console.error('Hiba a térkép szalonok betöltésekor:', error);
+                setMapSalons([]);
+            } finally {
+                setMapLoading(false);
+            }
+        }
+        fetchMapSalons();
+    }, [serviceFilter]);
+
     // Legújabb értékelések betöltése
     useEffect(() => {
         async function fetchRecentReviews() {
@@ -164,32 +205,6 @@ export default function OverviewTab({
         );
     }
 
-    // === KARUSSZEL ÉS LAPOZÁS FUNKCIÓK ===
-
-    /**
-     * Karusszel görgetése balra vagy jobbra
-     * @param {string} direction - Görgetés iránya ('left' vagy 'right')
-     */
-    function scrollCarousel(direction) {
-        if (carouselRef.current) {
-            const cardWidth = 320; // w-80 = 320px
-            const gap = 24; // gap-6 = 24px
-            const scrollAmount = cardWidth + gap;
-            const newScrollPosition = carouselRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
-            carouselRef.current.scrollTo({
-                left: newScrollPosition,
-                behavior: 'smooth'
-            });
-        }
-    }
-
-    // További szalonok betöltése
-    function handleLoadMore() {
-        const newLimit = salonLimit + 12;
-        setSalonLimit(newLimit);
-        loadTopRatedSalons(newLimit);
-    }
-
     // Keresés visszaállítása alapállapotba
     function resetSearch() {
         setSearchActive(false);
@@ -199,7 +214,43 @@ export default function OverviewTab({
         setSearchResults([]);
         setSearchLoading(false);
         setUserLocation(null);
+        clearAddressSuggestions();
     }
+
+    // Derived: show only search results on map when search is active, otherwise all salons
+    const displayedMapSalons = useMemo(
+        () => searchActive && searchResults.length > 0 ? searchResults : mapSalons,
+        [searchActive, searchResults, mapSalons]
+    );
+
+    // Handle location input change — trigger address autocomplete
+    function handleLocationInputChange(e) {
+        const value = e.target.value;
+        setLocationSearch(value);
+        if (userLocation) {
+            setUserLocation(null);
+        }
+        debouncedAddressFetch(value);
+    }
+
+    // Handle selecting an address suggestion
+    function handleSelectAddress(suggestion) {
+        const { shortAddress, lat, lon } = formatSuggestion(suggestion);
+        setLocationSearch(shortAddress);
+        setUserLocation({ latitude: parseFloat(lat), longitude: parseFloat(lon) });
+        clearAddressSuggestions();
+    }
+
+    // Close address suggestions on outside click
+    useEffect(() => {
+        function handleClickOutside(e) {
+            if (locationContainerRef.current && !locationContainerRef.current.contains(e.target)) {
+                setShowAddressSuggestions(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     return (
         <div>
@@ -215,14 +266,14 @@ export default function OverviewTab({
                         </p>
 
                         {/* Enhanced Search Bar */}
-                        <div className="max-w-4xl mx-auto space-y-3">
+                        <div className="max-w-4xl mx-auto space-y-3 relative z-[1000]">
                             {/* First Line: Search Bar + Service Filter */}
                             <div className="flex flex-col sm:flex-row gap-3">
                                 {/* Search Bar with Suggestions */}
                                 <div ref={searchContainerRef} className="flex-1 relative">
                                     <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 overflow-hidden">
-                                        <div className="pl-4">
-                                            <SearchIcon />
+                                        <div className="pl-4 shrink-0">
+                                            <SearchIcon className="w-5 h-5 text-gray-400" />
                                         </div>
                                         <input
                                             type="text"
@@ -259,7 +310,7 @@ export default function OverviewTab({
                                     <select
                                         value={serviceFilter}
                                         onChange={(e) => setServiceFilter(e.target.value)}
-                                        className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
+                                        className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm rounded-xl shadow-md border-l-4 border-dark-blue text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
                                     >
                                         <option value="all">Összes szolgáltatás</option>
                                         {serviceTypes.map((type) => (
@@ -271,24 +322,58 @@ export default function OverviewTab({
 
                             {/* Second Line: Location + Jelenlegi helyzetem + Keresés */}
                             <div className="flex flex-col sm:flex-row gap-3">
-                                {/* Location Input */}
-                                <div className="flex-1 flex items-center bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 overflow-hidden">
-                                    <div className="pl-4 text-gray-500">
-                                        <LocationIcon />
+                                {/* Location Input with Address Autocomplete */}
+                                <div ref={locationContainerRef} className="flex-1 relative">
+                                    <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 overflow-hidden">
+                                        <div className="pl-4 text-gray-500 shrink-0">
+                                            <LocationIcon className="w-5 h-5 text-gray-400" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            placeholder="Helyszín (pl. Budapest, Kossuth utca 12)"
+                                            value={locationSearch}
+                                            onChange={handleLocationInputChange}
+                                            onFocus={() => {
+                                                if (addressSuggestions.length > 0) setShowAddressSuggestions(true);
+                                            }}
+                                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                            className="flex-1 px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none bg-transparent"
+                                        />
+                                        {addressLoading && (
+                                            <div className="pr-3">
+                                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+                                            </div>
+                                        )}
                                     </div>
-                                    <input
-                                        type="text"
-                                        placeholder="Helyszín (pl. Budapest, sample street 12, 1111)"
-                                        value={locationSearch}
-                                        onChange={(e) => {
-                                            setLocationSearch(e.target.value);
-                                            if (userLocation) {
-                                                setUserLocation(null);
-                                            }
-                                        }}
-                                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                                        className="flex-1 px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none bg-transparent"
-                                    />
+
+                                    {/* Address Suggestions Dropdown */}
+                                    {showAddressSuggestions && addressSuggestions.length > 0 && (
+                                        <div className="absolute z-50 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto">
+                                            {addressSuggestions.map((suggestion, index) => {
+                                                const addr = suggestion.address;
+                                                const city = addr?.city || addr?.town || addr?.village || '';
+                                                const street = addr?.road || '';
+                                                const houseNumber = addr?.house_number || '';
+                                                const postalCode = addr?.postcode || '';
+
+                                                return (
+                                                    <button
+                                                        key={index}
+                                                        type="button"
+                                                        onClick={() => handleSelectAddress(suggestion)}
+                                                        className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0"
+                                                    >
+                                                        <p className="text-sm font-medium text-gray-900">
+                                                            {[city, street && (houseNumber ? `${street} ${houseNumber}` : street), postalCode].filter(Boolean).join(', ') || suggestion.display_name}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 truncate mt-0.5">
+                                                            {suggestion.display_name}
+                                                        </p>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Jelenlegi helyzetem Button */}
@@ -318,12 +403,38 @@ export default function OverviewTab({
                                     ✕ Keresés törlése
                                 </button>
                             )}
+
+                            {/* Helper text */}
+                            <p className="text-sm text-gray-500 text-center mt-1">
+                                A térképen a kiválasztott szolgáltatás szalonjai jelennek meg.
+                            </p>
                         </div>
+                    </div>
+
+                    {/* Keresési eredmények heading - between search and map */}
+                    {searchActive && (
+                        <div className="max-w-7xl mx-auto mt-8 px-4 sm:px-6 lg:px-8">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-dark-blue">Keresési eredmények</h2>
+                                    <p className="text-gray-600 mt-1">{searchResults.length} találat</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Map Section */}
+                    <div className="max-w-7xl mx-auto mt-6 px-4 sm:px-6 lg:px-8">
+                        {mapLoading ? (
+                            <div className="h-125 rounded-2xl animate-pulse bg-gray-200" />
+                        ) : (
+                            <SalonMap salons={displayedMapSalons} userLocation={userLocation} />
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* Keresési eredmények - Show when search is active */}
+            {/* Keresési eredmények cards - Show when search is active */}
             {searchActive && (
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                     <div className="flex items-center justify-between mb-8">
@@ -372,99 +483,6 @@ export default function OverviewTab({
                     )}
                 </div>
             )}
-
-            {/* Kiemelt szalonok - Always visible */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h2 className="text-2xl font-bold text-dark-blue">Kiemelt szalonok</h2>
-                        <p className="text-gray-600 mt-1">A legjobban értékelt partnereink</p>
-                    </div>
-                    <button
-                        onClick={() => setShowAllFeatured(!showAllFeatured)}
-                        className="text-dark-blue font-medium hover:text-blue-800 flex items-center transition-colors"
-                    >
-                        {showAllFeatured ? 'Kevesebb mutatása' : 'Összes megtekintése'}
-                        <RightArrowIcon />
-                    </button>
-                </div>
-                
-                {!showAllFeatured ? (
-                    /* Carousel view */
-                    <div className="relative group">
-                        {/* Left Arrow */}
-                        <button
-                            onClick={() => scrollCarousel('left')}
-                            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
-                            aria-label="Scroll left"
-                        >
-                            <LeftArrowIcon />
-                        </button>
-
-                        {/* Right Arrow */}
-                        <button
-                            onClick={() => scrollCarousel('right')}
-                            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
-                            aria-label="Scroll right"
-                        >
-                            <RightArrowIcon/>
-                        </button>
-
-                        <div ref={carouselRef} className="overflow-x-auto pb-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                            <div className="flex gap-6" style={{ minWidth: 'min-content' }}>
-                                {topRatedSalons.map((salon) => (
-                                    <div key={salon.id} className="shrink-0 w-80">
-                                        <SalonCard
-                                            salon={salon}
-                                            savedSalonIds={savedSalonIds}
-                                            toggleSaveSalon={toggleSaveSalon}
-                                            showDistance={false}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    /* Grid view */
-                    <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {topRatedSalons.map((salon) => (
-                                <SalonCard
-                                    key={salon.id}
-                                    salon={salon}
-                                    savedSalonIds={savedSalonIds}
-                                    toggleSaveSalon={toggleSaveSalon}
-                                    showDistance={false}
-                                />
-                            ))}
-                        </div>
-                        {topRatedSalons.length >= salonLimit && (
-                            <div className="mt-8 text-center">
-                                <button
-                                    onClick={handleLoadMore}
-                                    className="px-8 py-3 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors shadow-lg hover:shadow-xl"
-                                >
-                                    Még több mutatása
-                                </button>
-                            </div>
-                        )}
-                    </>
-                )}
-                
-                {topRatedSalons.length === 0 && (
-                    <div className="flex gap-6 overflow-hidden">
-                        {Array(3).fill(0).map((_, i) => (
-                            <SkeletonCard key={i} className="p-0 overflow-hidden shrink-0 w-80">
-                                <SkeletonBlock className="h-36 w-full rounded-none rounded-t-xl" />
-                                <div className="p-4 space-y-2">
-                                    <SkeletonText lines={2} />
-                                </div>
-                            </SkeletonCard>
-                        ))}
-                    </div>
-                )}
-            </div>
 
             {/* Hogyan működik? */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

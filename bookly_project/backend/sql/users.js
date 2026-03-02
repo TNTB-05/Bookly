@@ -52,10 +52,11 @@ const checkEmailExists = async (email, excludeUserId) => {
 
 const deleteUser = async (userId) => {
     // Soft delete: anonymize personal data but keep email + password for 30-day restoration login
+    // Name is set to 'Törölt felhasználó' so ratings remain visible with an anonymous display name
     const query = `
         UPDATE users 
         SET status = 'deleted',
-            name = NULL,
+            name = 'Törölt felhasználó',
             phone = NULL,
             address = NULL,
             deleted_at = NOW()

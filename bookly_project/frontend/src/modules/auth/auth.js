@@ -307,6 +307,11 @@ export const authApi ={
         body: JSON.stringify(body),
         ...options
     }),
+    patch: (url , body, options={})=> authFetch(url,{
+        method: 'PATCH',
+        body: JSON.stringify(body),
+        ...options
+    }),
     delete: (url , options={})=> authFetch(url,{
         method: 'DELETE',
         ...options

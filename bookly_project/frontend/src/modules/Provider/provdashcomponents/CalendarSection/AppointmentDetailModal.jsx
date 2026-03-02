@@ -24,7 +24,8 @@ const AppointmentDetailModal = ({ isOpen, onClose, appointment, deleteLoading, o
         switch (status) {
             case 'scheduled': return 'Foglalt';
             case 'completed': return 'Teljesítve';
-            case 'canceled': return 'Törölve';
+            case 'canceled': return 'Lemondva';
+            case 'deleted': return 'Törölve';
             case 'no_show': return 'Nem jelent meg';
             default: return status;
         }

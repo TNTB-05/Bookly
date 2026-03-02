@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../../auth/auth';
@@ -52,6 +52,9 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
     const [avatarError, setAvatarError] = useState(null);
     const [avatarSuccess, setAvatarSuccess] = useState(null);
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+    // Snapshot of original profile data for dirty-state detection
+    const originalProfileData = useRef(null);
 
     // Profilkép feltöltés
     async function handleAvatarUpload(e) {
@@ -143,10 +146,37 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
         });
         setProfileError(null);
         setShowProfileModal(true);
+
+        // Save snapshot for dirty-state comparison
+        originalProfileData.current = {
+            name: userProfile?.name || '',
+            email: userProfile?.email || '',
+            phone: userProfile?.phone || '',
+            postalCode,
+            city,
+            street
+        };
     }
 
     // Profil mentése
     async function handleProfileSave() {
+        // Dirty-state check — skip API call if nothing changed
+        if (originalProfileData.current) {
+            const o = originalProfileData.current;
+            const c = profileFormData;
+            const isUnchanged =
+                o.name === c.name.trim() &&
+                o.email === c.email.trim() &&
+                (o.phone || '') === (c.phone?.trim() || '') &&
+                (o.postalCode || '') === (c.postalCode?.trim() || '') &&
+                (o.city || '') === (c.city?.trim() || '') &&
+                (o.street || '') === (c.street?.trim() || '');
+            if (isUnchanged) {
+                showToast('Nem történt módosítás.', 'info');
+                setShowProfileModal(false);
+                return;
+            }
+        }
         if (!profileFormData.name.trim()) {
             setProfileError('A név megadása kötelező');
             return;
@@ -228,11 +258,11 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
                 setShowProfileModal(false);
                 showToast('Adatok sikeresen frissítve.', 'success');
             } else {
-                setProfileError(data.message || 'Hiba történt a mentés során');
+                showToast(data.message || 'Hiba történt a mentés során', 'error');
             }
         } catch (error) {
             console.error('Hiba a profil mentésekor:', error);
-            setProfileError('Hiba történt a mentés során');
+            showToast('Hiba történt a mentés során', 'error');
         } finally {
             setProfileSaving(false);
         }
@@ -288,11 +318,11 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
                     setPasswordSuccess(null);
                 }, 2000);
             } else {
-                setPasswordError(data.message || 'Hiba történt a jelszó módosítása során');
+                showToast(data.message || 'Hiba történt a jelszó módosítása során', 'error');
             }
         } catch (error) {
             console.error('Hiba a jelszó módosításakor:', error);
-            setPasswordError('Hiba történt a jelszó módosítása során');
+            showToast('Hiba történt a jelszó módosítása során', 'error');
         } finally {
             setPasswordSaving(false);
         }
@@ -328,14 +358,15 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
             const data = await response.json();
 
             if (data.success) {
+                showToast('A fiókod törlésre lett ütemezve. 30 napon belül véglegesen törlődik.', 'success');
                 localStorage.removeItem('accessToken');
                 navigate('/');
             } else {
-                setDeleteError(data.message || 'Hiba történt a fiók törlése során');
+                showToast(data.message || 'Hiba történt a fiók törlése során', 'error');
             }
         } catch (error) {
             console.error('Hiba a fiók törlésekor:', error);
-            setDeleteError('Hiba történt a fiók törlése során');
+            showToast('Hiba történt a fiók törlése során', 'error');
         } finally {
             setDeleteLoading(false);
         }

@@ -21,13 +21,14 @@ const { calculateDistance } = require('../services/locationService');
 const { upload, processAndSaveImage, deleteOldImage } = require('../middleware/uploadMiddleware');
 const { sendAppointmentConfirmation, sendPasswordChangeConfirmation, sendAppointmentCancellation } = require('../services/emailService');
 
+// Utazási idő szorzó (perc/km) – ez az egyetlen helyen konfigurálható érték
+const TRAVEL_TIME_MULTIPLIER_MIN_PER_KM = 2;
+
 // Utazási idő számítása távolság alapján (percben)
+// Képlet: travelTime = distanceKm * TRAVEL_TIME_MULTIPLIER_MIN_PER_KM
+// Minimum 5 perc biztosítva a nagyon rövid távolságokra is
 function calculateTravelBuffer(distanceKm) {
-    if (distanceKm < 1) return 5;        // < 1 km: 5 perc (gyaloglás)
-    if (distanceKm < 5) return 15;       // 1-5 km: 15 perc (rövid utazás)
-    if (distanceKm < 15) return 30;      // 5-15 km: 30 perc (városi utazás)
-    if (distanceKm < 30) return 45;      // 15-30 km: 45 perc (külvárosi utazás)
-    return 60;                            // > 30 km: 60 perc (hosszabb út)
+    return Math.max(5, Math.round(distanceKm * TRAVEL_TIME_MULTIPLIER_MIN_PER_KM));
 }
 
 // Get current user's profile
@@ -660,6 +661,14 @@ router.get('/visited-salons', AuthMiddleware, async (req, res) => {
 router.get('/appointments', AuthMiddleware, async (req, res) => {
     try {
         const userId = req.user.userId;
+
+        // Safety layer: auto-complete past-due appointments for this user
+        await pool.query(
+            `UPDATE appointments SET status = 'completed'
+             WHERE user_id = ? AND status = 'scheduled' AND appointment_end < NOW()`,
+            [userId]
+        );
+
         const appointments = await getUserAppointments(userId);
         
         res.status(200).json({
@@ -794,7 +803,12 @@ router.post('/appointments', AuthMiddleware, async (req, res) => {
                 const existingStartWithBuffer = new Date(existingStart.getTime() - bufferMinutes * 60000);
                 const existingEndWithBuffer = new Date(existingEnd.getTime() + bufferMinutes * 60000);
 
-                // Check for overlap with buffer
+                // Direct overlap: times physically overlap (no buffer needed)
+                const hasDirectConflict = (
+                    appointmentStart < existingEnd && appointmentEnd > existingStart
+                );
+
+                // Buffer overlap: conflict only when travel time is accounted for
                 const hasConflict = (
                     (appointmentStart < existingEndWithBuffer && appointmentEnd > existingStart) ||
                     (appointmentStart < existingEnd && appointmentEnd > existingStartWithBuffer)
@@ -802,12 +816,19 @@ router.post('/appointments', AuthMiddleware, async (req, res) => {
 
                 if (hasConflict) {
                     await connection.rollback();
-                    
-                    let message = `Önnek már van foglalása erre az időpontra (${existingAppt.salon_name}).`;
-                    if (bufferMinutes > 0) {
-                        message = `A foglalások között ${bufferMinutes} perc utazási idő szükséges (${existingAppt.salon_name}). Kérjük, válasszon másik időpontot.`;
+
+                    // Format existing appointment time as HH:MM–HH:MM for the message
+                    const fmtOpts = { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Budapest' };
+                    const startFmt = existingStart.toLocaleTimeString('hu-HU', fmtOpts);
+                    const endFmt   = existingEnd.toLocaleTimeString('hu-HU', fmtOpts);
+
+                    let message;
+                    if (hasDirectConflict) {
+                        message = `Ebben az időpontban már egy másik szalonban van foglalása (${startFmt}–${endFmt}), ${existingAppt.salon_name}. Kérjük válasszon másik időpontot.`;
+                    } else {
+                        message = `Az utazási idő miatt (${bufferMinutes} perc) nem lehetséges. Kérjük válasszon másik időpontot.`;
                     }
-                    
+
                     return res.status(409).json({
                         success: false,
                         message
@@ -909,6 +930,43 @@ router.post('/appointments', AuthMiddleware, async (req, res) => {
 });
 
 // Cancel user's appointment
+// Update appointment comment (only allowed for scheduled appointments)
+router.patch('/appointments/:id/comment', AuthMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const appointmentId = parseInt(req.params.id);
+        const { comment } = req.body;
+
+        if (!appointmentId || isNaN(appointmentId)) {
+            return res.status(400).json({ success: false, message: 'Érvénytelen foglalás azonosító' });
+        }
+
+        const appointment = await getAppointmentById(appointmentId);
+
+        if (!appointment) {
+            return res.status(404).json({ success: false, message: 'A foglalás nem található' });
+        }
+
+        if (appointment.user_id !== userId) {
+            return res.status(403).json({ success: false, message: 'Nincs jogosultságod módosítani ezt a foglalást' });
+        }
+
+        if (appointment.status !== 'scheduled') {
+            return res.status(400).json({ success: false, message: 'Csak várható foglalás megjegyzése szerkeszthető' });
+        }
+
+        await pool.execute(
+            'UPDATE appointments SET comment = ? WHERE id = ?',
+            [comment?.trim() || null, appointmentId]
+        );
+
+        return res.status(200).json({ success: true, message: 'Megjegyzés frissítve' });
+    } catch (error) {
+        console.error('Update comment error:', error);
+        return res.status(500).json({ success: false, message: 'Hiba a megjegyzés frissítésekor' });
+    }
+});
+
 router.delete('/appointments/:id', AuthMiddleware, async (req, res) => {
     try {
         const userId = req.user.userId;
