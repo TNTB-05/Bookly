@@ -12,6 +12,7 @@ import OverviewTab from './tabs/OverviewTab';
 import AppointmentsTab from './tabs/AppointmentsTab';
 import SavedSalonsTab from './tabs/SavedSalonsTab';
 import ProfileTab from './tabs/ProfileTab';
+import MessagesTab from './tabs/MessagesTab';
 
 // Fő irányítópult komponens - kezeli a tabokat és az adatbetöltést
 export default function Dashboard() {
@@ -35,6 +36,7 @@ export default function Dashboard() {
     const [restoreLoading, setRestoreLoading] = useState(false);
     const [deletionDate, setDeletionDate] = useState(null);
     const [daysRemaining, setDaysRemaining] = useState(null);
+    const [messagesUnread, setMessagesUnread] = useState(0);
 
     // URL paraméter változás figyelése
     useEffect(() => {
@@ -192,7 +194,7 @@ export default function Dashboard() {
     return (
         <div className="min-h-screen bg-base-blue font-sans text-gray-900">
             {/* Navbar */}
-            <DashboardNavbar activeTab={activeTab} setActiveTab={setActiveTab} user={user} userProfile={userProfile} />
+            <DashboardNavbar activeTab={activeTab} setActiveTab={setActiveTab} user={user} userProfile={userProfile} messagesUnread={messagesUnread} />
             
             {/* Restoration Banner */}
             {userProfile?.status === 'deleted' && daysRemaining !== null && (
@@ -216,49 +218,55 @@ export default function Dashboard() {
             )}
 
             {/* Főoldal */}
-            <main className={`${userProfile?.status === 'deleted' && daysRemaining !== null ? 'pt-28' : 'pt-16'} pb-24 md:pb-12`}>
-                <div className="animate-fade-in">
-                    {/* ÁTTEKINTÉS TAB */}
-                    {activeTab === 'overview' && (
-                        <OverviewTab
-                            setActiveTab={setActiveTab}
-                            serviceTypes={serviceTypes}
-                            topRatedSalons={topRatedSalons}
-                            savedSalonIds={savedSalonIds}
-                            toggleSaveSalon={toggleSaveSalon}
-                            loadTopRatedSalons={loadTopRatedSalons}
-                        />
-                    )}
+            {activeTab === 'messages' ? (
+                <main className={`${userProfile?.status === 'deleted' && daysRemaining !== null ? 'pt-28' : 'pt-16'} pb-16 sm:pb-0 flex flex-col`} style={{ height: '100dvh' }}>
+                    <MessagesTab onUnreadChange={setMessagesUnread} />
+                </main>
+            ) : (
+                <main className={`${userProfile?.status === 'deleted' && daysRemaining !== null ? 'pt-28' : 'pt-16'} pb-24 md:pb-12`}>
+                    <div className="animate-fade-in">
+                        {/* ÁTTEKINTÉS TAB */}
+                        {activeTab === 'overview' && (
+                            <OverviewTab
+                                setActiveTab={setActiveTab}
+                                serviceTypes={serviceTypes}
+                                topRatedSalons={topRatedSalons}
+                                savedSalonIds={savedSalonIds}
+                                toggleSaveSalon={toggleSaveSalon}
+                                loadTopRatedSalons={loadTopRatedSalons}
+                            />
+                        )}
 
-                    {/* FOGLALÁSAIM TAB */}
-                    {activeTab === 'appointments' && (
-                        <AppointmentsTab
-                            user={user}
-                            setActiveTab={setActiveTab}
-                            loadTopRatedSalons={loadTopRatedSalons}
-                        />
-                    )}
+                        {/* FOGLALÁSAIM TAB */}
+                        {activeTab === 'appointments' && (
+                            <AppointmentsTab
+                                user={user}
+                                setActiveTab={setActiveTab}
+                                loadTopRatedSalons={loadTopRatedSalons}
+                            />
+                        )}
 
-                    {/* MENTETT HELYEK TAB */}
-                    {activeTab === 'book' && (
-                        <SavedSalonsTab
-                            savedSalons={savedSalons}
-                            savedSalonIds={savedSalonIds}
-                            toggleSaveSalon={toggleSaveSalon}
-                            setActiveTab={setActiveTab}
-                        />
-                    )}
+                        {/* MENTETT HELYEK TAB */}
+                        {activeTab === 'book' && (
+                            <SavedSalonsTab
+                                savedSalons={savedSalons}
+                                savedSalonIds={savedSalonIds}
+                                toggleSaveSalon={toggleSaveSalon}
+                                setActiveTab={setActiveTab}
+                            />
+                        )}
 
-                    {/* PROFIL TAB */}
-                    {activeTab === 'profile' && (
-                        <ProfileTab
-                            user={user}
-                            userProfile={userProfile}
-                            setUserProfile={setUserProfile}
-                        />
-                    )}
-                </div>
-            </main>
+                        {/* PROFIL TAB */}
+                        {activeTab === 'profile' && (
+                            <ProfileTab
+                                user={user}
+                                userProfile={userProfile}
+                                setUserProfile={setUserProfile}
+                            />
+                        )}
+                    </div>
+                </main>
+            )}
         </div>
     );
 }

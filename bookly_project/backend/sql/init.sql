@@ -247,6 +247,37 @@ INSERT INTO appointments (user_id, provider_id, service_id, appointment_start, a
   (1, 4, 4, '2026-01-27 13:00:00', '2026-01-27 14:15:00', 'Anti-aging facial treatment', 9500, 'scheduled');
 
 -- Insert test ratings (must match ratings table schema: appointment_id, provider_id required)
-INSERT INTO ratings (user_id, appointment_id, salon_id, provider_id, salon_rating, provider_rating, salon_comment, provider_comment, active) VALUES 
+INSERT INTO ratings (user_id, appointment_id, salon_id, provider_id, salon_rating, provider_rating, salon_comment, provider_comment, active) VALUES
   (4, 4, 1, 2, 5, 4, 'Love my new hair color! Peter did an amazing job.', 'Very professional and creative stylist.', TRUE),
   (2, 5, 3, 6, 4, 5, 'Good repair service, fast turnaround.', 'Eva was super helpful and fixed my phone perfectly!', TRUE);
+
+-- Messaging tables
+CREATE TABLE IF NOT EXISTS conversations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    provider_id INT NOT NULL,
+    user_id INT NOT NULL,
+    last_message_at TIMESTAMP NULL,
+    last_message_preview VARCHAR(100) NULL,
+    provider_unread_count INT DEFAULT 0,
+    user_unread_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_conversation (provider_id, user_id),
+    FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_conv_provider (provider_id),
+    INDEX idx_conv_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
+
+CREATE TABLE IF NOT EXISTS messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    conversation_id INT NOT NULL,
+    sender_role ENUM('user', 'provider') NOT NULL,
+    sender_id INT NOT NULL,
+    content TEXT NOT NULL,
+    appointment_id INT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+    FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE SET NULL,
+    INDEX idx_msg_conversation (conversation_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
