@@ -9,7 +9,8 @@ const {
     createConversation,
     insertMessage,
     markConversationRead,
-    checkBookingExists
+    checkBookingExists,
+    deleteConversation
 } = require('./messagingQueries.js');
 
 module.exports = function (io) {
@@ -137,6 +138,33 @@ module.exports = function (io) {
         } catch (error) {
             console.error('Send message error:', error);
             return res.status(500).json({ success: false, message: 'Hiba az üzenet küldésekor' });
+        }
+    });
+
+    // DELETE /api/messages/conversations/:id — delete a conversation
+    router.delete('/conversations/:id', async (req, res) => {
+        try {
+            const { userId, role } = req.user;
+            const conversationId = parseInt(req.params.id);
+
+            const conversation = await getConversationById(conversationId);
+            if (!conversation) {
+                return res.status(404).json({ success: false, message: 'A beszélgetés nem található' });
+            }
+
+            const isParticipant =
+                (role === 'provider' && conversation.provider_id === userId) ||
+                (role !== 'provider' && conversation.user_id === userId);
+
+            if (!isParticipant) {
+                return res.status(403).json({ success: false, message: 'Nincs hozzáférés ehhez a beszélgetéshez' });
+            }
+
+            await deleteConversation(conversationId);
+            return res.status(200).json({ success: true });
+        } catch (error) {
+            console.error('Delete conversation error:', error);
+            return res.status(500).json({ success: false, message: 'Hiba a beszélgetés törlésekor' });
         }
     });
 

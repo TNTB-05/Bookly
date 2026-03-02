@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { io } from 'socket.io-client';
 import { getUserFromToken, authApi } from '../../auth/auth.js';
-import { getConversations, getMessages, startConversation, sendMessage, markRead } from '../../../services/messagingService.js';
+import { getConversations, getMessages, startConversation, sendMessage, markRead, deleteConversation } from '../../../services/messagingService.js';
 import ConversationList from '../../messaging/ConversationList.jsx';
 import MessageThread from '../../messaging/MessageThread.jsx';
 
-export default function MessagesSection({ onUnreadChange }) {
+export default function MessagesSection({ onUnreadChange, pendingConversation, onPendingConversationHandled }) {
     const [conversations, setConversations] = useState([]);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -56,6 +57,13 @@ export default function MessagesSection({ onUnreadChange }) {
         }
     }, [conversations]);
 
+    useEffect(() => {
+        if (!pendingConversation) return;
+        handleSelectConversation(pendingConversation);
+        loadConversations();
+        if (onPendingConversationHandled) onPendingConversationHandled();
+    }, [pendingConversation?.id]);
+
     async function loadConversations() {
         try {
             const data = await getConversations();
@@ -81,6 +89,20 @@ export default function MessagesSection({ onUnreadChange }) {
             console.error('Hiba az üzenetek betöltésekor:', e);
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function handleDeleteConversation() {
+        if (!selectedConversation) return;
+        try {
+            await deleteConversation(selectedConversation.id);
+            setConversations(prev => prev.filter(c => c.id !== selectedConversation.id));
+            setSelectedConversation(null);
+            selectedConversationRef.current = null;
+            setMessages([]);
+            setMobileView('list');
+        } catch (e) {
+            console.error('Hiba a beszélgetés törlésekor:', e);
         }
     }
 
@@ -158,6 +180,7 @@ export default function MessagesSection({ onUnreadChange }) {
                         currentUserRole="provider"
                         onSend={handleSend}
                         onBack={() => setMobileView('list')}
+                        onDelete={handleDeleteConversation}
                         sending={sending || loading}
                     />
                 ) : (
@@ -168,9 +191,9 @@ export default function MessagesSection({ onUnreadChange }) {
             </div>
 
             {/* New conversation modal */}
-            {showNewConvModal && (
-                <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+            {showNewConvModal && createPortal(
+                <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNewConvModal(false)}>
+                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
                         <div className="px-5 py-4 border-b border-stone-200 flex items-center justify-between">
                             <h3 className="font-semibold text-stone-800">Új üzenet küldése</h3>
                             <button onClick={() => setShowNewConvModal(false)} className="text-stone-400 hover:text-stone-600 transition-colors">✕</button>
@@ -203,7 +226,7 @@ export default function MessagesSection({ onUnreadChange }) {
                         </div>
                     </div>
                 </div>
-            )}
+            , document.body)}
         </div>
     );
 }

@@ -12,6 +12,7 @@ import UsersIcon from '../../icons/UsersIcon';
 import HourIcon from '../../icons/HourIcon';
 import TeamIcon from '../../icons/TeamIcon';
 import ChatBubbleIcon from '../../icons/ChatBubbleIcon';
+import { startConversation } from '../../services/messagingService';
 import SalonManagement from './SalonManagement';
 import MessagesSection from './provdashcomponents/MessagesSection';
 import AvailabilityManagement from './AvailabilityManagement';
@@ -28,6 +29,7 @@ import PasswordModal from './provdashcomponents/PasswordModal';
 export default function ProvDash() {
     const [activeTab, setActiveTab] = useState('overview');
     const [messagesUnread, setMessagesUnread] = useState(0);
+    const [pendingConversation, setPendingConversation] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
@@ -204,16 +206,27 @@ export default function ProvDash() {
         navigate('/');
     };
     
+    const handleOpenChat = async (userId, userName) => {
+        try {
+            const currentUser = getUserFromToken();
+            const conv = await startConversation(currentUser.userId, userId);
+            setPendingConversation({ ...conv, user_name: userName });
+            setActiveTab('messages');
+        } catch (e) {
+            console.error('Hiba a chat megnyitásakor:', e);
+        }
+    };
+
     const renderContent = () => {
         switch(activeTab) {
             case 'overview': return <OverviewSection />;
-            case 'calendar': return <CalendarSection />;
+            case 'calendar': return <CalendarSection onOpenChat={handleOpenChat} />;
             case 'services': return <ServicesSection />;
             case 'availability': return <AvailabilityManagement />;
             case 'salon': return <SalonManagement />;
-            case 'customers': return <CustomersSection />;
+            case 'customers': return <CustomersSection onOpenChat={handleOpenChat} />;
             case 'staff': return <StaffManagement />;
-            case 'messages': return <MessagesSection onUnreadChange={setMessagesUnread} />;
+            case 'messages': return <MessagesSection onUnreadChange={setMessagesUnread} pendingConversation={pendingConversation} onPendingConversationHandled={() => setPendingConversation(null)} />;
             default: return <OverviewSection />;
         }
     };

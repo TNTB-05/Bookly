@@ -118,6 +118,10 @@ async function checkBookingExists(userId, providerId) {
     return rows.length > 0;
 }
 
+async function deleteConversation(conversationId) {
+    await pool.execute('DELETE FROM conversations WHERE id = ?', [conversationId]);
+}
+
 module.exports = {
     getConversationsForProvider,
     getConversationsForUser,
@@ -127,5 +131,6 @@ module.exports = {
     createConversation,
     insertMessage,
     markConversationRead,
-    checkBookingExists
+    checkBookingExists,
+    deleteConversation
 };

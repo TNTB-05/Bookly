@@ -37,3 +37,10 @@ export async function markRead(conversationId) {
     if (!data.success) throw new Error(data.message || 'Hiba történt');
     return data;
 }
+
+export async function deleteConversation(conversationId) {
+    const response = await authFetch(`/api/messages/conversations/${conversationId}`, { method: 'DELETE' });
+    const data = await response.json();
+    if (!data.success) throw new Error(data.message || 'Hiba történt');
+    return data;
+}
