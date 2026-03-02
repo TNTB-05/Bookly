@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../../auth/auth';
+import { SkeletonStat, SkeletonCard, SkeletonAvatar, SkeletonText } from '../../../../components/skeletons';
+import BoardIcon from '../../../../icons/BoardIcon';
 import HourIcon from '../../../../icons/HourIcon';
 import TickIcon from '../../../../icons/TickIcon';
 import PlusIcon from '../../../../icons/PlusIcon';
@@ -264,13 +266,39 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                 </button>
             </div>
 
-            {/* ======================== */}
-            {/* Calendar Section */}
-            {/* ======================== */}
             {loading ? (
-                <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
-                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent mx-auto" />
-                    <p className="mt-4 text-gray-600">Foglalások betöltése...</p>
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {Array(3).fill(0).map((_, i) => (
+                            <SkeletonStat key={i} />
+                        ))}
+                    </div>
+                    <div className="space-y-4">
+                        {Array(3).fill(0).map((_, i) => (
+                            <SkeletonCard key={i} className="p-6">
+                                <div className="flex items-start gap-4">
+                                    <SkeletonAvatar size="lg" />
+                                    <div className="flex-1">
+                                        <SkeletonText lines={3} />
+                                    </div>
+                                </div>
+                            </SkeletonCard>
+                        ))}
+                    </div>
+                </>
+            ) : (
+            <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 transition-all hover:shadow-md">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Összes foglalás</p>
+                            <h3 className="text-3xl font-bold text-gray-900 mt-1">{appointments.length}</h3>
+                        </div>
+                        <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
+                            <BoardIcon />
+                        </div>
+                    </div>
                 </div>
             ) : error ? (
                 <div className="text-center py-16 rounded-xl border border-red-200 bg-red-50">
@@ -667,6 +695,8 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                         loadTopRatedSalons?.();
                     }}
                 />
+            )}
+            </>
             )}
         </div>
     );

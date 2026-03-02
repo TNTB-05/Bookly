@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { authApi } from '../../../auth/auth';
+import { SkeletonCard, SkeletonAvatar, SkeletonText } from '../../../../components/skeletons';
 import TimeBlockModal from '../../TimeBlockModal';
 import { timeBlocksService } from '../../../../services/timeBlocksService';
 import AppointmentDetailModal from './AppointmentDetailModal';
 import CreateAppointmentModal from './CreateAppointmentModal';
 import { useNotification } from '../../../../components/NotificationContext';
 
-const CalendarSection = () => {
+const CalendarSection = ({ onOpenChat }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [appointments, setAppointments] = useState([]);
@@ -455,8 +456,17 @@ const CalendarSection = () => {
                         </div>
                         <div className="max-h-100 sm:max-h-125 lg:max-h-150 overflow-y-auto">
                             {loading ? (
-                                <div className="flex items-center justify-center py-12">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dark-blue"></div>
+                                <div className="p-3 space-y-3">
+                                    {Array(3).fill(0).map((_, i) => (
+                                        <SkeletonCard key={i} className="p-3">
+                                            <div className="flex items-center gap-3">
+                                                <SkeletonAvatar size="md" />
+                                                <div className="flex-1">
+                                                    <SkeletonText lines={2} />
+                                                </div>
+                                            </div>
+                                        </SkeletonCard>
+                                    ))}
                                 </div>
                             ) : (
                                 <div className="flex" style={{ height: `${TOTAL_MINUTES * MINUTES_PER_PIXEL}px` }}>
@@ -536,13 +546,7 @@ const CalendarSection = () => {
                                                             <div className="flex items-center gap-1.5 w-full min-w-0 overflow-hidden">
                                                                 <span className="text-[15px] font-semibold leading-none truncate shrink min-w-0">
                                                                     {apt.user_name}
-                                                                </span>
-                                                                <span className="text-xs leading-none opacity-60 truncate shrink min-w-0">
-                                                                    {apt.user_phone}
-                                                                </span>
-                                                                <span className="text-xs font-semibold leading-none whitespace-nowrap shrink-0 ml-auto">
-                                                                    {Number(apt.price).toLocaleString()} Ft
-                                                                </span>
+                                                                </p>
                                                             </div>
                                                         ) : (
                                                             <div className="flex flex-col gap-px text-left w-full min-w-0 overflow-hidden">
@@ -577,12 +581,15 @@ const CalendarSection = () => {
                 selectedDate={selectedDate}
             />
 
-            <AppointmentDetailModal 
+            <AppointmentDetailModal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
                 appointment={selectedAppointment}
                 deleteLoading={deleteLoading}
                 onDelete={handleDeleteAppointment}
+                onOpenChat={onOpenChat && selectedAppointment?.user_id
+                    ? () => { setShowModal(false); onOpenChat(selectedAppointment.user_id, selectedAppointment.user_name); }
+                    : null}
             />
 
             <CreateAppointmentModal

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { searchSalons, getSuggestions } from '../../../../services/searchService';
 import { useDebounce } from '../../../../hooks/useDebounce';
 import { useAddressAutocomplete, formatSuggestion } from '../../../../hooks/useAddressAutocomplete';
+import { SkeletonCard, SkeletonBlock, SkeletonText } from '../../../../components/skeletons';
 
 // Ikonok
 import SearchIcon from '../../../../icons/SearchIcon';
@@ -32,6 +33,9 @@ export default function OverviewTab({
     const [userLocation, setUserLocation] = useState(null);
     const [searchActive, setSearchActive] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [showAllFeatured, setShowAllFeatured] = useState(false);
+    const [salonLimit, setSalonLimit] = useState(12);
     const [recentReviews, setRecentReviews] = useState([]);
 
     // Map state
@@ -150,6 +154,7 @@ export default function OverviewTab({
         }
 
         setSearchActive(true);
+        setSearchLoading(true);
 
         const results = await searchSalons({
             searchQuery,
@@ -159,6 +164,7 @@ export default function OverviewTab({
         });
 
         setSearchResults(results || []);
+        setSearchLoading(false);
     }
 
     // Felhasználó aktuális GPS pozíciójának lekérése
@@ -206,6 +212,7 @@ export default function OverviewTab({
         setLocationSearch('');
         setServiceFilter('all');
         setSearchResults([]);
+        setSearchLoading(false);
         setUserLocation(null);
         clearAddressSuggestions();
     }
@@ -430,31 +437,50 @@ export default function OverviewTab({
             {/* Keresési eredmények cards - Show when search is active */}
             {searchActive && (
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {searchResults.map((salon) => (
-                            <SalonCard
-                                key={salon.id}
-                                salon={salon}
-                                savedSalonIds={savedSalonIds}
-                                toggleSaveSalon={toggleSaveSalon}
-                                showDistance={true}
-                            />
-                        ))}
-                        
-                        {/* Empty state */}
-                        {searchResults.length === 0 && (
-                            <div className="col-span-full text-center py-12 bg-white/40 backdrop-blur-md rounded-xl border border-white/50">
-                                {!searchQuery.trim() && !locationSearch.trim() && serviceFilter === 'all' ? (
-                                    <div>
-                                        <p className="text-gray-700 font-medium text-lg mb-2">Keresési feltétel szükséges</p>
-                                        <p className="text-gray-500">Kérjük, adj meg egy szalon nevet, válassz szolgáltatást vagy add meg a helyzeted!</p>
-                                    </div>
-                                ) : (
-                                    <p className="text-gray-500">Nincs találat a keresési feltételeknek megfelelően</p>
-                                )}
-                            </div>
-                        )}
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h2 className="text-2xl font-bold text-dark-blue">Keresési eredmények</h2>
+                            <p className="text-gray-600 mt-1">{searchLoading ? 'Keresés...' : `${searchResults.length} találat`}</p>
+                        </div>
                     </div>
+                    {searchLoading ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {Array(4).fill(0).map((_, i) => (
+                                <SkeletonCard key={i} className="p-0 overflow-hidden">
+                                    <SkeletonBlock className="h-36 w-full rounded-none rounded-t-xl" />
+                                    <div className="p-4 space-y-2">
+                                        <SkeletonText lines={2} />
+                                    </div>
+                                </SkeletonCard>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {searchResults.map((salon) => (
+                                <SalonCard
+                                    key={salon.id}
+                                    salon={salon}
+                                    savedSalonIds={savedSalonIds}
+                                    toggleSaveSalon={toggleSaveSalon}
+                                    showDistance={true}
+                                />
+                            ))}
+
+                            {/* Empty state */}
+                            {searchResults.length === 0 && (
+                                <div className="col-span-full text-center py-12 bg-white/40 backdrop-blur-md rounded-xl border border-white/50">
+                                    {!searchQuery.trim() && !locationSearch.trim() && serviceFilter === 'all' ? (
+                                        <div>
+                                            <p className="text-gray-700 font-medium text-lg mb-2">Keresési feltétel szükséges</p>
+                                            <p className="text-gray-500">Kérjük, adj meg egy szalon nevet, válassz szolgáltatást vagy add meg a helyzeted!</p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-gray-500">Nincs találat a keresési feltételeknek megfelelően</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
 

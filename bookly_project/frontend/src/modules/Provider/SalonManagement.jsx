@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { authApi } from '../auth/auth';
 import AddressInput from './AddressInput';
 import { useNotification } from '../../components/NotificationContext';
+import { SkeletonBlock } from '../../components/skeletons';
 
 const PRESET_COLORS = [
     '#3B82F6', '#1E40AF', '#6366F1', '#8B5CF6', '#A855F7',
@@ -311,7 +312,19 @@ const SalonManagement = () => {
     };
 
     if (loading) {
-        return <div className="text-center py-10 text-gray-600">Loading salon data...</div>;
+        return (
+            <div className="p-5 max-w-6xl mx-auto space-y-6">
+                <SkeletonBlock className="h-9 w-64 mb-2" />
+                <div className="bg-white rounded-xl p-6 shadow-lg space-y-5">
+                    {Array(3).fill(0).map((_, i) => (
+                        <div key={i} className="flex flex-col gap-2">
+                            <SkeletonBlock className="h-3 w-24" />
+                            <SkeletonBlock className="h-10 w-full rounded-md" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
     }
 
     if (!salon) {
@@ -733,88 +746,6 @@ const SalonManagement = () => {
                     </div>
                 </div>
             )}
-
-            {/* Providers Section */}
-            <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
-                <div className="flex justify-between items-center mb-5 pb-4 border-b-2 border-gray-100">
-                    <h3 className="text-xl font-semibold text-gray-800">Team Members ({providers.length})</h3>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                    {providers.map(provider => (
-                        <div key={provider.id} className="flex justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <div className="flex-1">
-                                <div className="text-lg font-semibold mb-2 flex items-center gap-2.5">
-                                    {provider.name}
-                                    {!!provider.isManager && (
-                                        <span className="bg-yellow-400 text-black px-2 py-0.5 rounded text-xs">Manager</span>
-                                    )}
-                                </div>
-                                <div className="flex gap-4 text-gray-600 text-sm mb-2">
-                                    <span>{provider.email}</span>
-                                    <span>{provider.phone}</span>
-                                </div>
-                                {provider.description && (
-                                    <div className="text-gray-600 text-sm mb-2">{provider.description}</div>
-                                )}
-                                <div className="flex gap-4 items-center">
-                                    <span className={`px-3 py-1 rounded-xl text-xs font-semibold uppercase ${
-                                        provider.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'
-                                    }`}>
-                                        {provider.status}
-                                    </span>
-                                    <span className="text-xs text-gray-500">
-                                        Joined: {new Date(provider.created_at).toLocaleDateString('hu-HU')}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {isManager && (
-                                <div className="flex flex-col gap-2 items-stretch">
-                                    {provider.status === 'active' ? (
-                                        <button
-                                            onClick={() => handleProviderStatusChange(provider.id, 'inactive')}
-                                            className="px-3.5 py-1.5 rounded bg-yellow-400 text-black text-xs font-medium min-w-[120px] hover:opacity-90 hover:-translate-y-0.5 transition-all"
-                                        >
-                                            Deactivate
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => handleProviderStatusChange(provider.id, 'active')}
-                                            className="px-3.5 py-1.5 rounded bg-green-500 text-white text-xs font-medium min-w-[120px] hover:opacity-90 hover:-translate-y-0.5 transition-all"
-                                        >
-                                            Activate
-                                        </button>
-                                    )}
-
-                                    {!provider.isManager ? (
-                                        <button
-                                            onClick={() => handleProviderManagerChange(provider.id, true)}
-                                            className="px-3.5 py-1.5 rounded bg-cyan-500 text-white text-xs font-medium min-w-[120px] hover:opacity-90 hover:-translate-y-0.5 transition-all"
-                                        >
-                                            Make Manager
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => handleProviderManagerChange(provider.id, false)}
-                                            className="px-3.5 py-1.5 rounded bg-cyan-500 text-white text-xs font-medium min-w-[120px] hover:opacity-90 hover:-translate-y-0.5 transition-all"
-                                        >
-                                            Remove Manager
-                                        </button>
-                                    )}
-
-                                    <button
-                                        onClick={() => handleProviderRemove(provider.id)}
-                                        className="px-3.5 py-1.5 rounded bg-red-500 text-white text-xs font-medium min-w-[120px] hover:opacity-90 hover:-translate-y-0.5 transition-all"
-                                    >
-                                        Remove
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            </div>
         </div>
     );
 };

@@ -8,12 +8,19 @@ import OverviewIcon from '../../icons/OverviewIcon';
 import CalendarIcon from '../../icons/CalendarIcon';
 import ServicesIcon from '../../icons/ServicesIcon';
 import SalonIcon from '../../icons/SalonIcon';
+import UsersIcon from '../../icons/UsersIcon';
 import HourIcon from '../../icons/HourIcon';
+import TeamIcon from '../../icons/TeamIcon';
+import ChatBubbleIcon from '../../icons/ChatBubbleIcon';
+import { startConversation } from '../../services/messagingService';
 import SalonManagement from './SalonManagement';
+import MessagesSection from './provdashcomponents/MessagesSection';
 import AvailabilityManagement from './AvailabilityManagement';
 import OverviewSection from './provdashcomponents/OverviewSection';
+import CustomersSection from './provdashcomponents/CustomersSection/CustomersSection';
 import CalendarSection from './provdashcomponents/CalendarSection/CalendarSection';
 import ServicesSection from './provdashcomponents/ServicesSection/ServicesSection';
+import StaffManagement from './provdashcomponents/StaffManagement';
 import NavButton from './provdashcomponents/NavButton';
 import UserDropdown from './provdashcomponents/UserDropdown';
 import ProfileModal from './provdashcomponents/ProfileModal';
@@ -21,10 +28,13 @@ import PasswordModal from './provdashcomponents/PasswordModal';
 
 export default function ProvDash() {
     const [activeTab, setActiveTab] = useState('overview');
+    const [messagesUnread, setMessagesUnread] = useState(0);
+    const [pendingConversation, setPendingConversation] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
     const { setIsAuthenticated } = useAuth();
+    const { showToast } = useNotification();
     const user = getUserFromToken();
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -182,19 +192,41 @@ export default function ProvDash() {
         };
     }, [dropdownRef]);
 
+    const handleStaffTabClick = () => {
+        if (!providerProfile?.isManager) {
+            showToast('Csak menedzserek férhetnek hozzá a csapat kezelőhöz', 'error');
+            return;
+        }
+        setActiveTab('staff');
+    };
+
     const handleLogout = async () => {
         await logout();
         setIsAuthenticated(false);
         navigate('/');
     };
     
+    const handleOpenChat = async (userId, userName) => {
+        try {
+            const currentUser = getUserFromToken();
+            const conv = await startConversation(currentUser.userId, userId);
+            setPendingConversation({ ...conv, user_name: userName });
+            setActiveTab('messages');
+        } catch (e) {
+            console.error('Hiba a chat megnyitásakor:', e);
+        }
+    };
+
     const renderContent = () => {
         switch(activeTab) {
             case 'overview': return <OverviewSection />;
-            case 'calendar': return <CalendarSection />;
+            case 'calendar': return <CalendarSection onOpenChat={handleOpenChat} />;
             case 'services': return <ServicesSection />;
             case 'availability': return <AvailabilityManagement />;
             case 'salon': return <SalonManagement />;
+            case 'customers': return <CustomersSection onOpenChat={handleOpenChat} />;
+            case 'staff': return <StaffManagement />;
+            case 'messages': return <MessagesSection onUnreadChange={setMessagesUnread} pendingConversation={pendingConversation} onPendingConversationHandled={() => setPendingConversation(null)} />;
             default: return <OverviewSection />;
         }
     };
@@ -265,64 +297,129 @@ export default function ProvDash() {
                         icon={<HourIcon />} 
                         onClick={setActiveTab} 
                     />
-                    <NavButton 
-                        activeTab={activeTab} 
-                        tabId="salon" 
-                        label="Szalon kezelés" 
-                        icon={<SalonIcon />} 
-                        onClick={setActiveTab} 
+                    <NavButton
+                        activeTab={activeTab}
+                        tabId="salon"
+                        label="Szalon kezelés"
+                        icon={<SalonIcon />}
+                        onClick={setActiveTab}
                     />
+                    <NavButton
+                        activeTab={activeTab}
+                        tabId="customers"
+                        label="Ügyfelek"
+                        icon={<UsersIcon />}
+                        onClick={setActiveTab}
+                    />
+                    <NavButton
+                        activeTab={activeTab}
+                        tabId="staff"
+                        label="Csapat"
+                        icon={<TeamIcon />}
+                        onClick={handleStaffTabClick}
+                    />
+                    <div className="relative">
+                        <NavButton
+                            activeTab={activeTab}
+                            tabId="messages"
+                            label="Üzenetek"
+                            icon={<ChatBubbleIcon />}
+                            onClick={setActiveTab}
+                        />
+                        {messagesUnread > 0 && (
+                            <span className="absolute top-2 right-2 inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 text-white text-[10px] font-bold pointer-events-none">
+                                {messagesUnread > 9 ? '9+' : messagesUnread}
+                            </span>
+                        )}
+                    </div>
                 </aside>
 
                 {/* Main Content Area */}
-                <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 scroll-smooth">
-                    <div className="max-w-6xl mx-auto animate-fade-in">
+                {activeTab === 'messages' ? (
+                    <main className="flex-1 overflow-hidden flex flex-col pb-16 md:pb-0">
                         {renderContent()}
-                    </div>
-                </main>
+                    </main>
+                ) : (
+                    <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 scroll-smooth">
+                        <div className="max-w-6xl mx-auto animate-fade-in">
+                            {renderContent()}
+                        </div>
+                    </main>
+                )}
 
                 {/* Mobile Bottom Navigation */}
                 <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-white/50 p-2 pb-safe z-50 flex justify-around items-center shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)]">
-                    <NavButton 
-                        activeTab={activeTab} 
-                        tabId="overview" 
-                        label="Áttekintés" 
-                        icon={<OverviewIcon />} 
-                        onClick={setActiveTab} 
+                    <NavButton
+                        activeTab={activeTab}
+                        tabId="overview"
+                        label="Áttekintés"
+                        icon={<OverviewIcon />}
+                        onClick={setActiveTab}
                         isMobile={true}
                     />
-                    <NavButton 
-                        activeTab={activeTab} 
-                        tabId="calendar" 
-                        label="Naptár" 
-                        icon={<CalendarIcon />} 
-                        onClick={setActiveTab} 
+                    <NavButton
+                        activeTab={activeTab}
+                        tabId="calendar"
+                        label="Naptár"
+                        icon={<CalendarIcon />}
+                        onClick={setActiveTab}
                         isMobile={true}
                     />
-                    <NavButton 
-                        activeTab={activeTab} 
-                        tabId="services" 
-                        label="Szolgáltatások" 
-                        icon={<ServicesIcon />} 
-                        onClick={setActiveTab} 
+                    <NavButton
+                        activeTab={activeTab}
+                        tabId="services"
+                        label="Szolgáltatások"
+                        icon={<ServicesIcon />}
+                        onClick={setActiveTab}
                         isMobile={true}
                     />
-                    <NavButton 
-                        activeTab={activeTab} 
-                        tabId="availability" 
-                        label="Elérhetőség" 
-                        icon={<HourIcon />} 
-                        onClick={setActiveTab} 
+                    <NavButton
+                        activeTab={activeTab}
+                        tabId="availability"
+                        label="Elérhetőség"
+                        icon={<HourIcon />}
+                        onClick={setActiveTab}
                         isMobile={true}
                     />
-                    <NavButton 
-                        activeTab={activeTab} 
-                        tabId="salon" 
-                        label="Szalon" 
-                        icon={<SalonIcon />} 
-                        onClick={setActiveTab} 
+                    <NavButton
+                        activeTab={activeTab}
+                        tabId="salon"
+                        label="Szalon"
+                        icon={<SalonIcon />}
+                        onClick={setActiveTab}
                         isMobile={true}
                     />
+                    <NavButton
+                        activeTab={activeTab}
+                        tabId="customers"
+                        label="Ügyfelek"
+                        icon={<UsersIcon />}
+                        onClick={setActiveTab}
+                        isMobile={true}
+                    />
+                    <NavButton
+                        activeTab={activeTab}
+                        tabId="staff"
+                        label="Csapat"
+                        icon={<TeamIcon />}
+                        onClick={handleStaffTabClick}
+                        isMobile={true}
+                    />
+                    <div className="relative">
+                        <NavButton
+                            activeTab={activeTab}
+                            tabId="messages"
+                            label="Üzenetek"
+                            icon={<ChatBubbleIcon />}
+                            onClick={setActiveTab}
+                            isMobile={true}
+                        />
+                        {messagesUnread > 0 && (
+                            <span className="absolute top-1 right-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 text-white text-[10px] font-bold pointer-events-none">
+                                {messagesUnread > 9 ? '9+' : messagesUnread}
+                            </span>
+                        )}
+                    </div>
                 </nav>
             </div>
 

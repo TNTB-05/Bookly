@@ -206,10 +206,14 @@ router.get('/providers', AuthMiddleware, async (req, res) => {
         const salonId = providers[0].salon_id;
 
         const [salonProviders] = await pool.query(
-            `SELECT id, name, email, phone, description, status, role, isManager, created_at
-             FROM providers
-             WHERE salon_id = ?
-             ORDER BY isManager DESC, created_at ASC`,
+            `SELECT p.id, p.name, p.email, p.phone, p.description, p.status, p.role, p.isManager,
+                    p.profile_picture_url, p.created_at,
+                    COUNT(a.id) as appointment_count
+             FROM providers p
+             LEFT JOIN appointments a ON a.provider_id = p.id AND a.status IN ('scheduled', 'completed')
+             WHERE p.salon_id = ?
+             GROUP BY p.id
+             ORDER BY p.isManager DESC, p.created_at ASC`,
             [salonId]
         );
 

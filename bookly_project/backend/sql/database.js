@@ -77,23 +77,34 @@ async function getDistinctSalonTypes() {
 
 async function getServicesByProviderId(providerId) {
     const query = `
-        SELECT id, provider_id, name, description, duration_minutes, price, status, created_at
-        FROM services
-        WHERE provider_id = ? AND status = 'available'
+        SELECT s.id, s.provider_id, s.name, s.description, s.duration_minutes, s.price, s.status, s.created_at,
+            JSON_ARRAYAGG(
+                IF(si.id IS NOT NULL, JSON_OBJECT('id', si.id, 'image_url', si.image_url, 'sort_order', si.sort_order), NULL)
+            ) AS images
+        FROM services s
+        LEFT JOIN service_images si ON si.service_id = s.id
+        WHERE s.provider_id = ? AND s.status = 'available'
+        GROUP BY s.id, s.provider_id, s.name, s.description, s.duration_minutes, s.price, s.status, s.created_at
     `;
     const [rows] = await pool.execute(query, [providerId]);
-    return rows;
+    return rows.map(row => ({ ...row, images: (row.images || []).filter(img => img !== null) }));
 }
 
 async function getServicesBySalonId(salonId) {
     const query = `
-        SELECT s.id, s.provider_id, s.name, s.description, s.duration_minutes, s.price, s.status, s.created_at, providers.name as provider_name
+        SELECT s.id, s.provider_id, s.name, s.description, s.duration_minutes, s.price, s.status, s.created_at,
+            p.name as provider_name,
+            JSON_ARRAYAGG(
+                IF(si.id IS NOT NULL, JSON_OBJECT('id', si.id, 'image_url', si.image_url, 'sort_order', si.sort_order), NULL)
+            ) AS images
         FROM services s
-        INNER JOIN providers ON s.provider_id = providers.id
-        WHERE providers.salon_id = ? AND s.status = 'available' AND providers.status = 'active'
+        INNER JOIN providers p ON s.provider_id = p.id
+        LEFT JOIN service_images si ON si.service_id = s.id
+        WHERE p.salon_id = ? AND s.status = 'available' AND p.status = 'active'
+        GROUP BY s.id, s.provider_id, s.name, s.description, s.duration_minutes, s.price, s.status, s.created_at, p.name
     `;
     const [rows] = await pool.execute(query, [salonId]);
-    return rows;
+    return rows.map(row => ({ ...row, images: (row.images || []).filter(img => img !== null) }));
 }
 
 async function getTopRatedSalons(limit = 10) {

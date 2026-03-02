@@ -1,5 +1,6 @@
 //!Module-ok importálása
 const express = require('express'); //?npm install express
+const http = require('http');
 const session = require('express-session'); //?npm install express-session
 const cors = require('cors'); //?npm install cors
 const cookieParser = require('cookie-parser'); //?npm install cookie-parser
@@ -10,9 +11,18 @@ const { pool } = require('./sql/database.js'); //?Adatbázis kapcsolat importál
 
 //!Beállítások
 const app = express();
+const server = http.createServer(app);
 const router = express.Router();
 const ip = process.env.IP_ADDRESS || '127.0.0.1';
 const port = process.env.PORT || 3000;
+
+const { Server } = require('socket.io');
+const io = new Server(server, {
+    cors: {
+        origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'],
+        credentials: true
+    }
+});
 
 app.use(express.json()); //?Middleware JSON
 app.use(cookieParser()); //?Cookie parser middleware
@@ -35,6 +45,26 @@ app.use(
         saveUninitialized: true
     })
 );
+
+// Socket.io auth middleware
+io.use((socket, next) => {
+    const token = socket.handshake.auth.token;
+    if (!token) return next(new Error('Hiányzó token'));
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        socket.user = decoded;
+        next();
+    } catch (err) {
+        next(new Error('Érvénytelen token'));
+    }
+});
+
+// Socket.io connection handler
+io.on('connection', (socket) => {
+    const { userId, role } = socket.user;
+    socket.join(`${role}:${userId}`);
+    socket.on('disconnect', () => {});
+});
 
 //!Routing
 //?Főoldal:
@@ -61,12 +91,15 @@ const salonApi = require('./api/salonApi.js');
 app.use('/api/salon', salonApi);
 const adminApi = require('./api/adminApi.js');
 app.use('/api/admin', adminApi);
-
+const staffApi = require('./api/staffApi.js');
+app.use('/api/staff', staffApi);
+const messagingApi = require('./api/messagingApi.js');
+app.use('/api/messages', messagingApi(io));
 
 //!Szerver futtatása
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(path.join(__dirname, '../frontend'))); //?frontend mappa tartalmának betöltése az oldal működéséhez
-app.listen(port, ip, () => {
+server.listen(port, ip, () => {
     console.log(`Szerver elérhetősége: http://${ip}:${port}`);
 });
 

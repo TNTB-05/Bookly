@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { authApi } from '../../../auth/auth';
 import ServicesIcon from '../../../../icons/ServicesIcon';
+import { SkeletonCard, SkeletonBlock, SkeletonText } from '../../../../components/skeletons';
 import ServiceFormModal from './ServiceFormModal';
 import DeleteServiceModal from './DeleteServiceModal';
 
@@ -108,8 +109,13 @@ const ServicesSection = () => {
 
             const data = await response.json();
             if (data.success) {
-                handleCloseModal();
                 fetchServices();
+                if (editingService) {
+                    handleCloseModal();
+                } else {
+                    // Stay open in edit mode so images can be uploaded
+                    setEditingService({ ...formData, id: data.serviceId, images: [] });
+                }
             } else {
                 alert(data.message || 'Hiba történt a mentés során');
             }
@@ -154,8 +160,19 @@ const ServicesSection = () => {
             </div>
 
             {loading ? (
-                <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dark-blue"></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {Array(3).fill(0).map((_, i) => (
+                        <SkeletonCard key={i} className="p-6">
+                            <div className="flex justify-between items-start mb-4">
+                                <SkeletonBlock className="h-12 w-12 rounded-lg" />
+                            </div>
+                            <SkeletonText lines={2} className="mb-3" />
+                            <div className="flex justify-between pt-3 border-t border-gray-100">
+                                <SkeletonBlock className="h-3 w-16" />
+                                <SkeletonBlock className="h-3 w-20" />
+                            </div>
+                        </SkeletonCard>
+                    ))}
                 </div>
             ) : error ? (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
@@ -197,6 +214,18 @@ const ServicesSection = () => {
                             <h3 className="font-bold text-lg text-gray-900">{service.name}</h3>
                             {service.description && (
                                 <p className="text-gray-600 text-sm mt-1 line-clamp-2">{service.description}</p>
+                            )}
+                            {service.images && service.images.length > 0 && (
+                                <div className="flex gap-1.5 mt-2 flex-wrap">
+                                    {service.images.slice(0, 5).map((img) => (
+                                        <img
+                                            key={img.id}
+                                            src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + img.image_url}
+                                            alt=""
+                                            className="w-14 h-14 object-cover rounded-lg border border-gray-200"
+                                        />
+                                    ))}
+                                </div>
                             )}
                             <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
                                 <span className="text-gray-500 text-sm">{service.duration_minutes} perc</span>
