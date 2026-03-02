@@ -286,20 +286,6 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                         ))}
                     </div>
                 </>
-            ) : (
-            <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 transition-all hover:shadow-md">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Összes foglalás</p>
-                            <h3 className="text-3xl font-bold text-gray-900 mt-1">{appointments.length}</h3>
-                        </div>
-                        <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
-                            <BoardIcon />
-                        </div>
-                    </div>
-                </div>
             ) : error ? (
                 <div className="text-center py-16 rounded-xl border border-red-200 bg-red-50">
                     <p className="text-red-600">{error}</p>
@@ -695,8 +681,6 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                         loadTopRatedSalons?.();
                     }}
                 />
-            )}
-            </>
             )}
         </div>
     );

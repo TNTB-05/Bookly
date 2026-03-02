@@ -546,7 +546,7 @@ const CalendarSection = ({ onOpenChat }) => {
                                                             <div className="flex items-center gap-1.5 w-full min-w-0 overflow-hidden">
                                                                 <span className="text-[15px] font-semibold leading-none truncate shrink min-w-0">
                                                                     {apt.user_name}
-                                                                </p>
+                                                                </span>
                                                             </div>
                                                         ) : (
                                                             <div className="flex flex-col gap-px text-left w-full min-w-0 overflow-hidden">

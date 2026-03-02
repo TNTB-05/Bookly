@@ -220,17 +220,6 @@ export default function Dashboard() {
             )}
 
             {/* Főoldal */}
-            <main className={`${userProfile?.status === 'deleted' && daysRemaining !== null ? 'pt-28' : 'pt-16'} pb-24 md:pb-12`}>
-                <div className="animate-fade-in">
-                    {/* ÁTTEKINTÉS TAB */}
-                    {activeTab === 'overview' && (
-                        <OverviewTab
-                            setActiveTab={setActiveTab}
-                            serviceTypes={serviceTypes}
-                            savedSalonIds={savedSalonIds}
-                            toggleSaveSalon={toggleSaveSalon}
-                        />
-                    )}
             {activeTab === 'messages' ? (
                 <main className={`${userProfile?.status === 'deleted' && daysRemaining !== null ? 'pt-28' : 'pt-16'} pb-16 sm:pb-0 flex flex-col`} style={{ height: '100dvh' }}>
                     <MessagesTab onUnreadChange={setMessagesUnread} />
@@ -269,27 +258,28 @@ export default function Dashboard() {
                             />
                         )}
 
-                    {/* PROFIL TAB */}
-                    {activeTab === 'profile' && (
-                        <ProfileTab
-                            user={user}
-                            userProfile={userProfile}
-                            setUserProfile={setUserProfile}
-                        />
-                    )}
+                        {/* PROFIL TAB */}
+                        {activeTab === 'profile' && (
+                            <ProfileTab
+                                user={user}
+                                userProfile={userProfile}
+                                setUserProfile={setUserProfile}
+                            />
+                        )}
 
-                    {/* KIEMELT SZALONOK TAB */}
-                    {activeTab === 'featured' && (
-                        <FeaturedSalonsTab
-                            topRatedSalons={topRatedSalons}
-                            savedSalonIds={savedSalonIds}
-                            toggleSaveSalon={toggleSaveSalon}
-                            loadTopRatedSalons={loadTopRatedSalons}
-                            serviceTypes={serviceTypes}
-                        />
-                    )}
-                </div>
-            </main>
+                        {/* KIEMELT SZALONOK TAB */}
+                        {activeTab === 'featured' && (
+                            <FeaturedSalonsTab
+                                topRatedSalons={topRatedSalons}
+                                savedSalonIds={savedSalonIds}
+                                toggleSaveSalon={toggleSaveSalon}
+                                loadTopRatedSalons={loadTopRatedSalons}
+                                serviceTypes={serviceTypes}
+                            />
+                        )}
+                    </div>
+                </main>
+            )}
         </div>
     );
 }
