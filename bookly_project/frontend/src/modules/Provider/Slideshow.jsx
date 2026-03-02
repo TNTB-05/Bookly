@@ -1,77 +1,87 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const placeholderImages = [
-    "../../pics/slider1.png",
-    "https://placehold.co/1200x400/7DE1F4/darkblue?text=Slide+2",
-    "https://placehold.co/1200x400/E0F7FA/darkblue?text=Slide+3"
+const testimonials = [
+    {
+        quote: 'A Bookly-val 40%-kal csökkent az üres időpontjaim száma. Az ügyfelek maguktól foglalnak — nekem csak a munkára kell koncentrálnom.',
+        name: 'Kovács Éva',
+        role: 'Fodrász, Budapest',
+        initials: 'KÉ'
+    },
+    {
+        quote: 'Korábban naponta egy órát töltöttem telefonálással és időpont-egyeztetéssel. Most ez teljesen automatikus. Ajánlom minden kollégámnak.',
+        name: 'Tóth Márton',
+        role: 'Körmös szalon tulajdonos, Debrecen',
+        initials: 'TM'
+    },
+    {
+        quote: 'Az első héten három új ügyfelem volt a Bookly-on keresztül. Egyszerű a kezelés, és az ügyfelek is imádják.',
+        name: 'Szabó Petra',
+        role: 'Kozmetikus, Győr',
+        initials: 'SP'
+    }
 ];
 
 export default function Slideshow() {
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    const prevSlide = useCallback(() => {
-        const isFirstSlide = currentIndex === 0;
-        const newIndex = isFirstSlide ? placeholderImages.length - 1 : currentIndex - 1;
-        setCurrentIndex(newIndex);
-    }, [currentIndex]);
-
     const nextSlide = useCallback(() => {
-        const isLastSlide = currentIndex === placeholderImages.length - 1;
-        const newIndex = isLastSlide ? 0 : currentIndex + 1;
-        setCurrentIndex(newIndex);
-    }, [currentIndex]);
-
-    const goToSlide = (slideIndex) => {
-        setCurrentIndex(slideIndex);
-    };
+        setCurrentIndex(prev => (prev + 1) % testimonials.length);
+    }, []);
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            nextSlide();
-        }, 5000);
+        const interval = setInterval(nextSlide, 5000);
         return () => clearInterval(interval);
     }, [nextSlide]);
 
     return (
-        <div className="w-full h-[300px] sm:h-[400px] lg:h-[500px] relative group overflow-hidden">
-            {placeholderImages.map((url, index) => (
-                <div
-                    key={index}
-                    style={{ backgroundImage: `url(${url})` }}
-                    className={`absolute inset-0 w-full h-full bg-center bg-cover transition-opacity duration-700 ease-in-out ${
-                        index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                    }`}
-                ></div>
-            ))}
-            
-            {/* Left Arrow */}
-            <div className="hidden group-hover:block absolute top-[50%] -translate-x-0 translate-y-[-50%] left-8 text-2xl rounded-full p-2 bg-black/20 text-white cursor-pointer hover:bg-black/40 transition-colors z-20">
-                <button onClick={prevSlide} className="w-8 h-8 flex items-center justify-center">
-                    &#10094;
-                </button>
-            </div>
-            
-            {/* Right Arrow */}
-            <div className="hidden group-hover:block absolute top-[50%] -translate-x-0 translate-y-[-50%] right-8 text-2xl rounded-full p-2 bg-black/20 text-white cursor-pointer hover:bg-black/40 transition-colors z-20">
-                <button onClick={nextSlide} className="w-8 h-8 flex items-center justify-center">
-                    &#10095;
-                </button>
-            </div>
-            
-            {/* Dots */}
-            <div className="absolute bottom-4 left-0 right-0 flex justify-center py-2 gap-2 z-20">
-                {placeholderImages.map((_, slideIndex) => (
-                    <div
-                        key={slideIndex}
-                        onClick={() => goToSlide(slideIndex)}
-                        className={`text-2xl cursor-pointer transition-colors drop-shadow-md ${
-                            currentIndex === slideIndex ? 'text-white' : 'text-white/50'
-                        }`}
-                    >
-                        &#8226;
+        <section className="bg-dark-blue text-white py-16 sm:py-20">
+            <div className="max-w-4xl mx-auto px-6">
+                <div className="relative">
+                    <div className="text-8xl font-serif text-white/10 text-center leading-none select-none" aria-hidden="true">
+                        &ldquo;
                     </div>
-                ))}
+
+                    <div className="relative min-h-[200px]">
+                        {testimonials.map((testimonial, index) => (
+                            <div
+                                key={index}
+                                className={`transition-opacity duration-700 ${
+                                    index === currentIndex ? 'opacity-100 relative' : 'opacity-0 absolute inset-0'
+                                }`}
+                            >
+                                <p className="text-xl sm:text-2xl font-medium text-white leading-relaxed italic text-center">
+                                    {testimonial.quote}
+                                </p>
+
+                                <div className="w-12 h-0.5 bg-accent-blue mx-auto my-6"></div>
+
+                                <div className="flex items-center justify-center gap-4">
+                                    <div className="w-12 h-12 rounded-full bg-accent-blue/20 border-2 border-accent-blue/40 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
+                                        {testimonial.initials}
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-white">{testimonial.name}</p>
+                                        <p className="text-sm text-white/60">{testimonial.role}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex items-center justify-center gap-2 mt-10">
+                        {testimonials.map((_, dotIndex) => (
+                            <button
+                                key={dotIndex}
+                                onClick={() => setCurrentIndex(dotIndex)}
+                                className={`transition-all duration-300 rounded-full ${
+                                    dotIndex === currentIndex ? 'w-8 h-1.5 bg-accent-blue' : 'w-1.5 h-1.5 bg-white/30'
+                                }`}
+                                aria-label={`${dotIndex + 1}. vélemény`}
+                            />
+                        ))}
+                    </div>
+                </div>
             </div>
-        </div>
+        </section>
     );
 }
