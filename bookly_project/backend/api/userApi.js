@@ -930,6 +930,43 @@ router.post('/appointments', AuthMiddleware, async (req, res) => {
 });
 
 // Cancel user's appointment
+// Update appointment comment (only allowed for scheduled appointments)
+router.patch('/appointments/:id/comment', AuthMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const appointmentId = parseInt(req.params.id);
+        const { comment } = req.body;
+
+        if (!appointmentId || isNaN(appointmentId)) {
+            return res.status(400).json({ success: false, message: 'Érvénytelen foglalás azonosító' });
+        }
+
+        const appointment = await getAppointmentById(appointmentId);
+
+        if (!appointment) {
+            return res.status(404).json({ success: false, message: 'A foglalás nem található' });
+        }
+
+        if (appointment.user_id !== userId) {
+            return res.status(403).json({ success: false, message: 'Nincs jogosultságod módosítani ezt a foglalást' });
+        }
+
+        if (appointment.status !== 'scheduled') {
+            return res.status(400).json({ success: false, message: 'Csak várható foglalás megjegyzése szerkeszthető' });
+        }
+
+        await pool.execute(
+            'UPDATE appointments SET comment = ? WHERE id = ?',
+            [comment?.trim() || null, appointmentId]
+        );
+
+        return res.status(200).json({ success: true, message: 'Megjegyzés frissítve' });
+    } catch (error) {
+        console.error('Update comment error:', error);
+        return res.status(500).json({ success: false, message: 'Hiba a megjegyzés frissítésekor' });
+    }
+});
+
 router.delete('/appointments/:id', AuthMiddleware, async (req, res) => {
     try {
         const userId = req.user.userId;

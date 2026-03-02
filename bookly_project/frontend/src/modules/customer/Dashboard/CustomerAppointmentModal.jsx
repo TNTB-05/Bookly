@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import CloseIcon from '../../../icons/CloseIcon';
 import ClockIcon from '../../../icons/ClockIcon';
@@ -6,6 +7,7 @@ import StorefrontIcon from '../../../icons/StorefrontIcon';
 import CurrencyIcon from '../../../icons/CurrencyIcon';
 import ChatBubbleIcon from '../../../icons/ChatBubbleIcon';
 import WarningIcon from '../../../icons/WarningIcon';
+import PencilIcon from '../../../icons/PencilIcon';
 
 const statusConfig = {
     scheduled: { text: 'Várható', color: 'bg-blue-100 text-blue-700 border-blue-200' },
@@ -22,7 +24,18 @@ export default function CustomerAppointmentModal({
     onCancel,
     cancelLoading,
     onRate,
+    onSaveComment,
 }) {
+    const [editingComment, setEditingComment] = useState(false);
+    const [commentValue, setCommentValue] = useState('');
+    const [savingComment, setSavingComment] = useState(false);
+
+    // Sync local comment value whenever the appointment changes
+    useEffect(() => {
+        setCommentValue(appointment?.comment ?? '');
+        setEditingComment(false);
+    }, [appointment?.id]);
+
     if (!isOpen || !appointment) return null;
 
     const formatTime = (dateString) =>
@@ -111,15 +124,71 @@ export default function CustomerAppointmentModal({
                         </div>
                     </div>
 
-                    {/* Comment */}
-                    {appointment.comment && (
+                    {/* Comment — editable for scheduled appointments */}
+                    {(appointment.comment || appointment.status === 'scheduled') && (
                         <div className="flex items-start gap-3">
                             <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
                                 <ChatBubbleIcon className="w-4 h-4 text-purple-600" />
                             </div>
-                            <div>
-                                <p className="text-xs text-gray-500">Megjegyzés</p>
-                                <p className="text-sm text-gray-700 italic">"{appointment.comment}"</p>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-baseline gap-2">
+                                    <p className="text-xs text-gray-500">Megjegyzés</p>
+                                    {appointment.status === 'scheduled' && !editingComment && (
+                                        <button
+                                            onClick={() => {
+                                                setCommentValue(appointment.comment ?? '');
+                                                setEditingComment(true);
+                                            }}
+                                            className="text-xs text-purple-600 hover:text-purple-800 inline-flex items-center gap-1 transition-colors"
+                                        >
+                                            <PencilIcon className="w-3 h-3" />
+                                            Szerkesztés
+                                        </button>
+                                    )}
+                                </div>
+
+                                {editingComment ? (
+                                    <div className="flex flex-col gap-2">
+                                        <textarea
+                                            value={commentValue}
+                                            onChange={(e) => setCommentValue(e.target.value)}
+                                            rows={3}
+                                            maxLength={500}
+                                            placeholder="Írj megjegyzést a foglaláshoz..."
+                                            className="w-full text-sm border border-purple-200 rounded-lg p-2 resize-none focus:outline-none focus:ring-2 focus:ring-purple-300"
+                                        />
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={async () => {
+                                                    setSavingComment(true);
+                                                    try {
+                                                        await onSaveComment?.(appointment.id, commentValue);
+                                                        setEditingComment(false);
+                                                    } finally {
+                                                        setSavingComment(false);
+                                                    }
+                                                }}
+                                                disabled={savingComment}
+                                                className="flex-1 py-1.5 px-3 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                                            >
+                                                {savingComment ? (
+                                                    <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent" />
+                                                ) : 'Mentés'}
+                                            </button>
+                                            <button
+                                                onClick={() => setEditingComment(false)}
+                                                disabled={savingComment}
+                                                className="py-1.5 px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                                            >
+                                                Mégse
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : appointment.comment ? (
+                                    <p className="text-sm text-gray-700 italic">"{appointment.comment}"</p>
+                                ) : (
+                                    <p className="text-sm text-gray-400 italic">Nincs megjegyzés</p>
+                                )}
                             </div>
                         </div>
                     )}

@@ -109,6 +109,26 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
         }
     }
 
+    async function handleSaveComment(appointmentId, comment) {
+        try {
+            const response = await authApi.patch(`/api/user/appointments/${appointmentId}/comment`, { comment });
+            const data = await response.json();
+            if (data.success) {
+                showToast('Megjegyzés elmentve', 'success');
+                // Update the selected appointment in-place so the modal reflects the new comment
+                setSelectedAppointment((prev) => prev ? { ...prev, comment: comment?.trim() || null } : prev);
+                loadAppointments();
+            } else {
+                showToast(data.message || 'Hiba a megjegyzés mentésekor', 'error');
+                throw new Error(data.message);
+            }
+        } catch (err) {
+            console.error('Hiba a megjegyzés mentésekor:', err);
+            showToast('Hiba a megjegyzés mentésekor', 'error');
+            throw err;
+        }
+    }
+
     // ========================
     // Calendar logic
     // ========================
@@ -634,6 +654,7 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                     setShowModal(false);
                     setRatingAppointment(apt);
                 }}
+                onSaveComment={handleSaveComment}
             />
 
             {/* Rating Modal */}

@@ -195,8 +195,7 @@ router.post('/users/:id/gdpr-delete', async (req, res) => {
         // Delete all refresh tokens
         await pool.query('DELETE FROM RefTokens WHERE user_id = ?', [userId]);
 
-        // Deactivate all ratings by this user
-        await pool.query('UPDATE ratings SET active = FALSE WHERE user_id = ?', [userId]);
+        // Ratings remain active — user_name is already anonymized via the users table JOIN
 
         await logEvent('CRITICAL', 'USER_GDPR_DELETE', 'admin', req.user.userId, 'user', parseInt(userId),
             `Admin performed GDPR deletion for user #${userId} (was: ${users[0].email})`);
