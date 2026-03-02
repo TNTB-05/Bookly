@@ -540,9 +540,6 @@ const CalendarSection = ({ onOpenChat }) => {
                                                                 <p className="font-semibold text-[10px] sm:text-xs truncate">
                                                                     {apt.user_name}
                                                                 </p>
-                                                                <span className="text-[10px] sm:text-xs font-medium whitespace-nowrap shrink-0">
-                                                                    {apt.price.toLocaleString()} Ft
-                                                                </span>
                                                             </div>
                                                             {apt.service_name && (
                                                                 <p className="text-[9px] sm:text-[10px] text-gray-600 truncate">
