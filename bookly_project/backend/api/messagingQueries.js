@@ -24,6 +24,7 @@ async function getConversationsForUser(userId) {
                 conversations.last_message_at,
                 conversations.user_unread_count,
                 providers.name AS provider_name,
+                providers.profile_picture_url AS provider_profile_picture_url,
                 salons.name AS salon_name
          FROM conversations
          JOIN providers ON conversations.provider_id = providers.id

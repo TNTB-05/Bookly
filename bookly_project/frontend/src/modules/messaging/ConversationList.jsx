@@ -15,10 +15,23 @@ function getRelativeTime(dateString) {
     return `${diffDay}n`;
 }
 
-function InitialsAvatar({ name }) {
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+function Avatar({ name, pictureUrl }) {
     const initial = name ? name.charAt(0).toUpperCase() : '?';
     const colors = ['bg-amber-400', 'bg-stone-400', 'bg-amber-600', 'bg-stone-500', 'bg-amber-300'];
     const colorIndex = name ? name.charCodeAt(0) % colors.length : 0;
+
+    if (pictureUrl) {
+        return (
+            <img
+                src={`${API_URL}${pictureUrl}`}
+                alt={name || ''}
+                className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+            />
+        );
+    }
+
     return (
         <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 ${colors[colorIndex]}`}>
             {initial}
@@ -31,6 +44,7 @@ export default function ConversationList({ conversations = [], selectedId, onSel
 
     const getName = (conv) => (role === 'provider' ? conv.user_name : conv.provider_name);
     const getUnread = (conv) => (role === 'provider' ? conv.provider_unread_count : conv.user_unread_count);
+    const getProfilePic = (conv) => (role === 'provider' ? conv.user_profile_picture_url : conv.provider_profile_picture_url);
 
     const filtered = conversations.filter((conv) => {
         const name = getName(conv) || '';
@@ -75,7 +89,7 @@ export default function ConversationList({ conversations = [], selectedId, onSel
                                             isSelected ? 'bg-amber-50 border-amber-500' : 'border-transparent hover:bg-stone-50'
                                         }`}
                                     >
-                                        <InitialsAvatar name={name} />
+                                        <Avatar name={name} pictureUrl={getProfilePic(conv)} />
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between gap-2">
                                                 <span className={`text-sm font-semibold truncate ${unread > 0 ? 'text-stone-900' : 'text-stone-700'}`}>
