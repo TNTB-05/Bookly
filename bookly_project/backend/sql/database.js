@@ -980,6 +980,6 @@ module.exports = {
     getWaitlistForFreedSlot,
     getUserWaitlistEntries,
     cancelWaitlistEntry,
-    markWaitlistBooked
+    markWaitlistBooked,
     getRecommendedSalons
 };
