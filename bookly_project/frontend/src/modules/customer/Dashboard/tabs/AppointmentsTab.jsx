@@ -10,6 +10,7 @@ import DiaryIcon from '../../../../icons/DiaryIcon';
 import LightningIcon from '../../../../icons/LightningIcon';
 import CustomerAppointmentModal from '../CustomerAppointmentModal';
 import RatingModal from '../RatingModal';
+import AddToCalendarButton from '../AddToCalendarButton';
 import { useNotification } from '../../../../components/NotificationContext';
 
 // ========================
@@ -612,6 +613,7 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                                                 <p className="text-xl font-bold text-indigo-600">{Number(apt.price).toLocaleString()} Ft</p>
                                                 <div className="flex flex-col items-end gap-2">
                                                     {getStatusBadge(apt.status, apt)}
+                                                    <AddToCalendarButton appointment={apt} />
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
