@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const database = require('../sql/database.js');
 const locationService = require('../services/locationService.js');
+const AuthMiddleware = require('./auth/AuthMiddleware.js');
 
 // Közeli szalonok keresése koordináták vagy helynév alapján
 router.post('/nearby', async (req, res) => {
@@ -463,6 +464,22 @@ router.post('/reverse-geocode', async (req, res) => {
             message: 'Hiba a fordított geokódolás során',
             error: error.message
         });
+    }
+});
+
+// Get personalized salon recommendations
+router.get('/recommendations', AuthMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { lat, lng, limit = 8 } = req.query;
+        if (!lat || !lng) {
+            return res.json({ success: false, message: 'Location required' });
+        }
+        const salons = await database.getRecommendedSalons(userId, parseFloat(lat), parseFloat(lng), parseInt(limit));
+        res.json({ success: true, data: { salons } });
+    } catch (error) {
+        console.error('Get recommendations error:', error);
+        res.status(500).json({ success: false, message: 'Error fetching recommendations', error: error.message });
     }
 });
 

@@ -23,7 +23,8 @@ export default function OverviewTab({
     setActiveTab,
     serviceTypes,
     savedSalonIds,
-    toggleSaveSalon
+    toggleSaveSalon,
+    recommendedSalons = []
 }) {
     const { showToast } = useNotification();
     // UseState változók a kereséshez
@@ -532,6 +533,28 @@ export default function OverviewTab({
                     </div>
                 </div>
             </div>
+
+            {/* Ajánlott szalonok */}
+            {recommendedSalons.length > 0 && (
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    <div className="flex items-baseline gap-2 mb-6">
+                        <h2 className="text-2xl font-bold text-dark-blue">Ajánlott neked</h2>
+                        <span className="text-sm text-gray-400">aktivitásod alapján</span>
+                    </div>
+                    <div className="flex gap-4 overflow-x-auto pb-2">
+                        {recommendedSalons.map(salon => (
+                            <div key={salon.id} className="shrink-0 w-72">
+                                <SalonCard
+                                    salon={salon}
+                                    savedSalonIds={savedSalonIds}
+                                    toggleSaveSalon={toggleSaveSalon}
+                                    showDistance={true}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Legújabb értékelések */}
             {recentReviews.length > 0 && (
