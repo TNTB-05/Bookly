@@ -778,6 +778,106 @@ async function endRecurringBlockAt(blockId, providerId, endDate) {
     return result;
 }
 
+async function getRecommendedSalons(userId, lat, lng, limit = 8) {
+    const sql = `
+        WITH
+        user_service_affinity AS (
+            SELECT sal.type, COUNT(*) AS booking_count
+            FROM appointments a
+            JOIN providers p ON a.provider_id = p.id
+            JOIN salons sal ON p.salon_id = sal.id
+            WHERE a.user_id = ?
+            GROUP BY sal.type
+        ),
+        collab_users AS (
+        SELECT DISTINCT user_id FROM(
+            SELECT DISTINCT ss2.user_id
+            FROM saved_salons ss1
+            JOIN saved_salons ss2 ON ss1.salon_id = ss2.salon_id AND ss2.user_id != ?
+            WHERE ss1.user_id = ?
+            UNION ALL
+            SELECT DISTINCT a2.user_id
+            FROM appointments a1
+            JOIN appointments a2 ON a1.provider_id = a2.provider_id AND a2.user_id != ?
+            WHERE a1.user_id = ? AND DATE(a1.appointment_start) >= DATE_SUB(NOW(), INTERVAL 90 DAY)
+        ) collab_users_agg
+        GROUP BY user_id
+        ORDER BY COUNT(*) DESC
+        ),
+        collab_salons AS (
+            SELECT salon_id, COUNT(*) AS collab_score FROM (
+                SELECT salon_id FROM saved_salons
+                WHERE user_id IN (SELECT user_id FROM collab_users)
+                UNION ALL
+                SELECT p.salon_id
+                FROM appointments a
+                JOIN providers p ON a.provider_id = p.id
+                WHERE a.user_id IN (SELECT user_id FROM collab_users)
+                  AND DATE(a.appointment_start) >= DATE_SUB(NOW(), INTERVAL 90 DAY)
+            ) collab_activity
+            GROUP BY salon_id
+        ),
+        salon_popularity AS (
+            SELECT salon_id,
+                   AVG(salon_rating)                        AS avg_rating,
+                   COUNT(*)                                  AS rating_count,
+                   AVG(salon_rating) * LOG(COUNT(*) + 1)    AS popularity_score
+            FROM ratings
+            GROUP BY salon_id
+        ),
+        recent_visits AS (
+            SELECT DISTINCT p.salon_id
+            FROM appointments a
+            JOIN providers p ON a.provider_id = p.id
+            WHERE a.user_id = ?
+              AND DATE(a.appointment_start) >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+        )
+        SELECT
+            s.id,
+            s.name,
+            s.address,
+            s.banner_image_url,
+            s.logo_url,
+            s.banner_color,
+            s.type,
+            COALESCE(sp.avg_rating, 0)    AS avg_rating,
+            COALESCE(sp.rating_count, 0)  AS rating_count,
+            (
+                111.045 * DEGREES(ACOS(LEAST(1.0, COS(RADIANS(?))
+                  * COS(RADIANS(s.latitude))
+                  * COS(RADIANS(s.longitude) - RADIANS(?))
+                  + SIN(RADIANS(?)) * SIN(RADIANS(s.latitude)))))
+            ) AS distance_km,
+            (
+                COALESCE(usa.booking_count, 0) * 0.30
+              + COALESCE(cs.collab_score,   0) * 0.25
+              + COALESCE(sp.popularity_score, 0) * 0.20
+              + (CASE WHEN sav.user_id IS NOT NULL THEN 1 ELSE 0 END) * 0.15
+              + (1 / (1 + (111.045 * DEGREES(ACOS(LEAST(1.0,
+                    COS(RADIANS(?)) * COS(RADIANS(s.latitude))
+                    * COS(RADIANS(s.longitude) - RADIANS(?))
+                    + SIN(RADIANS(?)) * SIN(RADIANS(s.latitude)))))))) * 0.10
+            ) * (CASE WHEN rv.salon_id IS NOT NULL THEN 0.7 ELSE 1.0 END) AS score
+        FROM salons s
+        LEFT JOIN (
+            SELECT s2.id AS salon_id, usa2.booking_count
+            FROM salons s2
+            JOIN user_service_affinity usa2 ON s2.type = usa2.type
+            WHERE s2.type IS NOT NULL
+        ) usa ON usa.salon_id = s.id
+        LEFT JOIN collab_salons cs ON cs.salon_id = s.id
+        LEFT JOIN salon_popularity sp ON sp.salon_id = s.id
+        LEFT JOIN saved_salons sav ON sav.salon_id = s.id AND sav.user_id = ?
+        LEFT JOIN recent_visits rv ON rv.salon_id = s.id
+        WHERE s.latitude IS NOT NULL AND s.status != 'closed'
+        ORDER BY score DESC
+        LIMIT ?
+    `;
+    const params = [userId, userId, userId, userId, userId, userId, lat, lng, lat, lat, lng, lat, userId, limit];
+    const [rows] = await pool.query(sql, params);
+    return rows;
+}
+
 //!Export
 module.exports = {
     pool,
@@ -814,5 +914,6 @@ module.exports = {
     deleteTimeBlock,
     getTimeBlockById,
     endRecurringBlockAt,
-    getFullyBookedDays
+    getFullyBookedDays,
+    getRecommendedSalons
 };
