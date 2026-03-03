@@ -790,10 +790,19 @@ async function getRecommendedSalons(userId, lat, lng, limit = 8) {
             GROUP BY sal.type
         ),
         collab_users AS (
+        SELECT DISTINCT user_id FROM(
             SELECT DISTINCT ss2.user_id
             FROM saved_salons ss1
             JOIN saved_salons ss2 ON ss1.salon_id = ss2.salon_id AND ss2.user_id != ?
             WHERE ss1.user_id = ?
+            UNION ALL
+            SELECT DISTINCT a2.user_id
+            FROM appointments a1
+            JOIN appointments a2 ON a1.provider_id = a2.provider_id AND a2.user_id != ?
+            WHERE a1.user_id = ? AND DATE(a1.appointment_start) >= DATE_SUB(NOW(), INTERVAL 90 DAY)
+        ) collab_users_agg
+        GROUP BY user_id
+        ORDER BY COUNT(*) DESC
         ),
         collab_salons AS (
             SELECT salon_id, COUNT(*) AS collab_score FROM (
@@ -864,7 +873,7 @@ async function getRecommendedSalons(userId, lat, lng, limit = 8) {
         ORDER BY score DESC
         LIMIT ?
     `;
-    const params = [userId, userId, userId, userId, lat, lng, lat, lat, lng, lat, userId, limit];
+    const params = [userId, userId, userId, userId, userId, userId, lat, lng, lat, lat, lng, lat, userId, limit];
     const [rows] = await pool.query(sql, params);
     return rows;
 }
