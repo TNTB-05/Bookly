@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { pool } = require('../../sql/database');
+const { getAdminById, getProviderStatus, getUserStatus } = require('../../sql/authQueries.js');
 
 const AuthMiddleware = async (req, res, next) => {
     try {
@@ -40,11 +40,8 @@ const AuthMiddleware = async (req, res, next) => {
 
         // Check admin exists in DB (no bypass)
         if (decoded.role === 'admin') {
-            const [admins] = await pool.query(
-                'SELECT id FROM admins WHERE id = ?',
-                [decoded.userId]
-            );
-            if (admins.length === 0) {
+            const admin = await getAdminById(decoded.userId);
+            if (!admin) {
                 return res.status(403).json({
                     message: 'Admin fiók nem található',
                     banned: true
@@ -55,24 +52,21 @@ const AuthMiddleware = async (req, res, next) => {
 
         // Check account status in DB for providers
         if (decoded.role === 'provider') {
-            const [providers] = await pool.query(
-                'SELECT status FROM providers WHERE id = ?',
-                [decoded.userId]
-            );
-            if (providers.length === 0 || providers[0].status === 'inactive') {
+            const provider = await getProviderStatus(decoded.userId);
+            if (!provider || provider.status === 'inactive') {
                 return res.status(403).json({
                     message: 'A fiók inaktív vagy nem található',
                     banned: true
                 });
             }
-            if (providers[0].status === 'banned') {
+            if (provider.status === 'banned') {
                 return res.status(403).json({
                     message: 'A fiókod le lett tiltva.',
                     banned: true,
                     reason: 'banned'
                 });
             }
-            if (providers[0].status === 'deleted') {
+            if (provider.status === 'deleted') {
                 return res.status(403).json({
                     message: 'A fiók GDPR törlés miatt megszűnt.',
                     banned: true,
@@ -81,24 +75,21 @@ const AuthMiddleware = async (req, res, next) => {
             }
         } else {
             // Check account status in DB for customers/users
-            const [users] = await pool.query(
-                'SELECT status FROM users WHERE id = ?',
-                [decoded.userId]
-            );
-            if (users.length === 0) {
+            const user = await getUserStatus(decoded.userId);
+            if (!user) {
                 return res.status(403).json({
                     message: 'Felhasználó nem található',
                     banned: true
                 });
             }
-            if (users[0].status === 'banned') {
+            if (user.status === 'banned') {
                 return res.status(403).json({
                     message: 'A fiókod le lett tiltva.',
                     banned: true,
                     reason: 'banned'
                 });
             }
-            if (users[0].status === 'deleted') {
+            if (user.status === 'deleted') {
                 return res.status(403).json({
                     message: 'A fiók GDPR törlés miatt megszűnt.',
                     banned: true,
