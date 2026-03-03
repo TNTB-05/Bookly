@@ -31,6 +31,7 @@ export default function Dashboard() {
     const [activeTab, setActiveTab] = useState(tabFromUrl);
     const [serviceTypes, setServiceTypes] = useState([]);
     const [topRatedSalons, setTopRatedSalons] = useState([]);
+    const [recommendedSalons, setRecommendedSalons] = useState([]);
     const [userProfile, setUserProfile] = useState(null);
     const [savedSalonIds, setSavedSalonIds] = useState([]);
     const [savedSalons, setSavedSalons] = useState([]);
@@ -53,6 +54,22 @@ export default function Dashboard() {
         loadTopRatedSalons();
         loadUserProfile();
         loadSavedSalonIds();
+    }, []);
+
+    useEffect(() => {
+        if (!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            const { latitude, longitude } = position.coords;
+            try {
+                const response = await authApi.get(
+                    `/api/search/recommendations?lat=${latitude}&lng=${longitude}&limit=8`
+                );
+                const data = await response.json();
+                if (data.success) setRecommendedSalons(data.data.salons);
+            } catch (error) {
+                console.error('Hiba az ajánlások betöltésekor:', error);
+            }
+        });
     }, []);
 
     // Mentett szalonok betöltése ha a "Mentett helyek" tab aktív
@@ -236,6 +253,7 @@ export default function Dashboard() {
                                 savedSalonIds={savedSalonIds}
                                 toggleSaveSalon={toggleSaveSalon}
                                 loadTopRatedSalons={loadTopRatedSalons}
+                                recommendedSalons={recommendedSalons}
                             />
                         )}
 

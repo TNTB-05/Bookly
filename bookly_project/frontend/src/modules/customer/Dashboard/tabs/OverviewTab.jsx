@@ -23,7 +23,8 @@ export default function OverviewTab({
     setActiveTab,
     serviceTypes,
     savedSalonIds,
-    toggleSaveSalon
+    toggleSaveSalon,
+    recommendedSalons = []
 }) {
     const { showToast } = useNotification();
     // UseState változók a kereséshez
@@ -411,30 +412,7 @@ export default function OverviewTab({
                         </div>
                     </div>
 
-                    {/* Keresési eredmények heading - between search and map */}
-                    {searchActive && (
-                        <div className="max-w-7xl mx-auto mt-8 px-4 sm:px-6 lg:px-8">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <h2 className="text-2xl font-bold text-dark-blue">Keresési eredmények</h2>
-                                    <p className="text-gray-600 mt-1">{searchResults.length} találat</p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Map Section */}
-                    <div className="max-w-7xl mx-auto mt-6 px-4 sm:px-6 lg:px-8">
-                        {mapLoading ? (
-                            <div className="h-125 rounded-2xl animate-pulse bg-gray-200" />
-                        ) : (
-                            <SalonMap salons={displayedMapSalons} userLocation={userLocation} />
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Keresési eredmények cards - Show when search is active */}
+                                {/* Keresési eredmények cards - Show when search is active */}
             {searchActive && (
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                     <div className="flex items-center justify-between mb-8">
@@ -484,7 +462,44 @@ export default function OverviewTab({
                 </div>
             )}
 
-            {/* Hogyan működik? */}
+                    {/* Map Section */}
+                    <div className="max-w-7xl mx-auto mt-6 px-4 sm:px-6 lg:px-8">
+                        {mapLoading ? (
+                            <div className="h-125 rounded-2xl animate-pulse bg-gray-200" />
+                        ) : (
+                            <SalonMap salons={displayedMapSalons} userLocation={userLocation} />
+                        )}
+                    </div>
+                </div>
+            </div>
+
+
+
+
+
+            {/* Ajánlott szalonok */}
+            {recommendedSalons.length > 0 && (
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    <div className="flex items-baseline gap-2 mb-6">
+                        <h2 className="text-2xl font-bold text-dark-blue">Ajánlott neked</h2>
+                        <span className="text-sm text-gray-400">aktivitásod alapján</span>
+                    </div>
+                    <div className="flex gap-4 overflow-x-auto pb-2">
+                        {recommendedSalons.map(salon => (
+                            <div key={salon.id} className="shrink-0 w-72">
+                                <SalonCard
+                                    salon={salon}
+                                    savedSalonIds={savedSalonIds}
+                                    toggleSaveSalon={toggleSaveSalon}
+                                    showDistance={true}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+                        {/* Hogyan működik? */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="text-center mb-10">
                     <h2 className="text-2xl font-bold text-dark-blue">Hogyan működik?</h2>
