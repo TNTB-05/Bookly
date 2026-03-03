@@ -212,17 +212,20 @@ export default function CustomerAppointmentModal({
                 {!isDeleted && (
                     <div className="p-5 border-t border-gray-100 bg-gray-50 flex gap-2">
                         {appointment.status === 'scheduled' && (
-                            <button
-                                onClick={() => onCancel?.(appointment.id)}
-                                disabled={cancelLoading}
-                                className="flex-1 py-2.5 px-4 bg-red-500 hover:bg-red-600 text-white font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            >
-                                {cancelLoading ? (
-                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                                ) : (
-                                    'Lemondás'
-                                )}
-                            </button>
+                            <>
+                                <button
+                                    onClick={() => onCancel?.(appointment.id)}
+                                    disabled={cancelLoading}
+                                    className="flex-1 py-2.5 px-4 bg-red-500 hover:bg-red-600 text-white font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    {cancelLoading ? (
+                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                                    ) : (
+                                        'Lemondás'
+                                    )}
+                                </button>
+                                <AddToCalendarButton appointment={appointment} />
+                            </>
                         )}
                         {appointment.status === 'completed' && (
                             <button
