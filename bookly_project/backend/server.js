@@ -95,6 +95,8 @@ const staffApi = require('./api/staffApi.js');
 app.use('/api/staff', staffApi);
 const messagingApi = require('./api/messagingApi.js');
 app.use('/api/messages', messagingApi(io));
+const waitlistApi = require('./api/waitlistApi.js');
+app.use('/api/waitlist', waitlistApi);
 
 //!Szerver futtatása
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

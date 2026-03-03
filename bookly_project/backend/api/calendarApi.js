@@ -4,6 +4,7 @@ const { pool, getSalonHoursByProviderId, getExpandedTimeBlocksForDate, getFullyB
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
 const { requireRole } = require('./auth/RoleMiddleware.js');
 const { sendAppointmentCancellation, sendCustomerReminder } = require('../services/emailService.js');
+const { notifyWaitlistForCancelledSlot } = require('../services/waitlistService.js');
 const { upload, processServiceImage, deleteOldSalonImage } = require('../middleware/uploadMiddleware.js');
 
 // Middleware to verify provider exists and is active in database
@@ -527,18 +528,20 @@ router.delete('/appointments/:id', async (request, response) => {
             });
         }
 
-        // First check if appointment exists and belongs to this provider, and get details for email
+        // First check if appointment exists and belongs to this provider, and get details for email and waitlist
         const [appointments] = await pool.query(
             `SELECT
-                a.id, a.status, a.provider_id, a.user_id, a.appointment_start,
+                a.id, a.status, a.provider_id, a.service_id, a.user_id, a.appointment_start,
                 u.email as customer_email,
                 u.name as customer_name,
                 sal.name as salon_name,
-                s.name as service_name
+                s.name as service_name,
+                p.name as provider_name
             FROM appointments a
             LEFT JOIN users u ON a.user_id = u.id
             LEFT JOIN services s ON a.service_id = s.id
-            LEFT JOIN salons sal ON sal.id = (SELECT salon_id FROM providers WHERE id = a.provider_id)
+            LEFT JOIN providers p ON p.id = a.provider_id
+            LEFT JOIN salons sal ON sal.id = p.salon_id
             WHERE a.id = ?`,
             [appointmentId]
         );
@@ -586,6 +589,16 @@ router.delete('/appointments/:id', async (request, response) => {
                 console.error('Failed to send cancellation email:', err);
             });
         }
+
+        // Notify waitlisted users about the freed slot (fire-and-forget)
+        notifyWaitlistForCancelledSlot(
+            appointment.provider_id,
+            appointment.service_id,
+            appointment.appointment_start,
+            appointment.salon_name,
+            appointment.service_name,
+            appointment.provider_name
+        ).catch(err => console.error('Waitlist notify error:', err));
 
         response.status(200).json({
             success: true,

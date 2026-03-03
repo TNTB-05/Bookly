@@ -56,6 +56,14 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
     const [cancelingId, setCancelingId] = useState(null);
     const [ratingAppointment, setRatingAppointment] = useState(null);
 
+    // Waitlist state
+    const [waitlistEntries, setWaitlistEntries] = useState([]);
+    const [waitlistOpen, setWaitlistOpen] = useState(true);
+    const [waitlistLoading, setWaitlistLoading] = useState(false);
+    const [selectedWaitlistEntry, setSelectedWaitlistEntry] = useState(null);
+    const [waitlistSlots, setWaitlistSlots] = useState({});
+    const [waitlistSlotsLoading, setWaitlistSlotsLoading] = useState(false);
+
     const hours = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => i + START_HOUR);
 
     // ========================
@@ -63,6 +71,7 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
     // ========================
     useEffect(() => {
         loadAppointments();
+        fetchWaitlist();
     }, []);
 
     async function loadAppointments() {
@@ -82,6 +91,62 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
         } finally {
             setLoading(false);
         }
+    }
+
+    async function fetchWaitlist() {
+        setWaitlistLoading(true);
+        try {
+            const res = await authApi.get('/api/waitlist');
+            const data = await res.json();
+            if (data.success) setWaitlistEntries(data.data.entries);
+        } finally {
+            setWaitlistLoading(false);
+        }
+    }
+
+    async function handleCancelWaitlist(id) {
+        await authApi.delete(`/api/waitlist/${id}`);
+        setWaitlistEntries(prev => prev.filter(e => e.id !== id));
+        if (selectedWaitlistEntry?.id === id) setSelectedWaitlistEntry(null);
+    }
+
+    async function openWaitlistModal(entry) {
+        setSelectedWaitlistEntry(entry);
+        setWaitlistSlots({});
+        setWaitlistSlotsLoading(true);
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const msPerDay = 86400000;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const from = new Date(Math.max(new Date(entry.preferred_date_from).getTime(), today.getTime()));
+        const to = new Date(entry.preferred_date_to);
+        if (from > to) {
+            setWaitlistSlotsLoading(false);
+            return;
+        }
+        const totalDays = Math.min(Math.round((to - from) / msPerDay) + 1, 60);
+        const results = {};
+        await Promise.all(
+            Array.from({ length: totalDays }, (_, i) => {
+                const d = new Date(from.getTime() + i * msPerDay);
+                const dateStr = d.toISOString().split('T')[0];
+                return fetch(
+                    `${apiUrl}/api/user/provider/${entry.provider_id}/availability?date=${dateStr}&serviceDuration=${entry.duration_minutes}`
+                )
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.success || !data.slots?.length) return;
+                        let slots = data.slots;
+                        if (entry.preferred_time_from && entry.preferred_time_to) {
+                            slots = slots.filter(s => s >= entry.preferred_time_from && s < entry.preferred_time_to);
+                        }
+                        if (slots.length > 0) results[dateStr] = slots;
+                    })
+                    .catch(() => {});
+            })
+        );
+        setWaitlistSlots(results);
+        setWaitlistSlotsLoading(false);
     }
 
     // ========================
@@ -651,7 +716,125 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                             </div>
                         )}
                     </div>
+
+                    {/* Várólistáim */}
+                    <div className="mt-6">
+                        <button
+                            onClick={() => setWaitlistOpen(prev => !prev)}
+                            className="flex items-center gap-2 w-full text-left mb-3"
+                        >
+                            <span className="font-semibold text-gray-800 text-base">Várólistáim</span>
+                            <span className="text-xs text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">{waitlistEntries.length}</span>
+                            <span className="ml-auto text-gray-400 text-sm">{waitlistOpen ? '▲' : '▼'}</span>
+                        </button>
+                        {waitlistOpen && (
+                            <div className="space-y-3">
+                                {waitlistLoading && <p className="text-sm text-gray-400">Betöltés...</p>}
+                                {!waitlistLoading && waitlistEntries.length === 0 && (
+                                    <p className="text-sm text-gray-400">Nincs aktív várólistás bejegyzés.</p>
+                                )}
+                                {waitlistEntries.map(entry => (
+                                    <div key={entry.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-start justify-between gap-3">
+                                        <button
+                                            onClick={() => openWaitlistModal(entry)}
+                                            className="flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
+                                        >
+                                            <p className="font-medium text-gray-900 text-sm truncate">{entry.salon_name}</p>
+                                            <p className="text-xs text-gray-500 mt-0.5">{entry.service_name} · {entry.provider_name}</p>
+                                            <p className="text-xs text-indigo-600 mt-1 font-medium">
+                                                {new Date(entry.preferred_date_from).toLocaleDateString('hu-HU')} – {new Date(entry.preferred_date_to).toLocaleDateString('hu-HU')}
+                                            </p>
+                                            <p className="text-xs text-indigo-500 mt-1 underline">Szabad időpontok megtekintése</p>
+                                        </button>
+                                        <button
+                                            onClick={() => handleCancelWaitlist(entry.id)}
+                                            className="shrink-0 text-xs text-red-500 hover:text-red-700 font-medium px-3 py-1.5 rounded-lg border border-red-200 hover:border-red-400 transition-colors"
+                                        >
+                                            Lemondás
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </>
+            )}
+
+            {/* Waitlist Slots Modal */}
+            {selectedWaitlistEntry && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setSelectedWaitlistEntry(null)}>
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="px-5 pt-5 pb-4 border-b border-gray-100">
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <h2 className="font-semibold text-gray-900 text-base">Szabad időpontok</h2>
+                                    <p className="text-xs text-gray-500 mt-0.5">{selectedWaitlistEntry.salon_name} · {selectedWaitlistEntry.service_name}</p>
+                                    <p className="text-xs text-indigo-600 mt-0.5">
+                                        {new Date(selectedWaitlistEntry.preferred_date_from).toLocaleDateString('hu-HU')} – {new Date(selectedWaitlistEntry.preferred_date_to).toLocaleDateString('hu-HU')}
+                                        {selectedWaitlistEntry.preferred_time_from && ` · ${selectedWaitlistEntry.preferred_time_from}–${selectedWaitlistEntry.preferred_time_to}`}
+                                    </p>
+                                </div>
+                                <button onClick={() => setSelectedWaitlistEntry(null)} className="text-gray-400 hover:text-gray-600 text-xl leading-none mt-0.5">×</button>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+                            {waitlistSlotsLoading && (
+                                <div className="flex items-center justify-center py-10">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
+                                </div>
+                            )}
+                            {!waitlistSlotsLoading && Object.keys(waitlistSlots).length === 0 && (
+                                <div className="text-center py-8">
+                                    <p className="text-sm text-gray-500">Nincs szabad időpont ebben az időszakban.</p>
+                                    <p className="text-xs text-gray-400 mt-1">E-mailben értesítünk, amint felszabadul egy időpont.</p>
+                                </div>
+                            )}
+                            {!waitlistSlotsLoading && Object.keys(waitlistSlots).sort().map(dateStr => (
+                                <div key={dateStr}>
+                                    <p className="text-xs font-semibold text-gray-700 mb-2">
+                                        {new Date(dateStr).toLocaleDateString('hu-HU', { weekday: 'long', month: 'long', day: 'numeric' })}
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {waitlistSlots[dateStr].map(slot => (
+                                            <button
+                                                key={slot}
+                                                onClick={() => {
+                                                    setSelectedWaitlistEntry(null);
+                                                    navigate(`/dashboard/salon/${selectedWaitlistEntry.salon_id}`, {
+                                                        state: {
+                                                            fastBooking: {
+                                                                providerId: selectedWaitlistEntry.provider_id,
+                                                                serviceId: selectedWaitlistEntry.service_id,
+                                                                preselectedDate: dateStr,
+                                                            }
+                                                        }
+                                                    });
+                                                }}
+                                                className="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-medium border border-indigo-200 hover:bg-indigo-100 hover:border-indigo-400 transition-colors"
+                                            >
+                                                {slot}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+                            <button
+                                onClick={() => handleCancelWaitlist(selectedWaitlistEntry.id)}
+                                className="flex-1 py-2 text-sm text-red-500 hover:text-red-700 font-medium rounded-lg border border-red-200 hover:border-red-400 transition-colors"
+                            >
+                                Várólistáról lemondás
+                            </button>
+                            <button
+                                onClick={() => setSelectedWaitlistEntry(null)}
+                                className="flex-1 py-2 text-sm text-gray-700 font-medium rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                            >
+                                Bezárás
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {/* Appointment Detail Modal */}

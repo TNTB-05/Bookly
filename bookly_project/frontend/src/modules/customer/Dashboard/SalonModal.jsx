@@ -49,6 +49,15 @@ export default function SalonModal() {
     const [loadingUser, setLoadingUser] = useState(true);
     const [lightboxImage, setLightboxImage] = useState(null);
 
+    // Waitlist state
+    const [showWaitlistForm, setShowWaitlistForm] = useState(false);
+    const [waitlistDateFrom, setWaitlistDateFrom] = useState(null);
+    const [waitlistDateTo, setWaitlistDateTo] = useState(null);
+    const [waitlistTimePreference, setWaitlistTimePreference] = useState('');
+    const [waitlistSuccess, setWaitlistSuccess] = useState(false);
+    const [waitlistLoading, setWaitlistLoading] = useState(false);
+    const [waitlistAvailableWarning, setWaitlistAvailableWarning] = useState(null);
+
     // Fast booking: once salon data loads, prefill provider/service and jump to datetime step
     useEffect(() => {
         if (!fastBooking || !salon || !salon.providers) return;
@@ -67,6 +76,9 @@ export default function SalonModal() {
 
         setSelectedProvider(provider);
         setSelectedService(service);
+        if (fastBooking.preselectedDate) {
+            setSelectedDate(new Date(fastBooking.preselectedDate + 'T12:00:00'));
+        }
         setCurrentStep(STEPS.SELECT_DATETIME);
     }, [salon]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -283,6 +295,54 @@ export default function SalonModal() {
             showToast('Hiba történt a foglalás létrehozásakor', 'error');
         } finally {
             setBooking(false);
+        }
+    }
+
+    // Join waitlist handler
+    async function handleJoinWaitlist() {
+        if (!waitlistDateFrom || !waitlistDateTo) return;
+        setWaitlistLoading(true);
+        setWaitlistAvailableWarning(null);
+        const timeMap = {
+            morning: { from: '08:00', to: '12:00' },
+            afternoon: { from: '12:00', to: '17:00' },
+            evening: { from: '17:00', to: '20:00' },
+        };
+        const timeRange = timeMap[waitlistTimePreference] || {};
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const msPerDay = 86400000;
+        const totalDays = Math.min(Math.round((waitlistDateTo - waitlistDateFrom) / msPerDay) + 1, 60);
+        try {
+            for (let i = 0; i < totalDays; i++) {
+                const checkDate = new Date(waitlistDateFrom.getTime() + i * msPerDay);
+                const dateStr = formatDateLocal(checkDate);
+                const res = await fetch(
+                    `${apiUrl}/api/user/provider/${selectedProvider.id}/availability?date=${dateStr}&serviceDuration=${selectedService.duration_minutes}`
+                );
+                const data = await res.json();
+                if (data.success && data.slots?.length > 0) {
+                    const match = timeRange.from
+                        ? data.slots.find(s => s >= timeRange.from && s < timeRange.to)
+                        : data.slots[0];
+                    if (match) {
+                        setWaitlistAvailableWarning({ date: dateStr, slot: match });
+                        setWaitlistLoading(false);
+                        return;
+                    }
+                }
+            }
+            const res = await authApi.post('/api/waitlist', {
+                provider_id: selectedProvider.id,
+                service_id: selectedService.id,
+                date_from: waitlistDateFrom.toISOString().split('T')[0],
+                date_to: waitlistDateTo.toISOString().split('T')[0],
+                time_from: timeRange.from || null,
+                time_to: timeRange.to || null,
+            });
+            const resData = await res.json();
+            if (resData.success) setWaitlistSuccess(true);
+        } finally {
+            setWaitlistLoading(false);
         }
     }
 
@@ -681,7 +741,15 @@ export default function SalonModal() {
                                     <div className="flex justify-center">
                                         <DatePicker
                                             selected={selectedDate}
-                                            onChange={(date) => setSelectedDate(date)}
+                                            onChange={(date) => {
+                                                setSelectedDate(date);
+                                                setShowWaitlistForm(false);
+                                                setWaitlistSuccess(false);
+                                                setWaitlistDateFrom(null);
+                                                setWaitlistDateTo(null);
+                                                setWaitlistTimePreference('');
+                                                setWaitlistAvailableWarning(null);
+                                            }}
                                             minDate={new Date()}
                                             locale="hu"
                                             dateFormat="yyyy. MMMM d."
@@ -721,9 +789,113 @@ export default function SalonModal() {
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-xl">
-                                            <p className="text-gray-500">Nincs elérhető időpont</p>
-                                            <p className="text-sm text-gray-400 mt-1">Válasszon másik napot</p>
+                                        <div className="bg-gray-50 rounded-xl p-4">
+                                            <div className="flex flex-col items-center justify-center py-6">
+                                                <p className="text-gray-500">Nincs elérhető időpont</p>
+                                                <p className="text-sm text-gray-400 mt-1">Válasszon másik napot</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {selectedDate && (
+                                        <div className="mt-3">
+                                            {!showWaitlistForm && !waitlistSuccess && (
+                                                <button
+                                                    onClick={() => setShowWaitlistForm(true)}
+                                                    className="w-full py-2 px-4 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors border border-indigo-200"
+                                                >
+                                                    Feliratkozás a várólistára
+                                                </button>
+                                            )}
+                                            {showWaitlistForm && !waitlistSuccess && (
+                                                <div className="bg-white rounded-lg p-4 border border-gray-200 space-y-4">
+                                                    <p className="text-sm font-medium text-gray-700">Milyen időszakban szeretnél időpontot?</p>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div>
+                                                            <label className="text-xs text-gray-500 mb-1 block">Tól</label>
+                                                            <DatePicker
+                                                                selected={waitlistDateFrom}
+                                                                onChange={date => setWaitlistDateFrom(date)}
+                                                                selectsStart
+                                                                startDate={waitlistDateFrom}
+                                                                endDate={waitlistDateTo}
+                                                                minDate={new Date()}
+                                                                dateFormat="yyyy.MM.dd"
+                                                                placeholderText="Kezdő dátum"
+                                                                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs text-gray-500 mb-1 block">Ig</label>
+                                                            <DatePicker
+                                                                selected={waitlistDateTo}
+                                                                onChange={date => setWaitlistDateTo(date)}
+                                                                selectsEnd
+                                                                startDate={waitlistDateFrom}
+                                                                endDate={waitlistDateTo}
+                                                                minDate={waitlistDateFrom || new Date()}
+                                                                dateFormat="yyyy.MM.dd"
+                                                                placeholderText="Befejező dátum"
+                                                                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs text-gray-500 mb-2 block">Napszak preference (opcionális)</label>
+                                                        <div className="flex gap-2">
+                                                            {[
+                                                                { value: 'morning', label: 'Reggel', sub: '8–12' },
+                                                                { value: 'afternoon', label: 'Délután', sub: '12–17' },
+                                                                { value: 'evening', label: 'Este', sub: '17–20' },
+                                                            ].map(opt => (
+                                                                <button
+                                                                    key={opt.value}
+                                                                    onClick={() => setWaitlistTimePreference(prev => prev === opt.value ? '' : opt.value)}
+                                                                    className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium border transition-colors ${
+                                                                        waitlistTimePreference === opt.value
+                                                                            ? 'bg-indigo-600 text-white border-indigo-600'
+                                                                            : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-400'
+                                                                    }`}
+                                                                >
+                                                                    <div>{opt.label}</div>
+                                                                    <div className="text-xs opacity-70">{opt.sub}</div>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    {waitlistAvailableWarning && (
+                                                        <div className="bg-amber-50 border border-amber-300 rounded-lg p-3">
+                                                            <p className="text-sm font-medium text-amber-800">
+                                                                Szabad időpont van ebben az időszakban!
+                                                            </p>
+                                                            <p className="text-xs text-amber-700 mt-1">
+                                                                {new Date(waitlistAvailableWarning.date).toLocaleDateString('hu-HU', { month: 'long', day: 'numeric', weekday: 'short' })}{' '}
+                                                                — {waitlistAvailableWarning.slot} — már szabad. Foglald le most, vagy iratkozz fel a várólistára ha ezt az időpontot nem tudod.
+                                                            </p>
+                                                            <button
+                                                                onClick={() => setWaitlistAvailableWarning(null)}
+                                                                className="mt-2 text-xs text-amber-700 underline hover:text-amber-900"
+                                                            >
+                                                                Mégis feliratkozom a várólistára
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                    {!waitlistAvailableWarning && (
+                                                    <button
+                                                        onClick={handleJoinWaitlist}
+                                                        disabled={!waitlistDateFrom || !waitlistDateTo || waitlistLoading}
+                                                        className="w-full py-2 px-4 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                    >
+                                                        {waitlistLoading ? 'Ellenőrzés...' : 'Feliratkozás a várólistára'}
+                                                    </button>
+                                                    )}
+                                                </div>
+                                            )}
+                                            {waitlistSuccess && (
+                                                <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                                                    <p className="text-sm font-medium text-green-800">Sikeresen feliratkoztál a várólistára!</p>
+                                                    <p className="text-xs text-green-600 mt-1">E-mailben értesítünk, amint szabad időpont nyílik meg.</p>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>

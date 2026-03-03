@@ -293,6 +293,76 @@ async function sendPasswordChangeConfirmation(user) {
     });
 }
 
+async function sendWaitlistNotification({ user_email, user_name, salon_name, service_name, provider_name, freed_slot_date }) {
+    const formattedDate = new Date(freed_slot_date).toLocaleDateString('hu-HU', {
+        year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+    });
+
+    const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+            <div style="background: #4f46e5; padding: 32px 24px; text-align: center;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Szabad időpont nyílt meg!</h1>
+                <p style="color: #c7d2fe; margin: 8px 0 0; font-size: 14px;">Várólistás értesítő</p>
+            </div>
+            <div style="padding: 32px 24px;">
+                <p style="font-size: 16px; color: #374151; margin: 0 0 24px;">
+                    Kedves <strong>${user_name}</strong>,
+                </p>
+                <p style="font-size: 16px; color: #374151; margin: 0 0 24px; line-height: 1.6;">
+                    Jó hírünk van: lemondás miatt szabad időpont nyílt meg annál a szakembernél, akit vártál!
+                    Az időpont <strong>azonnal foglalható</strong> — az első foglalja le, aki megérkezik.
+                </p>
+                <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 0 0 24px; border-radius: 0 6px 6px 0;">
+                    <p style="margin: 0 0 6px; color: #92400e; font-size: 15px; font-weight: 700;">
+                        Ne hagyd ki — mások is várnak erre az időpontra!
+                    </p>
+                    <p style="margin: 0; color: #78350f; font-size: 14px; line-height: 1.5;">
+                        Mivel egyszerre mindenkit értesítünk a várólistán, az időpont az első foglalóé lesz.
+                        Az időpontok gyorsan elkelnek.
+                    </p>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 12px 0; color: #6b7280; font-size: 14px; width: 40%;">Szalon</td>
+                        <td style="padding: 12px 0; color: #111827; font-size: 14px; font-weight: 600;">${salon_name}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 12px 0; color: #6b7280; font-size: 14px;">Szakember</td>
+                        <td style="padding: 12px 0; color: #111827; font-size: 14px; font-weight: 600;">${provider_name}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 12px 0; color: #6b7280; font-size: 14px;">Szolgáltatás</td>
+                        <td style="padding: 12px 0; color: #111827; font-size: 14px; font-weight: 600;">${service_name}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 0; color: #6b7280; font-size: 14px;">Szabad nap</td>
+                        <td style="padding: 12px 0; color: #4f46e5; font-size: 14px; font-weight: 700;">${formattedDate}</td>
+                    </tr>
+                </table>
+                <div style="text-align: center; margin: 28px 0;">
+                    <p style="font-size: 14px; color: #374151; margin: 0 0 12px;">
+                        Nyisd meg a Bookly alkalmazást, és foglald le az időpontot most — mielőtt valaki más megelőz!
+                    </p>
+                    <p style="font-size: 12px; color: #9ca3af; margin: 0;">
+                        Ha már nem szeretnél értesítéseket kapni erről a várólistás bejegyzésről,
+                        a Bookly alkalmazásban a <em>Várólistáim</em> menüpontban lemondhatod.
+                    </p>
+                </div>
+            </div>
+            <div style="background: #f9fafb; padding: 16px 24px; text-align: center; border-top: 1px solid #e5e7eb;">
+                <p style="font-size: 12px; color: #9ca3af; margin: 0;">© 2026 Bookly — Automatikus értesítő, erre a címre ne válaszolj.</p>
+            </div>
+        </div>
+    `;
+
+    await transporter.sendMail({
+        from: process.env.EMAIL_FROM,
+        to: user_email,
+        subject: `Szabad időpont nyílt meg — ${salon_name} (${service_name})`,
+        html
+    });
+}
+
 async function sendCustomerReminder({ customer_email, customer_name, salon_name }) {
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
@@ -337,5 +407,6 @@ module.exports = {
     sendAppointmentModification,
     sendAppointmentCancellation,
     sendPasswordChangeConfirmation,
-    sendCustomerReminder
+    sendCustomerReminder,
+    sendWaitlistNotification
 };

@@ -251,6 +251,22 @@ INSERT INTO ratings (user_id, appointment_id, salon_id, provider_id, salon_ratin
   (4, 4, 1, 2, 5, 4, 'Love my new hair color! Peter did an amazing job.', 'Very professional and creative stylist.', TRUE),
   (2, 5, 3, 6, 4, 5, 'Good repair service, fast turnaround.', 'Eva was super helpful and fixed my phone perfectly!', TRUE);
 
+CREATE TABLE IF NOT EXISTS waitlist (
+  `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+  `user_id` INT NOT NULL,
+  `provider_id` INT NOT NULL,
+  `service_id` INT NOT NULL,
+  `preferred_date_from` DATE NOT NULL,
+  `preferred_date_to` DATE NOT NULL,
+  `preferred_time_from` TIME NULL,
+  `preferred_time_to` TIME NULL,
+  `status` ENUM('active', 'booked', 'expired', 'canceled') DEFAULT 'active',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE CASCADE,
+  FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
+
 -- Messaging tables
 CREATE TABLE IF NOT EXISTS conversations (
     id INT AUTO_INCREMENT PRIMARY KEY,
