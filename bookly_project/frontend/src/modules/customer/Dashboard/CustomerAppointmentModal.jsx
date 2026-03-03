@@ -8,6 +8,7 @@ import CurrencyIcon from '../../../icons/CurrencyIcon';
 import ChatBubbleIcon from '../../../icons/ChatBubbleIcon';
 import WarningIcon from '../../../icons/WarningIcon';
 import PencilIcon from '../../../icons/PencilIcon';
+import AddToCalendarButton from './AddToCalendarButton';
 
 const statusConfig = {
     scheduled: { text: 'Várható', color: 'bg-blue-100 text-blue-700 border-blue-200' },
