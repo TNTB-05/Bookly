@@ -20,6 +20,7 @@ const {
 const { calculateDistance } = require('../services/locationService');
 const { upload, processAndSaveImage, deleteOldImage } = require('../middleware/uploadMiddleware');
 const { sendAppointmentConfirmation, sendPasswordChangeConfirmation, sendAppointmentCancellation } = require('../services/emailService');
+const { notifyWaitlistForCancelledSlot } = require('../services/waitlistService.js');
 
 // Utazási idő szorzó (perc/km) – ez az egyetlen helyen konfigurálható érték
 const TRAVEL_TIME_MULTIPLIER_MIN_PER_KM = 2;
@@ -1003,14 +1004,17 @@ router.delete('/appointments/:id', AuthMiddleware, async (req, res) => {
             });
         }
 
-        // Get appointment details for email before canceling
+        // Get appointment details for email and waitlist notification before canceling
         const [appointmentDetails] = await pool.query(
             `SELECT
                 a.appointment_start,
+                a.service_id,
+                a.provider_id,
                 u.email as customer_email,
                 u.name as customer_name,
                 sal.name as salon_name,
-                s.name as service_name
+                s.name as service_name,
+                p.name as provider_name
             FROM appointments a
             JOIN users u ON a.user_id = u.id
             JOIN services s ON a.service_id = s.id
@@ -1031,6 +1035,17 @@ router.delete('/appointments/:id', AuthMiddleware, async (req, res) => {
             sendAppointmentCancellation(appointmentDetails[0]).catch(err => {
                 console.error('Failed to send cancellation email:', err);
             });
+
+            // Notify waitlisted users about the freed slot (fire-and-forget)
+            const det = appointmentDetails[0];
+            notifyWaitlistForCancelledSlot(
+                det.provider_id,
+                det.service_id,
+                det.appointment_start,
+                det.salon_name,
+                det.service_name,
+                det.provider_name
+            ).catch(err => console.error('Waitlist notify error:', err));
         }
 
         res.status(200).json({
