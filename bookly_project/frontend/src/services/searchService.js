@@ -14,7 +14,7 @@ const API_BASE_URL = 'http://localhost:3000';
  * @param {string} params.locationSearch - Location text (e.g., "Budapest, Istvánmezei út 3, 1146")
  * @param {string} params.serviceFilter - Service type filter (e.g., "fodrász", "all")
  * @param {Object} params.userLocation - User's GPS coordinates {latitude, longitude}
- * @returns {Promise<Array>} - Array of salon objects with distance info (if location provided)
+ * @returns {Promise<{salons: Array, resolvedLocation: Object|null}>} - Salons + resolved coordinates (if geocoded)
  */
 export async function searchSalons({ searchQuery, locationSearch, serviceFilter, userLocation }) {
     const hasSearchQuery = searchQuery && searchQuery.trim() !== '';
@@ -62,31 +62,39 @@ export async function searchSalons({ searchQuery, locationSearch, serviceFilter,
                     );
                 }
 
-                // Return salons with distance info
-                return salons.map((salon) => ({
-                    id: salon.id,
-                    name: salon.name,
-                    address: salon.address,
-                    description: salon.description,
-                    distance: salon.distance,
-                    latitude: salon.latitude,
-                    longitude: salon.longitude,
-                    type: salon.type,
-                    phone: salon.phone,
-                    email: salon.email,
-                    opening_hours: salon.opening_hours,
-                    closing_hours: salon.closing_hours,
-                    average_rating: salon.average_rating,
-                    rating_count: salon.rating_count,
-                    banner_color: salon.banner_color,
-                    logo_url: salon.logo_url,
-                    banner_image_url: salon.banner_image_url,
-                    providers: salon.providers,
-                    services: salon.services
-                }));
+                // Extract resolved coordinates (backend geocodes place name)
+                const resolvedLocation = data.search_location
+                    ? { latitude: data.search_location.latitude, longitude: data.search_location.longitude }
+                    : null;
+
+                // Return salons with distance info + resolved location
+                return {
+                    salons: salons.map((salon) => ({
+                        id: salon.id,
+                        name: salon.name,
+                        address: salon.address,
+                        description: salon.description,
+                        distance: salon.distance,
+                        latitude: salon.latitude,
+                        longitude: salon.longitude,
+                        type: salon.type,
+                        phone: salon.phone,
+                        email: salon.email,
+                        opening_hours: salon.opening_hours,
+                        closing_hours: salon.closing_hours,
+                        average_rating: salon.average_rating,
+                        rating_count: salon.rating_count,
+                        banner_color: salon.banner_color,
+                        logo_url: salon.logo_url,
+                        banner_image_url: salon.banner_image_url,
+                        providers: salon.providers,
+                        services: salon.services
+                    })),
+                    resolvedLocation
+                };
             } else {
                 console.error('Search failed:', data.message);
-                return [];
+                return { salons: [], resolvedLocation: null };
             }
         }
 
@@ -113,41 +121,44 @@ export async function searchSalons({ searchQuery, locationSearch, serviceFilter,
 
             if (data.success) {
                 // Return salons without distance info (backend already filtered by both query and service_type)
-                return data.salons.map((salon) => ({
-                    id: salon.id,
-                    name: salon.name,
-                    address: salon.address,
-                    description: salon.description,
-                    distance: null,
-                    latitude: salon.latitude,
-                    longitude: salon.longitude,
-                    type: salon.type,
-                    phone: salon.phone,
-                    email: salon.email,
-                    opening_hours: salon.opening_hours,
-                    closing_hours: salon.closing_hours,
-                    average_rating: salon.average_rating,
-                    rating_count: salon.rating_count,
-                    banner_color: salon.banner_color,
-                    logo_url: salon.logo_url,
-                    banner_image_url: salon.banner_image_url,
-                    providers: salon.providers,
-                    services: salon.services
-                }));
+                return {
+                    salons: data.salons.map((salon) => ({
+                        id: salon.id,
+                        name: salon.name,
+                        address: salon.address,
+                        description: salon.description,
+                        distance: null,
+                        latitude: salon.latitude,
+                        longitude: salon.longitude,
+                        type: salon.type,
+                        phone: salon.phone,
+                        email: salon.email,
+                        opening_hours: salon.opening_hours,
+                        closing_hours: salon.closing_hours,
+                        average_rating: salon.average_rating,
+                        rating_count: salon.rating_count,
+                        banner_color: salon.banner_color,
+                        logo_url: salon.logo_url,
+                        banner_image_url: salon.banner_image_url,
+                        providers: salon.providers,
+                        services: salon.services
+                    })),
+                    resolvedLocation: null
+                };
             } else {
                 console.error('Search failed:', data.message);
-                return [];
+                return { salons: [], resolvedLocation: null };
             }
         }
 
         // ==========================================
         // No filters - return empty (user should enter something)
         // ==========================================
-        return [];
+        return { salons: [], resolvedLocation: null };
 
     } catch (error) {
         console.error('Search error:', error);
-        return [];
+        return { salons: [], resolvedLocation: null };
     }
 }
 

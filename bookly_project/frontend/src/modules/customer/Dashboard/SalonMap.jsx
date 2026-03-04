@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useCallback } from 'react';
+import React, { useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -64,8 +64,29 @@ function FitBounds({ salons }) {
     return null;
 }
 
-function SalonMap({ salons, userLocation }) {
+// Inner component to fly to a selected salon and open its popup
+function FlyToSelected({ selectedSalonId, markerRefs, salons }) {
+    const map = useMap();
+    useEffect(() => {
+        if (!selectedSalonId) return;
+        const salon = salons.find((s) => s.id === selectedSalonId);
+        if (!salon) return;
+        const lat = parseFloat(salon.latitude);
+        const lng = parseFloat(salon.longitude);
+        if (isNaN(lat) || isNaN(lng)) return;
+        map.flyTo([lat, lng], 15, { duration: 0.8 });
+        // Open popup after fly animation
+        setTimeout(() => {
+            const marker = markerRefs.current[selectedSalonId];
+            if (marker) marker.openPopup();
+        }, 900);
+    }, [selectedSalonId, salons, map, markerRefs]);
+    return null;
+}
+
+function SalonMap({ salons, userLocation, height = '500px', selectedSalonId = null }) {
     const navigate = useNavigate();
+    const markerRefs = useRef({});
 
     // Filter salons that have valid coordinates
     const validSalons = useMemo(
@@ -103,7 +124,7 @@ function SalonMap({ salons, userLocation }) {
         <BaseMap
             center={mapCenter}
             zoom={mapZoom}
-            height="500px"
+            height={height}
             className="rounded-2xl border border-gray-200 shadow-sm"
         >
             {/* Recenter when user location changes */}
@@ -117,6 +138,15 @@ function SalonMap({ salons, userLocation }) {
             {/* Fit bounds to markers when no user location */}
             {!userLocation && validSalons.length > 0 && (
                 <FitBounds salons={validSalons} />
+            )}
+
+            {/* Fly to selected salon marker */}
+            {selectedSalonId && (
+                <FlyToSelected
+                    selectedSalonId={selectedSalonId}
+                    markerRefs={markerRefs}
+                    salons={validSalons}
+                />
             )}
 
             {/* Red marker for user's current location */}
@@ -146,7 +176,7 @@ function SalonMap({ salons, userLocation }) {
                         : null;
 
                 return (
-                    <Marker key={salon.id} position={[lat, lng]}>
+                    <Marker key={salon.id} position={[lat, lng]} ref={(ref) => { if (ref) markerRefs.current[salon.id] = ref; }}>
                         <Popup minWidth={240} maxWidth={300}>
                             <div className="space-y-1.5 text-sm">
                                 {/* Salon name */}
