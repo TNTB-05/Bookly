@@ -13,12 +13,12 @@ const { upload, processAndSaveImage, deleteOldImage } = require('../../middlewar
 const { sendPasswordChangeConfirmation } = require('../../services/emailService');
 
 // Get current user's profile
-router.get('/profile', AuthMiddleware, async (req, res) => {
+router.get('/profile', AuthMiddleware, async (request, response) => {
     try {
-        const userId = req.user.userId;
+        const userId = request.user.userId;
 
         if (!userId) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'Felhasználó azonosító nem található a tokenben'
             });
@@ -27,13 +27,13 @@ router.get('/profile', AuthMiddleware, async (req, res) => {
         const user = await getUserById(userId);
 
         if (!user) {
-            return res.status(404).json({
+            return response.status(404).json({
                 success: false,
                 message: 'Felhasználó nem található'
             });
         }
 
-        res.status(200).json({
+        response.status(200).json({
             success: true,
             user: {
                 id: user.id,
@@ -50,7 +50,7 @@ router.get('/profile', AuthMiddleware, async (req, res) => {
         });
     } catch (error) {
         console.error('Get profile error:', error);
-        res.status(500).json({
+        response.status(500).json({
             success: false,
             message: 'Szerverhiba a profil lekérése során'
         });
@@ -58,27 +58,27 @@ router.get('/profile', AuthMiddleware, async (req, res) => {
 });
 
 // Update current user's profile
-router.put('/profile', AuthMiddleware, async (req, res) => {
+router.put('/profile', AuthMiddleware, async (request, response) => {
     try {
-        const userId = req.user.userId;
-        const { name, email, phone, address } = req.body;
+        const userId = request.user.userId;
+        const { name, email, phone, address } = request.body;
 
         if (!userId) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'Felhasználó azonosító nem található a tokenben'
             });
         }
 
         if (!name || name.trim() === '') {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'A név megadása kötelező'
             });
         }
 
         if (!email || email.trim() === '') {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'Az e-mail megadása kötelező'
             });
@@ -86,7 +86,7 @@ router.put('/profile', AuthMiddleware, async (req, res) => {
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email.trim())) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'Érvénytelen e-mail formátum'
             });
@@ -94,7 +94,7 @@ router.put('/profile', AuthMiddleware, async (req, res) => {
 
         const emailExists = await checkEmailExists(email.trim(), userId);
         if (emailExists) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'Ez az e-mail cím már használatban van másik fióknál'
             });
@@ -117,7 +117,7 @@ router.put('/profile', AuthMiddleware, async (req, res) => {
         });
 
         if (!updated) {
-            return res.status(404).json({
+            return response.status(404).json({
                 success: false,
                 message: 'Felhasználó nem található vagy a frissítés sikertelen'
             });
@@ -125,7 +125,7 @@ router.put('/profile', AuthMiddleware, async (req, res) => {
 
         const user = await getUserById(userId);
 
-        res.status(200).json({
+        response.status(200).json({
             success: true,
             message: 'Profil sikeresen frissítve',
             user: {
@@ -142,7 +142,7 @@ router.put('/profile', AuthMiddleware, async (req, res) => {
         });
     } catch (error) {
         console.error('Update profile error:', error);
-        res.status(500).json({
+        response.status(500).json({
             success: false,
             message: 'Szerverhiba a profil frissítése során'
         });
@@ -150,34 +150,34 @@ router.put('/profile', AuthMiddleware, async (req, res) => {
 });
 
 // Change user password
-router.put('/password', AuthMiddleware, async (req, res) => {
+router.put('/password', AuthMiddleware, async (request, response) => {
     try {
-        const userId = req.user.userId;
-        const { currentPassword, newPassword, confirmPassword } = req.body;
+        const userId = request.user.userId;
+        const { currentPassword, newPassword, confirmPassword } = request.body;
 
         if (!userId) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'Felhasználó azonosító nem található a tokenben'
             });
         }
 
         if (!currentPassword || !newPassword || !confirmPassword) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'Minden jelszó mező kitöltése kötelező'
             });
         }
 
         if (newPassword.length < 6) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'Az új jelszónak legalább 6 karakter hosszúnak kell lennie'
             });
         }
 
         if (newPassword !== confirmPassword) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'Az új jelszavak nem egyeznek'
             });
@@ -185,7 +185,7 @@ router.put('/password', AuthMiddleware, async (req, res) => {
 
         const currentHash = await getUserPasswordHash(userId);
         if (!currentHash) {
-            return res.status(404).json({
+            return response.status(404).json({
                 success: false,
                 message: 'Felhasználó nem található'
             });
@@ -193,7 +193,7 @@ router.put('/password', AuthMiddleware, async (req, res) => {
 
         const passwordMatch = await bcrypt.compare(currentPassword, currentHash);
         if (!passwordMatch) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'A jelenlegi jelszó helytelen'
             });
@@ -203,7 +203,7 @@ router.put('/password', AuthMiddleware, async (req, res) => {
 
         const updated = await updateUserPassword(userId, newHashedPassword);
         if (!updated) {
-            return res.status(500).json({
+            return response.status(500).json({
                 success: false,
                 message: 'Nem sikerült a jelszó frissítése'
             });
@@ -216,13 +216,13 @@ router.put('/password', AuthMiddleware, async (req, res) => {
             });
         }
 
-        res.status(200).json({
+        response.status(200).json({
             success: true,
             message: 'Jelszó sikeresen megváltoztatva'
         });
     } catch (error) {
         console.error('Change password error:', error);
-        res.status(500).json({
+        response.status(500).json({
             success: false,
             message: 'Szerverhiba a jelszó módosítása során'
         });
@@ -230,70 +230,70 @@ router.put('/password', AuthMiddleware, async (req, res) => {
 });
 
 // Upload profile picture
-router.post('/profile/picture', AuthMiddleware, (req, res, next) => {
+router.post('/profile/picture', AuthMiddleware, (request, response, next) => {
     upload.single('profilePicture')(req, res, (err) => {
         if (err) {
             if (err.code === 'LIMIT_FILE_SIZE') {
-                return res.status(400).json({ success: false, message: 'A fájl mérete nem haladhatja meg az 5MB-ot' });
+                return response.status(400).json({ success: false, message: 'A fájl mérete nem haladhatja meg az 5MB-ot' });
             }
             if (err.message) {
-                return res.status(400).json({ success: false, message: err.message });
+                return response.status(400).json({ success: false, message: err.message });
             }
-            return res.status(400).json({ success: false, message: 'Hiba a fájl feltöltésekor' });
+            return response.status(400).json({ success: false, message: 'Hiba a fájl feltöltésekor' });
         }
         next();
     });
-}, async (req, res) => {
+}, async (request, response) => {
     try {
-        const userId = req.user.userId;
+        const userId = request.user.userId;
 
-        if (!req.file) {
-            return res.status(400).json({ success: false, message: 'Nincs feltöltött kép. Kérjük válasszon egy JPG, PNG vagy WebP fájlt.' });
+        if (!request.file) {
+            return response.status(400).json({ success: false, message: 'Nincs feltöltött kép. Kérjük válasszon egy JPG, PNG vagy WebP fájlt.' });
         }
 
         const user = await getUserById(userId);
         if (!user) {
-            return res.status(404).json({ success: false, message: 'Felhasználó nem található' });
+            return response.status(404).json({ success: false, message: 'Felhasználó nem található' });
         }
         const oldUrl = user.profile_picture_url;
 
-        const imageUrl = await processAndSaveImage(req.file.buffer, 'user', userId);
+        const imageUrl = await processAndSaveImage(request.file.buffer, 'user', userId);
 
         await updateUserPicture(userId, imageUrl);
 
         deleteOldImage(oldUrl);
 
-        res.status(200).json({
+        response.status(200).json({
             success: true,
             message: 'Profilkép sikeresen feltöltve',
             profile_picture_url: imageUrl
         });
     } catch (error) {
         console.error('Upload profile picture error:', error);
-        res.status(500).json({ success: false, message: 'Hiba történt a kép feltöltésekor. Kérjük próbálja újra.' });
+        response.status(500).json({ success: false, message: 'Hiba történt a kép feltöltésekor. Kérjük próbálja újra.' });
     }
 });
 
 // Restore deleted account (within grace period)
-router.post('/restore-account', AuthMiddleware, async (req, res) => {
+router.post('/restore-account', AuthMiddleware, async (request, response) => {
     try {
-        const userId = req.user.userId;
+        const userId = request.user.userId;
 
         const restored = await restoreUser(userId);
         if (!restored) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'Nem lehet visszaállítani a fiókot. A törlési határidő (30 nap) lejárt, vagy a fiók nem törölt állapotban van.'
             });
         }
 
-        res.status(200).json({
+        response.status(200).json({
             success: true,
             message: 'Fiók sikeresen visszaállítva. Kérjük, töltsd ki a profilodat.'
         });
     } catch (error) {
         console.error('Restore account error:', error);
-        res.status(500).json({
+        response.status(500).json({
             success: false,
             message: 'Szerverhiba a fiók visszaállítása során'
         });
@@ -301,20 +301,20 @@ router.post('/restore-account', AuthMiddleware, async (req, res) => {
 });
 
 // Delete user account
-router.delete('/account', AuthMiddleware, async (req, res) => {
+router.delete('/account', AuthMiddleware, async (request, response) => {
     try {
-        const userId = req.user.userId;
-        const { password } = req.body;
+        const userId = request.user.userId;
+        const { password } = request.body;
 
         if (!userId) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'Felhasználó azonosító nem található a tokenben'
             });
         }
 
         if (!password) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'A jelszó megadása kötelező a fiók törléséhez'
             });
@@ -322,7 +322,7 @@ router.delete('/account', AuthMiddleware, async (req, res) => {
 
         const currentHash = await getUserPasswordHash(userId);
         if (!currentHash) {
-            return res.status(404).json({
+            return response.status(404).json({
                 success: false,
                 message: 'Felhasználó nem található'
             });
@@ -330,7 +330,7 @@ router.delete('/account', AuthMiddleware, async (req, res) => {
 
         const passwordMatch = await bcrypt.compare(password, currentHash);
         if (!passwordMatch) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'Helytelen jelszó'
             });
@@ -344,19 +344,19 @@ router.delete('/account', AuthMiddleware, async (req, res) => {
 
         const deleted = await deleteUser(userId);
         if (!deleted) {
-            return res.status(500).json({
+            return response.status(500).json({
                 success: false,
                 message: 'Nem sikerült a fiók törlése'
             });
         }
 
-        res.status(200).json({
+        response.status(200).json({
             success: true,
             message: 'Fiók sikeresen törölve'
         });
     } catch (error) {
         console.error('Delete account error:', error);
-        res.status(500).json({
+        response.status(500).json({
             success: false,
             message: 'Szerverhiba a fiók törlése során'
         });

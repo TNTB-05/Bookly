@@ -27,53 +27,53 @@ function calculateTravelBuffer(distanceKm) {
 }
 
 // Get user's appointments
-router.get('/appointments', AuthMiddleware, async (req, res) => {
+router.get('/appointments', AuthMiddleware, async (request, response) => {
     try {
-        const userId = req.user.userId;
+        const userId = request.user.userId;
 
         // Safety layer: auto-complete past-due appointments for this user
         await autoCompletePastAppointments(userId);
 
         const appointments = await getUserAppointments(userId);
 
-        res.status(200).json({ success: true, appointments });
+        response.status(200).json({ success: true, appointments });
     } catch (error) {
         console.error('Get appointments error:', error);
-        res.status(500).json({ success: false, message: 'Hiba történt a foglalások lekérdezésekor' });
+        response.status(500).json({ success: false, message: 'Hiba történt a foglalások lekérdezésekor' });
     }
 });
 
 // Create new appointment (customer booking) — uses transaction + FOR UPDATE locking
-router.post('/appointments', AuthMiddleware, async (req, res) => {
+router.post('/appointments', AuthMiddleware, async (request, response) => {
     const connection = await pool.getConnection();
 
     try {
-        const userId = req.user.userId;
-        const { provider_id, service_id, appointment_date, appointment_time, comment } = req.body;
+        const userId = request.user.userId;
+        const { provider_id, service_id, appointment_date, appointment_time, comment } = request.body;
 
         if (!provider_id || !service_id || !appointment_date || !appointment_time) {
-            return res.status(400).json({ success: false, message: 'Szolgáltató, szolgáltatás, dátum és időpont megadása kötelező' });
+            return response.status(400).json({ success: false, message: 'Szolgáltató, szolgáltatás, dátum és időpont megadása kötelező' });
         }
 
         const service = await getServiceById(service_id);
         if (!service) {
-            return res.status(404).json({ success: false, message: 'A szolgáltatás nem található' });
+            return response.status(404).json({ success: false, message: 'A szolgáltatás nem található' });
         }
 
         if (service.provider_id !== parseInt(provider_id)) {
-            return res.status(400).json({ success: false, message: 'A szolgáltatás nem tartozik ehhez a szolgáltatóhoz' });
+            return response.status(400).json({ success: false, message: 'A szolgáltatás nem tartozik ehhez a szolgáltatóhoz' });
         }
 
         const provider = await getProviderById(provider_id);
         if (!provider || provider.status !== 'active') {
-            return res.status(404).json({ success: false, message: 'A szolgáltató nem található vagy nem elérhető' });
+            return response.status(404).json({ success: false, message: 'A szolgáltató nem található vagy nem elérhető' });
         }
 
         const appointmentStart = new Date(`${appointment_date}T${appointment_time}`);
         const appointmentEnd = new Date(appointmentStart.getTime() + service.duration_minutes * 60000);
 
         if (appointmentStart <= new Date()) {
-            return res.status(400).json({ success: false, message: 'A foglalás időpontja nem lehet a múltban' });
+            return response.status(400).json({ success: false, message: 'A foglalás időpontja nem lehet a múltban' });
         }
 
         const openingHour = service.opening_hours || 8;
@@ -83,7 +83,7 @@ router.post('/appointments', AuthMiddleware, async (req, res) => {
         const endMinute = appointmentEnd.getMinutes();
 
         if (startHour < openingHour || (endHour > closingHour) || (endHour === closingHour && endMinute > 0)) {
-            return res.status(400).json({ success: false, message: 'A foglalás kívül esik a nyitvatartási időn' });
+            return response.status(400).json({ success: false, message: 'A foglalás kívül esik a nyitvatartási időn' });
         }
 
         // Start transaction for race condition prevention
@@ -138,7 +138,7 @@ router.post('/appointments', AuthMiddleware, async (req, res) => {
                         message = `Az utazási idő miatt (${bufferMinutes} perc) nem lehetséges. Kérjük válasszon másik időpontot.`;
                     }
 
-                    return res.status(409).json({ success: false, message });
+                    return response.status(409).json({ success: false, message });
                 }
             }
 
@@ -152,7 +152,7 @@ router.post('/appointments', AuthMiddleware, async (req, res) => {
 
             if (conflicts.length > 0) {
                 await connection.rollback();
-                return res.status(409).json({ success: false, message: 'Ez az időpont már foglalt. Kérjük, válasszon másik időpontot.' });
+                return response.status(409).json({ success: false, message: 'Ez az időpont már foglalt. Kérjük, válasszon másik időpontot.' });
             }
 
             // Create appointment
@@ -173,7 +173,7 @@ router.post('/appointments', AuthMiddleware, async (req, res) => {
 
             sendAppointmentConfirmation(newAppointment).catch(console.error);
 
-            res.status(201).json({
+            response.status(201).json({
                 success: true,
                 message: 'Foglalás sikeresen létrehozva',
                 appointment: newAppointment
@@ -185,68 +185,68 @@ router.post('/appointments', AuthMiddleware, async (req, res) => {
         }
     } catch (error) {
         console.error('Create appointment error:', error);
-        res.status(500).json({ success: false, message: 'Hiba történt a foglalás létrehozásakor' });
+        response.status(500).json({ success: false, message: 'Hiba történt a foglalás létrehozásakor' });
     } finally {
         connection.release();
     }
 });
 
 // Update appointment comment
-router.patch('/appointments/:id/comment', AuthMiddleware, async (req, res) => {
+router.patch('/appointments/:id/comment', AuthMiddleware, async (request, response) => {
     try {
-        const userId = req.user.userId;
-        const appointmentId = parseInt(req.params.id);
-        const { comment } = req.body;
+        const userId = request.user.userId;
+        const appointmentId = parseInt(request.params.id);
+        const { comment } = request.body;
 
         if (!appointmentId || isNaN(appointmentId)) {
-            return res.status(400).json({ success: false, message: 'Érvénytelen foglalás azonosító' });
+            return response.status(400).json({ success: false, message: 'Érvénytelen foglalás azonosító' });
         }
 
         const appointment = await getAppointmentById(appointmentId);
 
         if (!appointment) {
-            return res.status(404).json({ success: false, message: 'A foglalás nem található' });
+            return response.status(404).json({ success: false, message: 'A foglalás nem található' });
         }
 
         if (appointment.user_id !== userId) {
-            return res.status(403).json({ success: false, message: 'Nincs jogosultságod módosítani ezt a foglalást' });
+            return response.status(403).json({ success: false, message: 'Nincs jogosultságod módosítani ezt a foglalást' });
         }
 
         if (appointment.status !== 'scheduled') {
-            return res.status(400).json({ success: false, message: 'Csak várható foglalás megjegyzése szerkeszthető' });
+            return response.status(400).json({ success: false, message: 'Csak várható foglalás megjegyzése szerkeszthető' });
         }
 
         await updateAppointmentComment(appointmentId, comment?.trim() || null);
 
-        return res.status(200).json({ success: true, message: 'Megjegyzés frissítve' });
+        return response.status(200).json({ success: true, message: 'Megjegyzés frissítve' });
     } catch (error) {
         console.error('Update comment error:', error);
-        return res.status(500).json({ success: false, message: 'Hiba a megjegyzés frissítésekor' });
+        return response.status(500).json({ success: false, message: 'Hiba a megjegyzés frissítésekor' });
     }
 });
 
 // Cancel user's appointment
-router.delete('/appointments/:id', AuthMiddleware, async (req, res) => {
+router.delete('/appointments/:id', AuthMiddleware, async (request, response) => {
     try {
-        const userId = req.user.userId;
-        const appointmentId = parseInt(req.params.id);
+        const userId = request.user.userId;
+        const appointmentId = parseInt(request.params.id);
 
         if (!appointmentId || isNaN(appointmentId)) {
-            return res.status(400).json({ success: false, message: 'Érvénytelen foglalás azonosító' });
+            return response.status(400).json({ success: false, message: 'Érvénytelen foglalás azonosító' });
         }
 
         const appointment = await getAppointmentById(appointmentId);
 
         if (!appointment) {
-            return res.status(404).json({ success: false, message: 'A foglalás nem található' });
+            return response.status(404).json({ success: false, message: 'A foglalás nem található' });
         }
 
         if (appointment.user_id !== userId) {
-            return res.status(403).json({ success: false, message: 'Nincs jogosultságod törölni ezt a foglalást' });
+            return response.status(403).json({ success: false, message: 'Nincs jogosultságod törölni ezt a foglalást' });
         }
 
         if (appointment.status !== 'scheduled') {
-            return res.status(400).json({ success: false, message: 'Csak aktív foglalás mondható le' });
+            return response.status(400).json({ success: false, message: 'Csak aktív foglalás mondható le' });
         }
 
         // Get details for email and waitlist notification before canceling
@@ -269,32 +269,32 @@ router.delete('/appointments/:id', AuthMiddleware, async (req, res) => {
             ).catch(err => console.error('Waitlist notify error:', err));
         }
 
-        res.status(200).json({ success: true, message: 'Foglalás sikeresen lemondva' });
+        response.status(200).json({ success: true, message: 'Foglalás sikeresen lemondva' });
     } catch (error) {
         console.error('Cancel appointment error:', error);
-        res.status(500).json({ success: false, message: 'Hiba történt a foglalás lemondásakor' });
+        response.status(500).json({ success: false, message: 'Hiba történt a foglalás lemondásakor' });
     }
 });
 
 // Get available time slots for a provider on a specific date (public endpoint — no AuthMiddleware)
-router.get('/provider/:providerId/availability', async (req, res) => {
+router.get('/provider/:providerId/availability', async (request, response) => {
     try {
-        const providerId = parseInt(req.params.providerId);
-        const { date, serviceDuration } = req.query;
+        const providerId = parseInt(request.params.providerId);
+        const { date, serviceDuration } = request.query;
 
         if (!providerId || isNaN(providerId)) {
-            return res.status(400).json({ success: false, message: 'Érvénytelen szolgáltató azonosító' });
+            return response.status(400).json({ success: false, message: 'Érvénytelen szolgáltató azonosító' });
         }
 
         if (!date) {
-            return res.status(400).json({ success: false, message: 'Dátum megadása kötelező' });
+            return response.status(400).json({ success: false, message: 'Dátum megadása kötelező' });
         }
 
         const duration = parseInt(serviceDuration) || 60;
 
         const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
         if (!dateRegex.test(date)) {
-            return res.status(400).json({ success: false, message: 'Érvénytelen dátum formátum (YYYY-MM-DD)' });
+            return response.status(400).json({ success: false, message: 'Érvénytelen dátum formátum (YYYY-MM-DD)' });
         }
 
         const requestedDate = new Date(date);
@@ -302,15 +302,15 @@ router.get('/provider/:providerId/availability', async (req, res) => {
         today.setHours(0, 0, 0, 0);
 
         if (requestedDate < today) {
-            return res.status(400).json({ success: false, message: 'Múltbeli dátumra nem lehet foglalni' });
+            return response.status(400).json({ success: false, message: 'Múltbeli dátumra nem lehet foglalni' });
         }
 
         const slots = await getAvailableTimeSlots(providerId, date, duration);
 
-        res.status(200).json({ success: true, date, serviceDuration: duration, slots });
+        response.status(200).json({ success: true, date, serviceDuration: duration, slots });
     } catch (error) {
         console.error('Get availability error:', error);
-        res.status(500).json({ success: false, message: 'Hiba történt az időpontok lekérdezésekor' });
+        response.status(500).json({ success: false, message: 'Hiba történt az időpontok lekérdezésekor' });
     }
 });
 

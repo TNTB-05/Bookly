@@ -19,9 +19,9 @@ module.exports = function (io) {
     router.use(AuthMiddleware);
 
     // GET /api/messages/conversations — list conversations for the logged-in user/provider
-    router.get('/conversations', async (req, res) => {
+    router.get('/conversations', async (request, response) => {
         try {
-            const { userId, role } = req.user;
+            const { userId, role } = request.user;
             let conversations;
 
             if (role === 'provider') {
@@ -30,22 +30,22 @@ module.exports = function (io) {
                 conversations = await getConversationsForUser(userId);
             }
 
-            return res.status(200).json({ success: true, conversations });
+            return response.status(200).json({ success: true, conversations });
         } catch (error) {
             console.error('Conversations list error:', error);
-            return res.status(500).json({ success: false, message: 'Hiba az üzenetek betöltésekor' });
+            return response.status(500).json({ success: false, message: 'Hiba az üzenetek betöltésekor' });
         }
     });
 
     // GET /api/messages/conversations/:id — message history for a conversation
-    router.get('/conversations/:id', async (req, res) => {
+    router.get('/conversations/:id', async (request, response) => {
         try {
-            const { userId, role } = req.user;
-            const conversationId = parseInt(req.params.id);
+            const { userId, role } = request.user;
+            const conversationId = parseInt(request.params.id);
 
             const conversation = await getConversationById(conversationId);
             if (!conversation) {
-                return res.status(404).json({ success: false, message: 'A beszélgetés nem található' });
+                return response.status(404).json({ success: false, message: 'A beszélgetés nem található' });
             }
 
             const isParticipant =
@@ -53,32 +53,32 @@ module.exports = function (io) {
                 (role !== 'provider' && conversation.user_id === userId);
 
             if (!isParticipant) {
-                return res.status(403).json({ success: false, message: 'Nincs hozzáférés ehhez a beszélgetéshez' });
+                return response.status(403).json({ success: false, message: 'Nincs hozzáférés ehhez a beszélgetéshez' });
             }
 
             const messages = await getMessages(conversationId);
-            return res.status(200).json({ success: true, messages, conversation });
+            return response.status(200).json({ success: true, messages, conversation });
         } catch (error) {
             console.error('Get messages error:', error);
-            return res.status(500).json({ success: false, message: 'Hiba az üzenetek betöltésekor' });
+            return response.status(500).json({ success: false, message: 'Hiba az üzenetek betöltésekor' });
         }
     });
 
     // POST /api/messages/conversations — start or retrieve a conversation
-    router.post('/conversations', async (req, res) => {
+    router.post('/conversations', async (request, response) => {
         try {
-            const { userId, role } = req.user;
-            const { provider_id, user_id } = req.body;
+            const { userId, role } = request.user;
+            const { provider_id, user_id } = request.body;
 
             if (!provider_id || !user_id) {
-                return res.status(400).json({ success: false, message: 'Hiányzó adatok' });
+                return response.status(400).json({ success: false, message: 'Hiányzó adatok' });
             }
 
             // Customers can only message providers they have booked with
             if (role !== 'provider') {
                 const hasBooking = await checkBookingExists(userId, provider_id);
                 if (!hasBooking) {
-                    return res.status(403).json({ success: false, message: 'Csak olyan fodrásszal üzenhetsz, akinél már foglaltál' });
+                    return response.status(403).json({ success: false, message: 'Csak olyan fodrásszal üzenhetsz, akinél már foglaltál' });
                 }
             }
 
@@ -91,27 +91,27 @@ module.exports = function (io) {
                 isNew = true;
             }
 
-            return res.status(isNew ? 201 : 200).json({ success: true, conversation });
+            return response.status(isNew ? 201 : 200).json({ success: true, conversation });
         } catch (error) {
             console.error('Start conversation error:', error);
-            return res.status(500).json({ success: false, message: 'Hiba a beszélgetés indításakor' });
+            return response.status(500).json({ success: false, message: 'Hiba a beszélgetés indításakor' });
         }
     });
 
     // POST /api/messages/conversations/:id/messages — send a message
-    router.post('/conversations/:id/messages', async (req, res) => {
+    router.post('/conversations/:id/messages', async (request, response) => {
         try {
-            const { userId, role } = req.user;
-            const conversationId = parseInt(req.params.id);
-            const { content, appointment_id } = req.body;
+            const { userId, role } = request.user;
+            const conversationId = parseInt(request.params.id);
+            const { content, appointment_id } = request.body;
 
             if (!content || !content.trim()) {
-                return res.status(400).json({ success: false, message: 'Az üzenet nem lehet üres' });
+                return response.status(400).json({ success: false, message: 'Az üzenet nem lehet üres' });
             }
 
             const conversation = await getConversationById(conversationId);
             if (!conversation) {
-                return res.status(404).json({ success: false, message: 'A beszélgetés nem található' });
+                return response.status(404).json({ success: false, message: 'A beszélgetés nem található' });
             }
 
             const isParticipant =
@@ -119,7 +119,7 @@ module.exports = function (io) {
                 (role !== 'provider' && conversation.user_id === userId);
 
             if (!isParticipant) {
-                return res.status(403).json({ success: false, message: 'Nincs hozzáférés ehhez a beszélgetéshez' });
+                return response.status(403).json({ success: false, message: 'Nincs hozzáférés ehhez a beszélgetéshez' });
             }
 
             const senderRole = role === 'provider' ? 'provider' : 'user';
@@ -134,22 +134,22 @@ module.exports = function (io) {
                 lastMessagePreview: content.trim().substring(0, 100)
             });
 
-            return res.status(201).json({ success: true, message: newMessage });
+            return response.status(201).json({ success: true, message: newMessage });
         } catch (error) {
             console.error('Send message error:', error);
-            return res.status(500).json({ success: false, message: 'Hiba az üzenet küldésekor' });
+            return response.status(500).json({ success: false, message: 'Hiba az üzenet küldésekor' });
         }
     });
 
     // DELETE /api/messages/conversations/:id — delete a conversation
-    router.delete('/conversations/:id', async (req, res) => {
+    router.delete('/conversations/:id', async (request, response) => {
         try {
-            const { userId, role } = req.user;
-            const conversationId = parseInt(req.params.id);
+            const { userId, role } = request.user;
+            const conversationId = parseInt(request.params.id);
 
             const conversation = await getConversationById(conversationId);
             if (!conversation) {
-                return res.status(404).json({ success: false, message: 'A beszélgetés nem található' });
+                return response.status(404).json({ success: false, message: 'A beszélgetés nem található' });
             }
 
             const isParticipant =
@@ -157,26 +157,26 @@ module.exports = function (io) {
                 (role !== 'provider' && conversation.user_id === userId);
 
             if (!isParticipant) {
-                return res.status(403).json({ success: false, message: 'Nincs hozzáférés ehhez a beszélgetéshez' });
+                return response.status(403).json({ success: false, message: 'Nincs hozzáférés ehhez a beszélgetéshez' });
             }
 
             await deleteConversation(conversationId);
-            return res.status(200).json({ success: true });
+            return response.status(200).json({ success: true });
         } catch (error) {
             console.error('Delete conversation error:', error);
-            return res.status(500).json({ success: false, message: 'Hiba a beszélgetés törlésekor' });
+            return response.status(500).json({ success: false, message: 'Hiba a beszélgetés törlésekor' });
         }
     });
 
     // PATCH /api/messages/conversations/:id/read — mark conversation as read
-    router.patch('/conversations/:id/read', async (req, res) => {
+    router.patch('/conversations/:id/read', async (request, response) => {
         try {
-            const { userId, role } = req.user;
-            const conversationId = parseInt(req.params.id);
+            const { userId, role } = request.user;
+            const conversationId = parseInt(request.params.id);
 
             const conversation = await getConversationById(conversationId);
             if (!conversation) {
-                return res.status(404).json({ success: false, message: 'A beszélgetés nem található' });
+                return response.status(404).json({ success: false, message: 'A beszélgetés nem található' });
             }
 
             const isParticipant =
@@ -184,16 +184,16 @@ module.exports = function (io) {
                 (role !== 'provider' && conversation.user_id === userId);
 
             if (!isParticipant) {
-                return res.status(403).json({ success: false, message: 'Nincs hozzáférés ehhez a beszélgetéshez' });
+                return response.status(403).json({ success: false, message: 'Nincs hozzáférés ehhez a beszélgetéshez' });
             }
 
             const readerRole = role === 'provider' ? 'provider' : 'user';
             await markConversationRead(conversationId, readerRole);
 
-            return res.status(200).json({ success: true });
+            return response.status(200).json({ success: true });
         } catch (error) {
             console.error('Mark read error:', error);
-            return res.status(500).json({ success: false, message: 'Hiba az olvasottság jelzésekor' });
+            return response.status(500).json({ success: false, message: 'Hiba az olvasottság jelzésekor' });
         }
     });
 

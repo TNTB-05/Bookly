@@ -18,34 +18,34 @@ const {
 } = require('../../sql/providerQueries');
 
 // GET /me - Get current provider's own profile
-router.get('/me', AuthMiddleware, async (req, res) => {
+router.get('/me', AuthMiddleware, async (request, response) => {
     try {
-        const providerId = req.user.userId;
+        const providerId = request.user.userId;
 
         const provider = await getProviderProfile(providerId);
 
         if (!provider) {
-            return res.status(404).json({ success: false, message: 'Szolgáltató nem található' });
+            return response.status(404).json({ success: false, message: 'Szolgáltató nem található' });
         }
 
-        res.status(200).json({ success: true, provider });
+        response.status(200).json({ success: true, provider });
     } catch (error) {
         console.error('Get provider profile error:', error);
-        res.status(500).json({ success: false, message: 'Szerverhiba' });
+        response.status(500).json({ success: false, message: 'Szerverhiba' });
     }
 });
 
 // PUT /me - Update current provider's own profile (name, phone, description only)
-router.put('/me', AuthMiddleware, async (req, res) => {
+router.put('/me', AuthMiddleware, async (request, response) => {
     try {
-        const providerId = req.user.userId;
-        const { name, phone, description } = req.body;
+        const providerId = request.user.userId;
+        const { name, phone, description } = request.body;
 
         if (!name || !name.trim()) {
-            return res.status(400).json({ success: false, message: 'A név megadása kötelező' });
+            return response.status(400).json({ success: false, message: 'A név megadása kötelező' });
         }
         if (!phone || !phone.trim()) {
-            return res.status(400).json({ success: false, message: 'A telefonszám megadása kötelező' });
+            return response.status(400).json({ success: false, message: 'A telefonszám megadása kötelező' });
         }
 
         await updateProviderProfile(providerId, {
@@ -56,86 +56,86 @@ router.put('/me', AuthMiddleware, async (req, res) => {
 
         const updatedProvider = await getProviderProfile(providerId);
 
-        res.status(200).json({ success: true, message: 'Profil sikeresen frissítve', provider: updatedProvider });
+        response.status(200).json({ success: true, message: 'Profil sikeresen frissítve', provider: updatedProvider });
     } catch (error) {
         console.error('Update provider profile error:', error);
-        res.status(500).json({ success: false, message: 'Szerverhiba' });
+        response.status(500).json({ success: false, message: 'Szerverhiba' });
     }
 });
 
 // POST /me/picture - Upload provider's own profile picture
-router.post('/me/picture', AuthMiddleware, (req, res, next) => {
+router.post('/me/picture', AuthMiddleware, (request, response, next) => {
     upload.single('profilePicture')(req, res, (err) => {
         if (err) {
             if (err.code === 'LIMIT_FILE_SIZE') {
-                return res.status(400).json({ success: false, message: 'A fájl mérete nem haladhatja meg az 5MB-ot' });
+                return response.status(400).json({ success: false, message: 'A fájl mérete nem haladhatja meg az 5MB-ot' });
             }
             if (err.message) {
-                return res.status(400).json({ success: false, message: err.message });
+                return response.status(400).json({ success: false, message: err.message });
             }
-            return res.status(400).json({ success: false, message: 'Hiba a fájl feltöltésekor' });
+            return response.status(400).json({ success: false, message: 'Hiba a fájl feltöltésekor' });
         }
         next();
     });
-}, async (req, res) => {
+}, async (request, response) => {
     try {
-        const providerId = req.user.userId;
+        const providerId = request.user.userId;
 
-        if (!req.file) {
-            return res.status(400).json({ success: false, message: 'Nincs feltöltött kép. Kérjük válasszon egy JPG, PNG vagy WebP fájlt.' });
+        if (!request.file) {
+            return response.status(400).json({ success: false, message: 'Nincs feltöltött kép. Kérjük válasszon egy JPG, PNG vagy WebP fájlt.' });
         }
 
         const oldUrl = await getProviderPictureUrl(providerId);
-        const imageUrl = await processAndSaveImage(req.file.buffer, 'provider', providerId);
+        const imageUrl = await processAndSaveImage(request.file.buffer, 'provider', providerId);
 
         await updateProviderPicture(providerId, imageUrl);
 
         deleteOldImage(oldUrl);
 
-        res.status(200).json({
+        response.status(200).json({
             success: true,
             message: 'Profilkép sikeresen feltöltve',
             profile_picture_url: imageUrl
         });
     } catch (error) {
         console.error('Upload provider picture error:', error);
-        res.status(500).json({ success: false, message: 'Hiba történt a kép feltöltésekor. Kérjük próbálja újra.' });
+        response.status(500).json({ success: false, message: 'Hiba történt a kép feltöltésekor. Kérjük próbálja újra.' });
     }
 });
 
 // PUT /me/password - Change provider's own password
-router.put('/me/password', AuthMiddleware, async (req, res) => {
+router.put('/me/password', AuthMiddleware, async (request, response) => {
     try {
-        const providerId = req.user.userId;
-        const { currentPassword, newPassword, confirmPassword } = req.body;
+        const providerId = request.user.userId;
+        const { currentPassword, newPassword, confirmPassword } = request.body;
 
         if (!currentPassword || !newPassword || !confirmPassword) {
-            return res.status(400).json({ success: false, message: 'Minden jelszó mező kitöltése kötelező' });
+            return response.status(400).json({ success: false, message: 'Minden jelszó mező kitöltése kötelező' });
         }
         if (newPassword.length < 6) {
-            return res.status(400).json({ success: false, message: 'Az új jelszónak legalább 6 karakter hosszúnak kell lennie' });
+            return response.status(400).json({ success: false, message: 'Az új jelszónak legalább 6 karakter hosszúnak kell lennie' });
         }
         if (newPassword !== confirmPassword) {
-            return res.status(400).json({ success: false, message: 'Az új jelszavak nem egyeznek' });
+            return response.status(400).json({ success: false, message: 'Az új jelszavak nem egyeznek' });
         }
 
         const currentHash = await getProviderPasswordHash(providerId);
         if (!currentHash) {
-            return res.status(404).json({ success: false, message: 'Szolgáltató nem található' });
+            return response.status(404).json({ success: false, message: 'Szolgáltató nem található' });
         }
 
         const passwordMatch = await bcrypt.compare(currentPassword, currentHash);
         if (!passwordMatch) {
-            return res.status(400).json({ success: false, message: 'A jelenlegi jelszó helytelen' });
+            return response.status(400).json({ success: false, message: 'A jelenlegi jelszó helytelen' });
         }
 
         const newHash = await bcrypt.hash(newPassword, 10);
         await updateProviderPassword(providerId, newHash);
 
-        res.status(200).json({ success: true, message: 'Jelszó sikeresen megváltoztatva' });
+        response.status(200).json({ success: true, message: 'Jelszó sikeresen megváltoztatva' });
     } catch (error) {
         console.error('Change provider password error:', error);
-        res.status(500).json({ success: false, message: 'Szerverhiba a jelszó módosítása során' });
+        response.status(500).json({ success: false, message: 'Szerverhiba a jelszó módosítása során' });
     }
 });
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Admin rating, appointment, and log routes.
  * Covers: GET /ratings, DELETE /ratings/:id, GET /appointments, DELETE /appointments/:id, GET /logs.
  */
@@ -12,77 +12,77 @@ const { logEvent } = require('../../services/logService');
 
 // ==================== Ratings ====================
 
-router.get('/ratings', async (req, res) => {
+router.get('/ratings', async (request, response) => {
     try {
         const ratings = await getAdminRatings();
-        return res.json({ success: true, ratings });
+        return response.status(200).json({ success: true, ratings });
     } catch (error) {
         console.error('[Admin Ratings] ERROR:', error);
-        return res.status(500).json({ success: false, message: 'Hiba az értékelések lekérése során' });
+        return response.status(500).json({ success: false, message: 'Hiba az értékelések lekérése során' });
     }
 });
 
-router.delete('/ratings/:id', async (req, res) => {
+router.delete('/ratings/:id', async (request, response) => {
     try {
-        const ratingId = req.params.id;
+        const ratingId = request.params.id;
 
         const rating = await getRatingById(ratingId);
-        if (!rating) return res.status(404).json({ success: false, message: 'Értékelés nem található' });
+        if (!rating) return response.status(404).json({ success: false, message: 'Értékelés nem található' });
 
         await deactivateRating(ratingId);
-        await logEvent('WARN', 'RATING_DEACTIVATE', 'admin', req.user.userId, 'rating', parseInt(ratingId),
+        await logEvent('WARN', 'RATING_DEACTIVATE', 'admin', request.user.userId, 'rating', parseInt(ratingId),
             `Admin deactivated rating #${ratingId} (salon: ${rating.salon_id}, provider: ${rating.provider_id})`);
-        return res.json({ success: true, message: 'Értékelés deaktiválva' });
+        return response.status(200).json({ success: true, message: 'Értékelés deaktiválva' });
     } catch (error) {
         console.error('[Admin Delete Rating] ERROR:', error);
-        return res.status(500).json({ success: false, message: 'Hiba az értékelés törlése során' });
+        return response.status(500).json({ success: false, message: 'Hiba az értékelés törlése során' });
     }
 });
 
 // ==================== Appointments ====================
 
-router.get('/appointments', async (req, res) => {
+router.get('/appointments', async (request, response) => {
     try {
         const appointments = await getAdminAppointments();
-        return res.json({ success: true, appointments });
+        return response.status(200).json({ success: true, appointments });
     } catch (error) {
         console.error('[Admin Appointments] ERROR:', error);
-        return res.status(500).json({ success: false, message: 'Hiba a foglalások lekérése során' });
+        return response.status(500).json({ success: false, message: 'Hiba a foglalások lekérése során' });
     }
 });
 
-router.delete('/appointments/:id', async (req, res) => {
+router.delete('/appointments/:id', async (request, response) => {
     try {
-        const appointmentId = req.params.id;
-        const { reason } = req.body;
+        const appointmentId = request.params.id;
+        const { reason } = request.body;
         if (!reason || reason.trim().length === 0) {
-            return res.status(400).json({ success: false, message: 'Törlés indoklása kötelező' });
+            return response.status(400).json({ success: false, message: 'Törlés indoklása kötelező' });
         }
 
         const appointment = await getAdminAppointmentById(appointmentId);
-        if (!appointment) return res.status(404).json({ success: false, message: 'Foglalás nem található' });
-        if (appointment.status === 'deleted') return res.status(400).json({ success: false, message: 'Ez a foglalás már törölve van' });
+        if (!appointment) return response.status(404).json({ success: false, message: 'Foglalás nem található' });
+        if (appointment.status === 'deleted') return response.status(400).json({ success: false, message: 'Ez a foglalás már törölve van' });
 
-        await softDeleteAppointment(appointmentId, reason.trim(), req.user.userId);
-        await logEvent('CRITICAL', 'APPOINTMENT_SOFT_DELETE', 'admin', req.user.userId, 'appointment', parseInt(appointmentId),
+        await softDeleteAppointment(appointmentId, reason.trim(), request.user.userId);
+        await logEvent('CRITICAL', 'APPOINTMENT_SOFT_DELETE', 'admin', request.user.userId, 'appointment', parseInt(appointmentId),
             `Admin soft-deleted appointment #${appointmentId} (was: ${appointment.status}, price: ${appointment.price}). Reason: ${reason.trim()}`);
-        return res.json({ success: true, message: 'Foglalás törölve (soft delete)' });
+        return response.status(200).json({ success: true, message: 'Foglalás törölve (soft delete)' });
     } catch (error) {
         console.error('[Admin Delete Appointment] ERROR:', error);
-        return res.status(500).json({ success: false, message: 'Hiba a foglalás törlése során' });
+        return response.status(500).json({ success: false, message: 'Hiba a foglalás törlése során' });
     }
 });
 
 // ==================== System Logs ====================
 
-router.get('/logs', async (req, res) => {
+router.get('/logs', async (request, response) => {
     try {
-        const { level, action, limit = 200 } = req.query;
+        const { level, action, limit = 200 } = request.query;
         const logs = await getSystemLogs({ level, action, limit });
-        return res.json({ success: true, logs });
+        return response.status(200).json({ success: true, logs });
     } catch (error) {
         console.error('[Admin Logs] ERROR:', error);
-        return res.status(500).json({ success: false, message: 'Hiba a naplók lekérése során' });
+        return response.status(500).json({ success: false, message: 'Hiba a naplók lekérése során' });
     }
 });
 

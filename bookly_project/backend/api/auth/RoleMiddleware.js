@@ -14,23 +14,23 @@
  * router.get('/admin/stats', AuthMiddleware, requireRole(['provider', 'admin']), handler);
  */
 const requireRole = (allowedRoles) => {
-    return (req, res, next) => {
-        // req.user is set by AuthMiddleware (the decoded JWT payload)
-        if (!req.user) {
-            return res.status(401).json({
+    return (request, response, next) => {
+        // request.user is set by AuthMiddleware (the decoded JWT payload)
+        if (!request.user) {
+            return response.status(401).json({
                 success: false,
                 message: 'Bejelentkezés szükséges',
                 error: 'Nem található felhasználói adat. Győződj meg róla, hogy az AuthMiddleware előbb fut.'
             });
         }
 
-        const userRole = req.user.role;
+        const userRole = request.user.role;
 
         // Check if user's role is in the allowed roles array
         if (!allowedRoles.includes(userRole)) {
             console.warn(`Access denied: User with role '${userRole}' attempted to access route requiring ${allowedRoles.join(' or ')}`);
             
-            return res.status(403).json({
+            return response.status(403).json({
                 success: false,
                 message: 'Hozzáférés megtagadva. Nem megfelelő jogosultság.',
                 error: `Ez az erőforrás a következő szerepkörök egyikét igényli: ${allowedRoles.join(', ')}`

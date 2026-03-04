@@ -8,7 +8,7 @@ const router = express.Router();
 const { getDashboardStatistics, getMonthlyRevenue } = require('../../sql/adminQueries');
 const { getTopRatedSalons } = require('../../sql/salonQueries');
 
-router.get('/statistics', async (req, res) => {
+router.get('/statistics', async (request, response) => {
     try {
         const {
             usersResult, providersResult, salonsResult,
@@ -25,7 +25,7 @@ router.get('/statistics', async (req, res) => {
         const statusBreakdown = {};
         appointmentsByStatusResult.forEach(row => { statusBreakdown[row.status] = row.count; });
 
-        return res.json({
+        return response.status(200).json({
             success: true,
             stats: {
                 totalUsers: usersResult[0].count,
@@ -43,7 +43,7 @@ router.get('/statistics', async (req, res) => {
         });
     } catch (error) {
         console.error('[Admin Stats] ERROR:', error);
-        return res.status(500).json({ success: false, message: 'Hiba a statisztikák lekérése során' });
+        return response.status(500).json({ success: false, message: 'Hiba a statisztikák lekérése során' });
     }
 });
 

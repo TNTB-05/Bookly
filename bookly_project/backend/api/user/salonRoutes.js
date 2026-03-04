@@ -11,9 +11,9 @@ const { getProvidersBySalonId } = require('../../sql/providerQueries');
 const { getVisitedSalons } = require('../../sql/appointmentQueries');
 
 // Get user's saved salons
-router.get('/saved-salons', AuthMiddleware, async (req, res) => {
+router.get('/saved-salons', AuthMiddleware, async (request, response) => {
     try {
-        const userId = req.user.userId;
+        const userId = request.user.userId;
         const savedSalons = await getSavedSalonsByUserId(userId);
 
         const salonsWithProviders = await Promise.all(
@@ -23,65 +23,65 @@ router.get('/saved-salons', AuthMiddleware, async (req, res) => {
             })
         );
 
-        res.status(200).json({ success: true, salons: salonsWithProviders });
+        response.status(200).json({ success: true, salons: salonsWithProviders });
     } catch (error) {
         console.error('Get saved salons error:', error);
-        res.status(500).json({ success: false, message: 'Szerverhiba a mentett szalonok lekérése során' });
+        response.status(500).json({ success: false, message: 'Szerverhiba a mentett szalonok lekérése során' });
     }
 });
 
 // Get user's saved salon IDs
-router.get('/saved-salon-ids', AuthMiddleware, async (req, res) => {
+router.get('/saved-salon-ids', AuthMiddleware, async (request, response) => {
     try {
-        const userId = req.user.userId;
+        const userId = request.user.userId;
         const savedIds = await getSavedSalonIds(userId);
-        res.status(200).json({ success: true, savedIds });
+        response.status(200).json({ success: true, savedIds });
     } catch (error) {
         console.error('Get saved salon IDs error:', error);
-        res.status(500).json({ success: false, message: 'Szerverhiba a mentett szalon azonosítók lekérése során' });
+        response.status(500).json({ success: false, message: 'Szerverhiba a mentett szalon azonosítók lekérése során' });
     }
 });
 
 // Save a salon
-router.post('/saved-salons/:salonId', AuthMiddleware, async (req, res) => {
+router.post('/saved-salons/:salonId', AuthMiddleware, async (request, response) => {
     try {
-        const userId = req.user.userId;
-        const salonId = parseInt(req.params.salonId);
+        const userId = request.user.userId;
+        const salonId = parseInt(request.params.salonId);
 
         if (!salonId || isNaN(salonId)) {
-            return res.status(400).json({ success: false, message: 'Érvénytelen szalon azonosító' });
+            return response.status(400).json({ success: false, message: 'Érvénytelen szalon azonosító' });
         }
 
         await saveSalon(userId, salonId);
-        res.status(200).json({ success: true, message: 'Szalon sikeresen mentve' });
+        response.status(200).json({ success: true, message: 'Szalon sikeresen mentve' });
     } catch (error) {
         console.error('Save salon error:', error);
-        res.status(500).json({ success: false, message: 'Szerverhiba a szalon mentése során' });
+        response.status(500).json({ success: false, message: 'Szerverhiba a szalon mentése során' });
     }
 });
 
 // Unsave a salon
-router.delete('/saved-salons/:salonId', AuthMiddleware, async (req, res) => {
+router.delete('/saved-salons/:salonId', AuthMiddleware, async (request, response) => {
     try {
-        const userId = req.user.userId;
-        const salonId = parseInt(req.params.salonId);
+        const userId = request.user.userId;
+        const salonId = parseInt(request.params.salonId);
 
         if (!salonId || isNaN(salonId)) {
-            return res.status(400).json({ success: false, message: 'Érvénytelen szalon azonosító' });
+            return response.status(400).json({ success: false, message: 'Érvénytelen szalon azonosító' });
         }
 
         await unsaveSalon(userId, salonId);
-        res.status(200).json({ success: true, message: 'Szalon eltávolítva a mentettek közül' });
+        response.status(200).json({ success: true, message: 'Szalon eltávolítva a mentettek közül' });
     } catch (error) {
         console.error('Unsave salon error:', error);
-        res.status(500).json({ success: false, message: 'Szerverhiba a szalon eltávolítása során' });
+        response.status(500).json({ success: false, message: 'Szerverhiba a szalon eltávolítása során' });
     }
 });
 
 // Get user's visited salons (from past appointments)
-router.get('/visited-salons', AuthMiddleware, async (req, res) => {
+router.get('/visited-salons', AuthMiddleware, async (request, response) => {
     try {
-        const userId = req.user.userId;
+        const userId = request.user.userId;
 
         const salons = await getVisitedSalons(userId);
 
@@ -92,10 +92,10 @@ router.get('/visited-salons', AuthMiddleware, async (req, res) => {
             })
         );
 
-        res.status(200).json({ success: true, salons: salonsWithProviders });
+        response.status(200).json({ success: true, salons: salonsWithProviders });
     } catch (error) {
         console.error('Get visited salons error:', error);
-        res.status(500).json({ success: false, message: 'Hiba történt a meglátogatott szalonok lekérdezésekor' });
+        response.status(500).json({ success: false, message: 'Hiba történt a meglátogatott szalonok lekérdezésekor' });
     }
 });
 

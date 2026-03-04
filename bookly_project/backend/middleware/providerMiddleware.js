@@ -7,34 +7,34 @@ const { getProviderStatus, getProviderManagerInfo } = require('../sql/providerQu
 
 /**
  * Verify provider exists and is active in database.
- * Sets req.providerId on success.
+ * Sets request.providerId on success.
  * Used by: calendarApi, timeBlocksApi.
  */
-async function verifyProvider(req, res, next) {
+async function verifyProvider(request, response, next) {
     try {
-        const providerId = req.user.userId;
+        const providerId = request.user.userId;
 
         const provider = await getProviderStatus(providerId);
 
         if (!provider) {
-            return res.status(403).json({
+            return response.status(403).json({
                 success: false,
                 message: 'Szolgáltató nem található'
             });
         }
 
         if (provider.status !== 'active') {
-            return res.status(403).json({
+            return response.status(403).json({
                 success: false,
                 message: 'A fiók nincs aktív státuszban'
             });
         }
 
-        req.providerId = providerId;
+        request.providerId = providerId;
         next();
     } catch (error) {
         console.error('Provider verification error:', error);
-        return res.status(500).json({
+        return response.status(500).json({
             success: false,
             message: 'Hiba történt a hitelesítés során'
         });
@@ -42,34 +42,34 @@ async function verifyProvider(req, res, next) {
 }
 
 /**
- * Verify provider is a manager and set req.salonId.
+ * Verify provider is a manager and set request.salonId.
  * Used by: salonApi (management), staffApi.
  */
-async function isManagerMiddleware(req, res, next) {
+async function isManagerMiddleware(request, response, next) {
     try {
-        const providerId = req.user.userId;
+        const providerId = request.user.userId;
 
         const provider = await getProviderManagerInfo(providerId);
 
         if (!provider) {
-            return res.status(404).json({
+            return response.status(404).json({
                 success: false,
                 message: 'Szolgáltató nem található'
             });
         }
 
         if (!provider.isManager) {
-            return res.status(403).json({
+            return response.status(403).json({
                 success: false,
                 message: 'Csak menedzserek végezhetik el ezt a műveletet'
             });
         }
 
-        req.salonId = provider.salon_id;
+        request.salonId = provider.salon_id;
         next();
     } catch (error) {
         console.error('Manager check error:', error);
-        return res.status(500).json({
+        return response.status(500).json({
             success: false,
             message: 'Szerverhiba'
         });

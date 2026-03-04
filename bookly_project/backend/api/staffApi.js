@@ -18,45 +18,45 @@ const bcrypt = require('bcryptjs');
 router.use(AuthMiddleware, isManagerMiddleware);
 
 // GET /api/staff/services/:staffId — list active services for a staff member
-router.get('/services/:staffId', async (req, res) => {
+router.get('/services/:staffId', async (request, response) => {
     try {
-        const staffId = parseInt(req.params.staffId);
+        const staffId = parseInt(request.params.staffId);
         if (isNaN(staffId)) {
-            return res.status(400).json({ success: false, message: 'Érvénytelen munkatárs azonosító' });
+            return response.status(400).json({ success: false, message: 'Érvénytelen munkatárs azonosító' });
         }
 
-        const belongs = await verifyStaffBelongsToSalon(staffId, req.salonId);
+        const belongs = await verifyStaffBelongsToSalon(staffId, request.salonId);
         if (!belongs) {
-            return res.status(403).json({ success: false, message: 'A munkatárs nem tartozik a szalonhoz' });
+            return response.status(403).json({ success: false, message: 'A munkatárs nem tartozik a szalonhoz' });
         }
 
         const services = await getActiveServicesForStaff(staffId);
 
-        res.status(200).json({ success: true, services });
+        response.status(200).json({ success: true, services });
     } catch (error) {
         console.error('Get staff services error:', error);
-        res.status(500).json({ success: false, message: 'Szerverhiba' });
+        response.status(500).json({ success: false, message: 'Szerverhiba' });
     }
 });
 
 // GET /api/staff/calendar/:staffId?date=YYYY-MM-DD
 // Returns appointments + time blocks for a staff member on a given date
-router.get('/calendar/:staffId', async (req, res) => {
+router.get('/calendar/:staffId', async (request, response) => {
     try {
-        const staffId = parseInt(req.params.staffId);
-        const { date } = req.query;
+        const staffId = parseInt(request.params.staffId);
+        const { date } = request.query;
 
         if (isNaN(staffId)) {
-            return res.status(400).json({ success: false, message: 'Érvénytelen munkatárs azonosító' });
+            return response.status(400).json({ success: false, message: 'Érvénytelen munkatárs azonosító' });
         }
 
         if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-            return res.status(400).json({ success: false, message: 'Érvénytelen dátum formátum (YYYY-MM-DD szükséges)' });
+            return response.status(400).json({ success: false, message: 'Érvénytelen dátum formátum (YYYY-MM-DD szükséges)' });
         }
 
-        const belongs = await verifyStaffBelongsToSalon(staffId, req.salonId);
+        const belongs = await verifyStaffBelongsToSalon(staffId, request.salonId);
         if (!belongs) {
-            return res.status(403).json({ success: false, message: 'A munkatárs nem tartozik a szalonhoz' });
+            return response.status(403).json({ success: false, message: 'A munkatárs nem tartozik a szalonhoz' });
         }
 
         const appointments = await getStaffCalendarAppointments(staffId, date);
@@ -65,7 +65,7 @@ router.get('/calendar/:staffId', async (req, res) => {
 
         const salonHours = await getSalonHoursByProviderId(staffId);
 
-        res.status(200).json({
+        response.status(200).json({
             success: true,
             appointments,
             timeBlocks,
@@ -74,35 +74,35 @@ router.get('/calendar/:staffId', async (req, res) => {
         });
     } catch (error) {
         console.error('Get staff calendar error:', error);
-        res.status(500).json({ success: false, message: 'Szerverhiba' });
+        response.status(500).json({ success: false, message: 'Szerverhiba' });
     }
 });
 
 // POST /api/staff/appointment
 // Creates an appointment for a staff member
-router.post('/appointment', async (req, res) => {
+router.post('/appointment', async (request, response) => {
     try {
-        const { staffId, is_guest, user_email, user_name, user_phone, service_id, appointment_date, appointment_time, comment } = req.body;
+        const { staffId, is_guest, user_email, user_name, user_phone, service_id, appointment_date, appointment_time, comment } = request.body;
 
         if (!staffId || !user_name || !service_id || !appointment_date || !appointment_time) {
-            return res.status(400).json({ success: false, message: 'staffId, név, szolgáltatás, dátum és idő megadása kötelező' });
+            return response.status(400).json({ success: false, message: 'staffId, név, szolgáltatás, dátum és idő megadása kötelező' });
         }
 
         const parsedStaffId = parseInt(staffId);
         if (isNaN(parsedStaffId)) {
-            return res.status(400).json({ success: false, message: 'Érvénytelen munkatárs azonosító' });
+            return response.status(400).json({ success: false, message: 'Érvénytelen munkatárs azonosító' });
         }
 
-        const belongs = await verifyStaffBelongsToSalon(parsedStaffId, req.salonId);
+        const belongs = await verifyStaffBelongsToSalon(parsedStaffId, request.salonId);
         if (!belongs) {
-            return res.status(403).json({ success: false, message: 'A munkatárs nem tartozik a szalonhoz' });
+            return response.status(403).json({ success: false, message: 'A munkatárs nem tartozik a szalonhoz' });
         }
 
         // Verify service belongs to the staff member
         const service = await getServiceByIdAndProvider(service_id, parsedStaffId);
 
         if (!service) {
-            return res.status(404).json({ success: false, message: 'Szolgáltatás nem található a munkatársnál' });
+            return response.status(404).json({ success: false, message: 'Szolgáltatás nem található a munkatársnál' });
         }
         const salonHours = await getSalonHoursByProviderId(parsedStaffId);
         const openingHour = salonHours?.opening_hours || 8;
@@ -113,18 +113,18 @@ router.post('/appointment', async (req, res) => {
 
         const startHour = appointmentStart.getHours();
         if (startHour < openingHour || startHour >= closingHour) {
-            return res.status(400).json({ success: false, message: 'Az időpont a szalon nyitvatartási idején kívül esik' });
+            return response.status(400).json({ success: false, message: 'Az időpont a szalon nyitvatartási idején kívül esik' });
         }
 
         let userId = null;
 
         if (is_guest) {
             if (!user_email && !user_phone) {
-                return res.status(400).json({ success: false, message: 'Vendég foglaláshoz email vagy telefonszám szükséges' });
+                return response.status(400).json({ success: false, message: 'Vendég foglaláshoz email vagy telefonszám szükséges' });
             }
         } else {
             if (!user_email) {
-                return res.status(400).json({ success: false, message: 'Regisztrált felhasználóhoz email cím szükséges' });
+                return response.status(400).json({ success: false, message: 'Regisztrált felhasználóhoz email cím szükséges' });
             }
 
             const existingUser = await getUserByEmail(user_email.trim());
@@ -146,7 +146,7 @@ router.post('/appointment', async (req, res) => {
         );
 
         if (conflicts.length > 0) {
-            return res.status(409).json({ success: false, message: 'Ez az időpont már foglalt' });
+            return response.status(409).json({ success: false, message: 'Ez az időpont már foglalt' });
         }
 
         // Check for time block conflicts
@@ -159,7 +159,7 @@ router.post('/appointment', async (req, res) => {
         });
 
         if (hasConflict) {
-            return res.status(409).json({ success: false, message: 'Időpont ütközik a munkatárs szünetével' });
+            return response.status(409).json({ success: false, message: 'Időpont ütközik a munkatárs szünetével' });
         }
 
         const appointmentId = await createAppointment({
@@ -175,36 +175,36 @@ router.post('/appointment', async (req, res) => {
             guestPhone: is_guest ? (user_phone?.trim() || null) : null
         });
 
-        res.status(201).json({ success: true, message: 'Foglalás sikeresen létrehozva', appointmentId });
+        response.status(201).json({ success: true, message: 'Foglalás sikeresen létrehozva', appointmentId });
     } catch (error) {
         console.error('Create staff appointment error:', error);
-        res.status(500).json({ success: false, message: 'Szerverhiba' });
+        response.status(500).json({ success: false, message: 'Szerverhiba' });
     }
 });
 
 // PUT /api/staff/appointment/:appointmentId
 // Updates appointment status or comment
-router.put('/appointment/:appointmentId', async (req, res) => {
+router.put('/appointment/:appointmentId', async (request, response) => {
     try {
-        const appointmentId = parseInt(req.params.appointmentId);
-        const { status, comment } = req.body;
+        const appointmentId = parseInt(request.params.appointmentId);
+        const { status, comment } = request.body;
 
         if (isNaN(appointmentId)) {
-            return res.status(400).json({ success: false, message: 'Érvénytelen foglalás azonosító' });
+            return response.status(400).json({ success: false, message: 'Érvénytelen foglalás azonosító' });
         }
 
-        const belongs = await verifyAppointmentBelongsToSalon(appointmentId, req.salonId);
+        const belongs = await verifyAppointmentBelongsToSalon(appointmentId, request.salonId);
         if (!belongs) {
-            return res.status(403).json({ success: false, message: 'A foglalás nem tartozik a szalonhoz' });
+            return response.status(403).json({ success: false, message: 'A foglalás nem tartozik a szalonhoz' });
         }
 
         const validStatuses = ['scheduled', 'completed', 'canceled', 'no_show'];
         if (status && !validStatuses.includes(status)) {
-            return res.status(400).json({ success: false, message: 'Érvénytelen státusz' });
+            return response.status(400).json({ success: false, message: 'Érvénytelen státusz' });
         }
 
         if (!status && comment === undefined) {
-            return res.status(400).json({ success: false, message: 'Nincs módosítandó adat' });
+            return response.status(400).json({ success: false, message: 'Nincs módosítandó adat' });
         }
 
         if (status) {
@@ -214,44 +214,44 @@ router.put('/appointment/:appointmentId', async (req, res) => {
             await updateAppointmentComment(appointmentId, comment?.trim() || null);
         }
 
-        res.status(200).json({ success: true, message: 'Foglalás sikeresen frissítve' });
+        response.status(200).json({ success: true, message: 'Foglalás sikeresen frissítve' });
     } catch (error) {
         console.error('Update staff appointment error:', error);
-        res.status(500).json({ success: false, message: 'Szerverhiba' });
+        response.status(500).json({ success: false, message: 'Szerverhiba' });
     }
 });
 
 // DELETE /api/staff/appointment/:appointmentId
 // Deletes (cancels) a staff appointment
-router.delete('/appointment/:appointmentId', async (req, res) => {
+router.delete('/appointment/:appointmentId', async (request, response) => {
     try {
-        const appointmentId = parseInt(req.params.appointmentId);
+        const appointmentId = parseInt(request.params.appointmentId);
 
         if (isNaN(appointmentId)) {
-            return res.status(400).json({ success: false, message: 'Érvénytelen foglalás azonosító' });
+            return response.status(400).json({ success: false, message: 'Érvénytelen foglalás azonosító' });
         }
 
-        const belongs = await verifyAppointmentBelongsToSalon(appointmentId, req.salonId);
+        const belongs = await verifyAppointmentBelongsToSalon(appointmentId, request.salonId);
         if (!belongs) {
-            return res.status(403).json({ success: false, message: 'A foglalás nem tartozik a szalonhoz' });
+            return response.status(403).json({ success: false, message: 'A foglalás nem tartozik a szalonhoz' });
         }
 
         const appointment = await getAppointmentStatusById(appointmentId);
 
         if (!appointment) {
-            return res.status(404).json({ success: false, message: 'Foglalás nem található' });
+            return response.status(404).json({ success: false, message: 'Foglalás nem található' });
         }
 
         if (appointment.status === 'canceled') {
-            return res.status(400).json({ success: false, message: 'Ez a foglalás már törölve van' });
+            return response.status(400).json({ success: false, message: 'Ez a foglalás már törölve van' });
         }
 
         await deleteAppointment(appointmentId);
 
-        res.status(200).json({ success: true, message: 'Foglalás sikeresen törölve' });
+        response.status(200).json({ success: true, message: 'Foglalás sikeresen törölve' });
     } catch (error) {
         console.error('Delete staff appointment error:', error);
-        res.status(500).json({ success: false, message: 'Szerverhiba' });
+        response.status(500).json({ success: false, message: 'Szerverhiba' });
     }
 });
 
