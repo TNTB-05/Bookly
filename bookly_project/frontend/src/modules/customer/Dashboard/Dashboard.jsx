@@ -7,6 +7,8 @@ import { authApi } from '../../auth/auth';
 import WarningIcon from '../../../icons/WarningIcon';
 import { useNotification } from '../../../components/NotificationContext';
 
+import { getConversations } from '../../../services/messagingService';
+
 // Tab komponensek
 import OverviewTab from './tabs/OverviewTab';
 import AppointmentsTab from './tabs/AppointmentsTab';
@@ -39,6 +41,15 @@ export default function Dashboard() {
     const [deletionDate, setDeletionDate] = useState(null);
     const [daysRemaining, setDaysRemaining] = useState(null);
     const [messagesUnread, setMessagesUnread] = useState(0);
+
+    useEffect(() => {
+        getConversations()
+            .then(data => {
+                const total = data.reduce((sum, c) => sum + (c.user_unread_count || 0), 0);
+                setMessagesUnread(total);
+            })
+            .catch(() => {});
+    }, []);
 
     // URL paraméter változás figyelése
     useEffect(() => {
