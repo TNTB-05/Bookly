@@ -11,7 +11,7 @@ const {
     markConversationRead,
     checkBookingExists,
     deleteConversation
-} = require('./messagingQueries.js');
+} = require('../sql/messagingQueries.js');
 
 module.exports = function (io) {
     const router = express.Router();

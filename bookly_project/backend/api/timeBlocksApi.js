@@ -1,51 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const { 
-    pool, 
     getExpandedTimeBlocksForRange,
-    checkAppointmentConflicts,
+    getRawTimeBlocks,
     createTimeBlock, 
     updateTimeBlock, 
     deleteTimeBlock, 
     getTimeBlockById,
     endRecurringBlockAt
-} = require('../sql/database.js');
+} = require('../sql/timeBlockQueries.js');
+const { checkAppointmentConflicts } = require('../sql/appointmentQueries.js');
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
 const { requireRole } = require('./auth/RoleMiddleware.js');
-
-// Middleware to verify provider exists and is active
-const verifyProvider = async (req, res, next) => {
-    try {
-        const providerId = req.user.userId;
-        const [providers] = await pool.query(
-            'SELECT id, status FROM providers WHERE id = ?',
-            [providerId]
-        );
-
-        if (providers.length === 0) {
-            return res.status(403).json({
-                success: false,
-                message: 'Szolgáltató nem található'
-            });
-        }
-
-        if (providers[0].status !== 'active') {
-            return res.status(403).json({
-                success: false,
-                message: 'A fiók nincs aktív státuszban'
-            });
-        }
-
-        req.providerId = providerId;
-        next();
-    } catch (error) {
-        console.error('Provider verification error:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'Hiba történt a hitelesítés során'
-        });
-    }
-};
+const { verifyProvider } = require('../middleware/providerMiddleware.js');
 
 // Apply middleware to all routes
 router.use(AuthMiddleware, requireRole(['provider']), verifyProvider);
@@ -83,19 +50,7 @@ router.get('/raw', async (req, res) => {
     try {
         const providerId = req.providerId;
 
-        const [rows] = await pool.execute(
-            `SELECT id, provider_id, start_datetime, end_datetime, 
-                    is_recurring, recurrence_pattern, recurrence_days, 
-                    recurrence_end_date, notes, created_at
-             FROM provider_time_blocks
-             WHERE provider_id = ?
-             AND (
-                 (is_recurring = 0 AND DATE(CONVERT_TZ(end_datetime, '+00:00', '+01:00')) >= DATE(CONVERT_TZ(NOW(), '+00:00', '+01:00')))
-                 OR (is_recurring = 1 AND (recurrence_end_date IS NULL OR recurrence_end_date >= DATE(CONVERT_TZ(NOW(), '+00:00', '+01:00'))))
-             )
-             ORDER BY created_at DESC`,
-            [providerId]
-        );
+        const rows = await getRawTimeBlocks(providerId);
 
         res.status(200).json({
             success: true,

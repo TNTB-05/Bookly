@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const database = require('../sql/database.js');
+const { getAllSalons, getSalonById, getDistinctSalonTypes, getTopRatedSalons, getServicesBySalonId } = require('../sql/salonQueries.js');
+const { getProvidersBySalonId } = require('../sql/providerQueries.js');
+const { getServicesByProviderId } = require('../sql/serviceQueries.js');
+const { getSalonSuggestions, getTypeSuggestions, searchSalonsByName, getRecentReviews, getRecommendedSalons } = require('../sql/searchQueries.js');
 const locationService = require('../services/locationService.js');
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
 
@@ -45,7 +48,7 @@ router.post('/nearby', async (req, res) => {
         }
 
         // Szalonok lekérése az adatbázisból
-        const allSalons = await database.getAllSalons();
+        const allSalons = await getAllSalons();
 
         // Közeli szalonok keresése
         const nearbySalons = locationService.findNearbySalons(
@@ -58,8 +61,8 @@ router.post('/nearby', async (req, res) => {
         // Szalonok részleteinek lekérése (szolgáltatások és szolgáltatók)
         const salonsWithDetails = await Promise.all(
             nearbySalons.map(async (salon) => {
-                const providers = await database.getProvidersBySalonId(salon.id);
-                const services = await database.getServicesBySalonId(salon.id);
+                const providers = await getProvidersBySalonId(salon.id);
+                const services = await getServicesBySalonId(salon.id);
 
                 return {
                     ...salon,
@@ -142,7 +145,7 @@ router.post('/geocode', async (req, res) => {
 // Get distinct salon types
 router.get('/types', async (req, res) => {
     try {
-        const types = await database.getDistinctSalonTypes();
+        const types = await getDistinctSalonTypes();
         
         return res.status(200).json({
             success: true,
@@ -162,12 +165,12 @@ router.get('/types', async (req, res) => {
 router.get('/top-rated', async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 10;
-        const salons = await database.getTopRatedSalons(limit);
+        const salons = await getTopRatedSalons(limit);
         
         // Get providers for each salon
         const salonsWithProviders = await Promise.all(
             salons.map(async (salon) => {
-                const providers = await database.getProvidersBySalonId(salon.id);
+                const providers = await getProvidersBySalonId(salon.id);
                 return {
                     ...salon,
                     providers
@@ -205,27 +208,10 @@ router.get('/suggestions', async (req, res) => {
         const searchTerm = query.trim().toLowerCase();
 
         // Get matching salon names
-        const salonQuery = `
-            SELECT DISTINCT id, name, address, type
-            FROM salons
-            WHERE status != 'closed' 
-            AND LOWER(name) LIKE ?
-            LIMIT 5
-        `;
-        const [salons] = await database.pool.execute(salonQuery, [`%${searchTerm}%`]);
+        const salons = await getSalonSuggestions(searchTerm);
 
         // Get matching service types
-        const typeQuery = `
-            SELECT DISTINCT type
-            FROM salons
-            WHERE status != 'closed' 
-            AND type IS NOT NULL 
-            AND type != ''
-            AND LOWER(type) LIKE ?
-            LIMIT 3
-        `;
-        const [types] = await database.pool.execute(typeQuery, [`%${searchTerm}%`]);
-        const serviceTypes = types.map(row => row.type);
+        const serviceTypes = await getTypeSuggestions(searchTerm);
 
         return res.status(200).json({
             success: true,
@@ -255,7 +241,7 @@ router.get('/salon/:id', async (req, res) => {
         }
         
         // Get salon details
-        const salon = await database.getSalonById(salonId);
+        const salon = await getSalonById(salonId);
         
         if (!salon) {
             return res.status(404).json({
@@ -265,12 +251,12 @@ router.get('/salon/:id', async (req, res) => {
         }
         
         // Get providers for the salon
-        const providers = await database.getProvidersBySalonId(salonId);
+        const providers = await getProvidersBySalonId(salonId);
         
         // Get services for each provider
         const providersWithServices = await Promise.all(
             providers.map(async (provider) => {
-                const services = await database.getServicesByProviderId(provider.id);
+                const services = await getServicesByProviderId(provider.id);
                 return {
                     ...provider,
                     services
@@ -279,7 +265,7 @@ router.get('/salon/:id', async (req, res) => {
         );
         
         // Get salon services
-        const services = await database.getServicesBySalonId(salonId);
+        const services = await getServicesBySalonId(salonId);
         
         return res.status(200).json({
             success: true,
@@ -318,25 +304,13 @@ router.get('/by-name', async (req, res) => {
             queryParams.push(service_type);
         }
 
-        const salonQuery = `
-            SELECT s.id, s.name, s.address, s.type, s.description, s.banner_color, s.logo_url, s.banner_image_url,
-                   s.latitude, s.longitude, s.phone, s.email, s.opening_hours, s.closing_hours,
-                   COALESCE(AVG(r.salon_rating), 0) as average_rating,
-                   COUNT(DISTINCT r.id) as rating_count
-            FROM salons s
-            LEFT JOIN ratings r ON s.id = r.salon_id AND r.active = TRUE
-            WHERE ${whereConditions.join(' AND ')}
-            GROUP BY s.id
-            ORDER BY average_rating DESC, rating_count DESC
-        `;
-
-        const [salons] = await database.pool.execute(salonQuery, queryParams);
+        const salons = await searchSalonsByName(whereConditions, queryParams);
 
         // Get providers for each salon
         const salonsWithProviders = await Promise.all(
             salons.map(async (salon) => {
-                const providers = await database.getProvidersBySalonId(salon.id);
-                const services = await database.getServicesBySalonId(salon.id);
+                const providers = await getProvidersBySalonId(salon.id);
+                const services = await getServicesBySalonId(salon.id);
                 return {
                     ...salon,
                     providers,
@@ -365,27 +339,7 @@ router.get('/recent-reviews', async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 8;
         
-        const query = `
-            SELECT 
-                r.id,
-                r.salon_rating,
-                r.salon_comment,
-                r.created_at,
-                u.name as user_name,
-                sal.id as salon_id,
-                sal.name as salon_name,
-                sal.type as salon_type
-            FROM ratings r
-            JOIN users u ON r.user_id = u.id
-            JOIN salons sal ON r.salon_id = sal.id
-            WHERE r.active = TRUE 
-            AND r.salon_comment IS NOT NULL 
-            AND r.salon_comment != ''
-            ORDER BY r.created_at DESC
-            LIMIT ?
-        `;
-        
-        const [reviews] = await database.pool.execute(query, [String(limit)]);
+        const reviews = await getRecentReviews(limit);
         
         return res.status(200).json({
             success: true,
@@ -475,7 +429,7 @@ router.get('/recommendations', AuthMiddleware, async (req, res) => {
         if (!lat || !lng) {
             return res.json({ success: false, message: 'Location required' });
         }
-        const salons = await database.getRecommendedSalons(userId, parseFloat(lat), parseFloat(lng), parseInt(limit));
+        const salons = await getRecommendedSalons(userId, parseFloat(lat), parseFloat(lng), parseInt(limit));
         res.json({ success: true, data: { salons } });
     } catch (error) {
         console.error('Get recommendations error:', error);
