@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../../sql/pool.js');
-const { validateSalonCode, insertProviderRefreshToken, updateProviderLastLogin, getProviderForLogin } = require('../../sql/authQueries.js');
+const { validateSalonCode, insertProviderRefreshToken, updateProviderLastLogin, getProviderForLogin,
+    checkProviderExistsByEmailOrPhone, checkSalonExistsByNameAndAddress, checkSharecodeUnique,
+    createSalon, checkSalonExistsById, createProvider } = require('../../sql/authQueries.js');
 const { generateProviderTokens, setAuthCookies } = require('../../utils/authUtils.js');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const locationService = require('../../services/locationService.js');
 const { sendWelcomeEmail } = require('../../services/emailService.js');
@@ -101,12 +102,9 @@ router.post('/register', async (request, response) => {
         await connection.beginTransaction();
 
         // Check if provider already exists
-        const [existingProviders] = await connection.query(
-            'SELECT id FROM providers WHERE email = ? OR phone = ?',
-            [email, phone]
-        );
+        const providerExists = await checkProviderExistsByEmailOrPhone(connection, email, phone);
 
-        if (existingProviders.length > 0) {
+        if (providerExists) {
             await connection.rollback();
             return response.status(409).json({
                 success: false,
@@ -119,12 +117,9 @@ router.post('/register', async (request, response) => {
 
         if (registrationType === 'create') {
             // Verify salon doesn't already exist with same name at same address
-            const [existingSalons] = await connection.query(
-                'SELECT id FROM salons WHERE name = ? AND address = ?',
-                [salon.companyName.trim(), salon.address.trim()]
-            );
+            const salonExists = await checkSalonExistsByNameAndAddress(connection, salon.companyName.trim(), salon.address.trim());
 
-            if (existingSalons.length > 0) {
+            if (salonExists) {
                 await connection.rollback();
                 return response.status(409).json({
                     success: false,
@@ -137,13 +132,7 @@ router.post('/register', async (request, response) => {
             let isUnique = false;
             while (!isUnique) {
                 shareCode = generateShareCode();
-                const [existing] = await connection.query(
-                    'SELECT id FROM salons WHERE sharecode = ?',
-                    [shareCode]
-                );
-                if (existing.length === 0) {
-                    isUnique = true;
-                }
+                isUnique = await checkSharecodeUnique(connection, shareCode);
             }
 
             // Geocode the address to get coordinates
@@ -163,30 +152,21 @@ router.post('/register', async (request, response) => {
             }
 
             // Create new salon with coordinates
-            const [salonResult] = await connection.query(
-                `INSERT INTO salons (name, address, description, sharecode, status, type, latitude, longitude) 
-                 VALUES (?, ?, ?, ?, 'open', ?, ?, ?)`,
-                [
-                    salon.companyName.trim(),
-                    salon.address.trim(),
-                    salon.description.trim(),
-                    shareCode,
-                    salon.salonType.trim(),
-                    latitude,
-                    longitude
-                ]
-            );
-
-            finalSalonId = salonResult.insertId;
+            finalSalonId = await createSalon(connection, {
+                name: salon.companyName.trim(),
+                address: salon.address.trim(),
+                description: salon.description.trim(),
+                sharecode: shareCode,
+                salonType: salon.salonType.trim(),
+                latitude,
+                longitude
+            });
             isManager = true; // Creator becomes manager
         } else {
             // Join existing salon - verify it exists
-            const [salons] = await connection.query(
-                'SELECT id FROM salons WHERE id = ?',
-                [salonId]
-            );
+            const salonFound = await checkSalonExistsById(connection, salonId);
 
-            if (salons.length === 0) {
+            if (!salonFound) {
                 await connection.rollback();
                 return response.status(404).json({
                     success: false,
@@ -202,19 +182,15 @@ router.post('/register', async (request, response) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create provider
-        const [providerResult] = await connection.query(
-            `INSERT INTO providers (salon_id, name, email, phone, status, role, isManager, password_hash) 
-             VALUES (?, ?, ?, ?, 'active', ?, ?, ?)`,
-            [
-                finalSalonId,
-                name.trim(),
-                email.trim().toLowerCase(),
-                phone.trim(),
-                isManager ? 'manager' : 'provider',
-                isManager,
-                hashedPassword
-            ]
-        );
+        const providerId = await createProvider(connection, {
+            salonId: finalSalonId,
+            name: name.trim(),
+            email: email.trim().toLowerCase(),
+            phone: phone.trim(),
+            role: isManager ? 'manager' : 'provider',
+            isManager,
+            passwordHash: hashedPassword
+        });
 
         await connection.commit();
 
@@ -226,7 +202,7 @@ router.post('/register', async (request, response) => {
         response.status(201).json({
             success: true,
             message: 'Sikeres regisztráció',
-            providerId: providerResult.insertId,
+            providerId: providerId,
             isManager
         });
     } catch (error) {

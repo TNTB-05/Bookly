@@ -45,8 +45,7 @@ router.get('/profile', AuthMiddleware, async (req, res) => {
                 status: user.status,
                 created_at: user.created_at,
                 deleted_at: user.deleted_at || null,
-                profile_picture_url: user.profile_picture_url,
-                created_at: user.created_at
+                profile_picture_url: user.profile_picture_url
             }
         });
     } catch (error) {

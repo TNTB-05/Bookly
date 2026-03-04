@@ -210,6 +210,8 @@ async function getAdminUserById(userId) {
 async function banUser(userId) {
     const query = "UPDATE users SET status = 'banned' WHERE id = ?";
     const [result] = await pool.execute(query, [userId]);
+    // Also invalidate all refresh tokens for the banned user
+    await pool.execute('DELETE FROM RefTokens WHERE user_id = ?', [userId]);
     return result;
 }
 
@@ -246,7 +248,6 @@ async function removeUserPicture(userId) {
 module.exports = {
     getUserById,
     getUserByEmail,
-    getUsers,
     getUserPasswordHash,
     checkEmailExists,
     getUserPictureUrl,
@@ -261,7 +262,6 @@ module.exports = {
     updateUserNameAndPhone,
     deleteUser,
     restoreUser,
-    permanentlyDeleteUser,
     reactivateUser,
     deleteSavedSalonsForUser,
     deleteRefTokensForUser,
@@ -270,6 +270,5 @@ module.exports = {
     banUser,
     unbanUser,
     gdprDeleteUser,
-    getAdminUserFull,
     removeUserPicture
 };

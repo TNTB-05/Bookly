@@ -75,6 +75,12 @@ async function getProviderStatus(providerId) {
     return rows.length > 0 ? rows[0] : null;
 }
 
+async function getProviderManagerInfo(providerId) {
+    const query = 'SELECT isManager, salon_id FROM providers WHERE id = ?';
+    const [rows] = await pool.execute(query, [providerId]);
+    return rows.length > 0 ? rows[0] : null;
+}
+
 // ==================== UPDATE ====================
 
 async function updateProviderProfile(providerId, { name, phone, description }) {
@@ -237,6 +243,7 @@ module.exports = {
     getProviderPictureUrl,
     getProviderSalonId,
     getProviderStatus,
+    getProviderManagerInfo,
     updateProviderProfile,
     updateProviderPicture,
     updateProviderPassword,
@@ -250,6 +257,5 @@ module.exports = {
     getAdminProviders,
     getAdminProviderById,
     getProviderByEmail,
-    checkProviderExists,
     verifyStaffBelongsToSalon
 };

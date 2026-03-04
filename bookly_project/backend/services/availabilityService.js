@@ -4,7 +4,7 @@
  * Extracted from database.js — these are NOT pure SQL, they combine queries + computation.
  */
 
-const { getProviderAppointmentsForDate } = require('../sql/appointmentQueries');
+const { getProviderAppointmentsForDate, getAppointmentsBatchForRange } = require('../sql/appointmentQueries');
 const { getExpandedTimeBlocksForDate, getExpandedTimeBlocksForRange } = require('../sql/timeBlockQueries');
 const { getSalonHoursByProviderId, getMinServiceDuration } = require('../sql/serviceQueries');
 
@@ -98,16 +98,7 @@ async function getFullyBookedDays(providerId, startDate, endDate) {
     if (!minDuration) return []; // No services → never fully booked
 
     // 3. Batch-fetch appointments for the range (exclude canceled)
-    const pool = require('../sql/pool');
-    const [appointments] = await pool.execute(
-        `SELECT appointment_start, appointment_end
-         FROM appointments
-         WHERE provider_id = ?
-         AND DATE(appointment_start) BETWEEN ? AND ?
-         AND status != 'canceled'
-         ORDER BY appointment_start ASC`,
-        [providerId, startDate, endDate]
-    );
+    const appointments = await getAppointmentsBatchForRange(providerId, startDate, endDate);
 
     // 4. Batch-fetch and expand time blocks for the range
     const expandedBlocks = await getExpandedTimeBlocksForRange(providerId, startDate, endDate);

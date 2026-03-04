@@ -6,9 +6,10 @@
 
 const express = require('express');
 const router = express.Router();
-const { getAdminProviders, getAdminProviderById, deactivateProvider, activateProvider, getProviderProfilePicture, removeProviderProfilePicture, banProvider, unbanProvider } = require('../../sql/adminQueries');
+const { getAdminProviders, getAdminProviderById } = require('../../sql/providerQueries');
+const { deactivateProvider, activateProvider, getProviderProfilePicture, removeProviderProfilePicture, banProvider, unbanProvider } = require('../../sql/adminQueries');
 const { logEvent } = require('../../services/logService');
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 
 router.get('/providers', async (req, res) => {
@@ -65,7 +66,7 @@ router.delete('/providers/:id/picture', async (req, res) => {
         const pictureUrl = await getProviderProfilePicture(providerId);
         if (pictureUrl) {
             const filePath = path.join(__dirname, '../..', pictureUrl);
-            try { fs.unlinkSync(filePath); } catch (e) { /* file may not exist */ }
+            try { await fs.unlink(filePath); } catch (e) { /* file may not exist */ }
         }
 
         await removeProviderProfilePicture(providerId);

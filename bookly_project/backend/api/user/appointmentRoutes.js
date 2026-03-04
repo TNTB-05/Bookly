@@ -26,17 +26,6 @@ function calculateTravelBuffer(distanceKm) {
     return Math.max(5, Math.round(distanceKm * TRAVEL_TIME_MULTIPLIER_MIN_PER_KM));
 }
 
-// Helper: format Date to MySQL datetime in local timezone
-function formatDateTimeLocal(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-}
-
 // Get user's appointments
 router.get('/appointments', AuthMiddleware, async (req, res) => {
     try {
@@ -157,8 +146,8 @@ router.post('/appointments', AuthMiddleware, async (req, res) => {
             const conflicts = await checkProviderConflictsForUpdate(
                 connection,
                 provider_id,
-                formatDateTimeLocal(appointmentStart),
-                formatDateTimeLocal(appointmentEnd)
+                formatLocalDatetime(appointmentStart),
+                formatLocalDatetime(appointmentEnd)
             );
 
             if (conflicts.length > 0) {
@@ -171,8 +160,8 @@ router.post('/appointments', AuthMiddleware, async (req, res) => {
                 userId,
                 providerId: provider_id,
                 serviceId: service_id,
-                appointmentStart: formatDateTimeLocal(appointmentStart),
-                appointmentEnd: formatDateTimeLocal(appointmentEnd),
+                appointmentStart: formatLocalDatetime(appointmentStart),
+                appointmentEnd: formatLocalDatetime(appointmentEnd),
                 comment,
                 price: service.price
             });

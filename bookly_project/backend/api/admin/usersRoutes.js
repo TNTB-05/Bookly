@@ -5,9 +5,10 @@
 
 const express = require('express');
 const router = express.Router();
-const { getAdminUsers, getAdminUserById, banUser, unbanUser, gdprDeleteUser, getUserProfilePicture, removeUserProfilePicture } = require('../../sql/adminQueries');
+const { getAdminUsers, getAdminUserById, banUser, unbanUser, getUserPictureUrl, removeUserPicture } = require('../../sql/userQueries');
+const { gdprDeleteUser } = require('../../sql/adminQueries');
 const { logEvent } = require('../../services/logService');
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 
 router.get('/users', async (req, res) => {
@@ -66,7 +67,7 @@ router.post('/users/:id/gdpr-delete', async (req, res) => {
 
         if (originalUser.profile_picture_url) {
             const filePath = path.join(__dirname, '../..', originalUser.profile_picture_url);
-            try { fs.unlinkSync(filePath); } catch (e) { /* file may not exist */ }
+            try { await fs.unlink(filePath); } catch (e) { /* file may not exist */ }
         }
 
         await logEvent('CRITICAL', 'USER_GDPR_DELETE', 'admin', req.user.userId, 'user', parseInt(userId),
@@ -82,13 +83,13 @@ router.delete('/users/:id/picture', async (req, res) => {
     try {
         const userId = req.params.id;
 
-        const pictureUrl = await getUserProfilePicture(userId);
+        const pictureUrl = await getUserPictureUrl(userId);
         if (pictureUrl) {
             const filePath = path.join(__dirname, '../..', pictureUrl);
-            try { fs.unlinkSync(filePath); } catch (e) { /* file may not exist */ }
+            try { await fs.unlink(filePath); } catch (e) { /* file may not exist */ }
         }
 
-        await removeUserProfilePicture(userId);
+        await removeUserPicture(userId);
         await logEvent('WARN', 'USER_PIC_REMOVED', 'admin', req.user.userId, 'user', parseInt(userId), `Admin removed profile picture for user #${userId}`);
         return res.json({ success: true, message: 'Profilkép eltávolítva' });
     } catch (error) {

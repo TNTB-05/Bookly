@@ -1,4 +1,4 @@
-const { getWaitlistForFreedSlot } = require('../sql/database.js');
+const { getWaitlistForFreedSlot } = require('../sql/waitlistQueries.js');
 const { sendWaitlistNotification } = require('./emailService.js');
 
 async function notifyWaitlistForCancelledSlot(providerId, serviceId, slotStart, salonName, serviceName, providerName) {

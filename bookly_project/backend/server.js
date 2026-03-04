@@ -1,7 +1,6 @@
 //!Module-ok importálása
 const express = require('express'); //?npm install express
 const http = require('http');
-const session = require('express-session'); //?npm install express-session
 const cors = require('cors'); //?npm install cors
 const cookieParser = require('cookie-parser'); //?npm install cookie-parser
 const path = require('path');
@@ -12,7 +11,6 @@ const { pool } = require('./sql/database.js'); //?Adatbázis kapcsolat importál
 //!Beállítások
 const app = express();
 const server = http.createServer(app);
-const router = express.Router();
 const ip = process.env.IP_ADDRESS || '127.0.0.1';
 const port = process.env.PORT || 3000;
 
@@ -36,15 +34,6 @@ app.use(cors({
 })); //?CORS middleware
 
 app.set('trust proxy', 1); //?Middleware Proxy
-
-//!Session beállítása:
-app.use(
-    session({
-        secret: process.env.SESSION_SECRET || 'default-secret-key',
-        resave: false,
-        saveUninitialized: true
-    })
-);
 
 // Socket.io auth middleware
 io.use((socket, next) => {
@@ -72,7 +61,6 @@ app.get('/', (request, response) => {
     response.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 //!API endpoints
-app.use('/', router);
 const endpoints = require('./api/api.js');
 app.use('/api', endpoints);
 const loginApi = require('./api/auth/LoginApi.js');

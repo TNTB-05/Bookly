@@ -318,16 +318,9 @@ router.post('/refresh', async (request, response) => {
 router.post('/logout', async (request, response) => {
     const refreshToken = request.cookies.refreshToken;
     
-    console.log('=== LOGOUT ===');
-    console.log('Cookie received:', !!refreshToken);
-    
     // Remove token from database
     if (refreshToken) {
         try {
-            // Decode token to get user/provider ID
-            const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-            
-            // Delete the token from RefTokens table
             await deleteRefreshToken(refreshToken);
         } catch (error) {
             console.error('Error deleting refresh token:', error);

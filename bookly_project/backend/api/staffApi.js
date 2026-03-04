@@ -8,6 +8,7 @@ const { getUserByEmail, updateUserNameAndPhone, createUserFromProviderBooking } 
 const { formatLocalDatetime } = require('../utils/dateUtils.js');
 const { isManagerMiddleware } = require('../middleware/providerMiddleware.js');
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
+const bcrypt = require('bcryptjs');
 
 // GET /api/staff/services/:staffId — returns active services for a staff member
 // Applied before the manager middleware since both managers and providers need this.
@@ -132,7 +133,6 @@ router.post('/appointment', async (req, res) => {
                 userId = existingUser.id;
                 await updateUserNameAndPhone(userId, user_name.trim(), user_phone?.trim() || null);
             } else {
-                const bcrypt = require('bcryptjs');
                 const defaultPasswordHash = await bcrypt.hash('ChangeMe123!', 10);
                 userId = await createUserFromProviderBooking(user_name.trim(), user_email.trim(), user_phone?.trim() || null, defaultPasswordHash);
             }

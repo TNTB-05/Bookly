@@ -314,6 +314,17 @@ async function cancelUserScheduledAppointments(userId) {
     return result;
 }
 
+async function completeAllExpiredAppointments() {
+    const query = `
+        UPDATE appointments
+        SET status = 'completed'
+        WHERE status = 'scheduled'
+          AND appointment_end < NOW()
+    `;
+    const [result] = await pool.query(query);
+    return result;
+}
+
 async function softDeleteAppointment(appointmentId, reason, adminId) {
     const query = 'UPDATE appointments SET status = ?, deleted_reason = ?, deleted_at = NOW(), deleted_by = ? WHERE id = ?';
     const [result] = await pool.execute(query, ['deleted', reason, adminId, appointmentId]);
@@ -352,17 +363,11 @@ async function checkProviderAppointmentConflicts(providerId, startFormatted, end
         SELECT id FROM appointments 
         WHERE provider_id = ? 
         AND status = 'scheduled'
-        AND (
-            (appointment_start < ? AND appointment_end > ?)
-            OR (appointment_start < ? AND appointment_end > ?)
-            OR (appointment_start >= ? AND appointment_end <= ?)
-        )
+        AND appointment_start < ? AND appointment_end > ?
     `;
     const [rows] = await pool.execute(query, [
         providerId,
-        endFormatted, startFormatted,
-        endFormatted, startFormatted,
-        startFormatted, endFormatted
+        endFormatted, startFormatted
     ]);
     return rows;
 }
@@ -700,18 +705,12 @@ async function checkProviderConflictsForUpdate(connection, providerId, startForm
         SELECT id FROM appointments
         WHERE provider_id = ?
         AND status = 'scheduled'
-        AND (
-            (appointment_start < ? AND appointment_end > ?)
-            OR (appointment_start < ? AND appointment_end > ?)
-            OR (appointment_start >= ? AND appointment_end <= ?)
-        )
+        AND appointment_start < ? AND appointment_end > ?
         FOR UPDATE
     `;
     const [rows] = await connection.query(query, [
         providerId,
-        endFormatted, startFormatted,
-        endFormatted, startFormatted,
-        startFormatted, endFormatted
+        endFormatted, startFormatted
     ]);
     return rows;
 }
@@ -751,6 +750,7 @@ module.exports = {
     updateAppointmentComment,
     autoCompletePastAppointments,
     cancelUserScheduledAppointments,
+    completeAllExpiredAppointments,
     softDeleteAppointment,
     deleteAppointment,
     checkAppointmentConflicts,

@@ -21,6 +21,7 @@ const { findUserByEmail, updateUserNameAndPhone, createUserFromProviderBooking }
 const { sendAppointmentCancellation } = require('../../services/emailService');
 const { notifyWaitlistForCancelledSlot } = require('../../services/waitlistService');
 const { formatLocalDatetime } = require('../../utils/dateUtils');
+const bcrypt = require('bcryptjs');
 
 // Get appointments for a provider
 router.get('/', async (request, response) => {
@@ -148,7 +149,6 @@ router.post('/', async (request, response) => {
                 await updateUserNameAndPhone(userId, user_name.trim(), user_phone?.trim() || null);
             } else {
                 // Create new user with default password
-                const bcrypt = require('bcryptjs');
                 const defaultPasswordHash = await bcrypt.hash('ChangeMe123!', 10);
                 userId = await createUserFromProviderBooking(user_name.trim(), user_email.trim(), user_phone?.trim() || null, defaultPasswordHash);
             }

@@ -95,7 +95,7 @@ function generateAdminTokens({ email, adminId, name }) {
 function setAuthCookies(res, refreshToken, { maxAge = 7 * 24 * 60 * 60 * 1000 } = {}) {
     res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: false,
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         path: '/',
         maxAge

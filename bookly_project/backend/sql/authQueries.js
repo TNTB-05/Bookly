@@ -123,6 +123,58 @@ async function validateSalonCode(code) {
     return rows.length > 0 ? rows[0] : null;
 }
 
+// ==================== PROVIDER REGISTRATION (transactional — accept connection param) ====================
+
+async function checkProviderExistsByEmailOrPhone(connection, email, phone) {
+    const [rows] = await connection.query(
+        'SELECT id FROM providers WHERE email = ? OR phone = ?',
+        [email, phone]
+    );
+    return rows.length > 0;
+}
+
+async function checkSalonExistsByNameAndAddress(connection, name, address) {
+    const [rows] = await connection.query(
+        'SELECT id FROM salons WHERE name = ? AND address = ?',
+        [name, address]
+    );
+    return rows.length > 0;
+}
+
+async function checkSharecodeUnique(connection, sharecode) {
+    const [rows] = await connection.query(
+        'SELECT id FROM salons WHERE sharecode = ?',
+        [sharecode]
+    );
+    return rows.length === 0;
+}
+
+async function createSalon(connection, { name, address, description, sharecode, salonType, latitude, longitude }) {
+    const [result] = await connection.query(
+        `INSERT INTO salons (name, address, description, sharecode, status, type, latitude, longitude) 
+         VALUES (?, ?, ?, ?, 'open', ?, ?, ?)`,
+        [name, address, description, sharecode, salonType, latitude, longitude]
+    );
+    return result.insertId;
+}
+
+async function checkSalonExistsById(connection, salonId) {
+    const [rows] = await connection.query(
+        'SELECT id FROM salons WHERE id = ?',
+        [salonId]
+    );
+    return rows.length > 0;
+}
+
+async function createProvider(connection, { salonId, name, email, phone, role, isManager, passwordHash }) {
+    const [result] = await connection.query(
+        `INSERT INTO providers (salon_id, name, email, phone, status, role, isManager, password_hash) 
+         VALUES (?, ?, ?, ?, 'active', ?, ?, ?)`,
+        [salonId, name, email, phone, role, isManager, passwordHash]
+    );
+    return result.insertId;
+}
+
 // ==================== USER REACTIVATION ====================
 
 async function getUserForReactivation(userId) {
@@ -152,8 +204,6 @@ module.exports = {
     insertAdminRefreshToken,
     deleteRefreshTokenById,
     deleteRefreshToken,
-    deleteUserRefreshTokens,
-    deleteProviderRefreshTokens,
     // Admin table
     getAdminByEmail,
     getAdminById,
@@ -167,6 +217,13 @@ module.exports = {
     getProviderForLogin,
     // Registration helpers
     validateSalonCode,
+    // Registration (transactional)
+    checkProviderExistsByEmailOrPhone,
+    checkSalonExistsByNameAndAddress,
+    checkSharecodeUnique,
+    createSalon,
+    checkSalonExistsById,
+    createProvider,
     // Reactivation
     getUserForReactivation,
     reactivateUser

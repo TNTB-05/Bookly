@@ -5,9 +5,10 @@
 
 const express = require('express');
 const router = express.Router();
-const { getAdminSalons, getAdminSalonById, getSalonBannerUrl, getSalonLogoUrl, removeSalonBanner, removeSalonLogo, removeSalonDescription, updateSalonStatus } = require('../../sql/adminQueries');
+const { getAdminSalons, getAdminSalonById, getSalonBannerUrl, removeSalonBanner, updateSalonStatus } = require('../../sql/salonQueries');
+const { getSalonLogoUrl, removeSalonLogo, removeSalonDescription } = require('../../sql/adminQueries');
 const { logEvent } = require('../../services/logService');
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 
 router.get('/salons', async (req, res) => {
@@ -39,7 +40,7 @@ router.delete('/salons/:id/banner', async (req, res) => {
         const bannerUrl = await getSalonBannerUrl(salonId);
         if (bannerUrl) {
             const filePath = path.join(__dirname, '../..', bannerUrl);
-            try { fs.unlinkSync(filePath); } catch (e) { /* file may not exist */ }
+            try { await fs.unlink(filePath); } catch (e) { /* file may not exist */ }
         }
         await removeSalonBanner(salonId);
         await logEvent('WARN', 'SALON_BANNER_REMOVED', 'admin', req.user.userId, 'salon', parseInt(salonId), `Admin removed banner for salon #${salonId}`);
@@ -56,7 +57,7 @@ router.delete('/salons/:id/logo', async (req, res) => {
         const logoUrl = await getSalonLogoUrl(salonId);
         if (logoUrl) {
             const filePath = path.join(__dirname, '../..', logoUrl);
-            try { fs.unlinkSync(filePath); } catch (e) { /* file may not exist */ }
+            try { await fs.unlink(filePath); } catch (e) { /* file may not exist */ }
         }
         await removeSalonLogo(salonId);
         await logEvent('WARN', 'SALON_LOGO_REMOVED', 'admin', req.user.userId, 'salon', parseInt(salonId), `Admin removed logo for salon #${salonId}`);

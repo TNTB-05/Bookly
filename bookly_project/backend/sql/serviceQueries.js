@@ -107,7 +107,7 @@ async function getMinServiceDuration(providerId) {
 }
 
 async function getScheduledAppointmentCountForService(serviceId) {
-    const query = 'SELECT COUNT(*) as count FROM appointments WHERE service_id = ? AND status = "scheduled"';
+    const query = "SELECT COUNT(*) as count FROM appointments WHERE service_id = ? AND status = 'scheduled'";
     const [rows] = await pool.execute(query, [serviceId]);
     return rows[0].count;
 }

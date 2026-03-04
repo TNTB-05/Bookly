@@ -5,7 +5,9 @@
 
 const express = require('express');
 const router = express.Router();
-const { getAdminRatings, getRatingById, deactivateRating, getAdminAppointments, getAdminAppointmentById, softDeleteAppointment, getSystemLogs } = require('../../sql/adminQueries');
+const { getAdminRatings, getRatingById, deactivateRating } = require('../../sql/ratingQueries');
+const { getAdminAppointments, getAdminAppointmentById, softDeleteAppointment } = require('../../sql/appointmentQueries');
+const { getSystemLogs } = require('../../sql/adminQueries');
 const { logEvent } = require('../../services/logService');
 
 // ==================== Ratings ====================

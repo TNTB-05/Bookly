@@ -3,7 +3,7 @@
  * Consolidates duplicated middleware from calendarApi, timeBlocksApi, salonApi, and staffApi.
  */
 
-const pool = require('../sql/pool');
+const { getProviderStatus, getProviderManagerInfo } = require('../sql/providerQueries');
 
 /**
  * Verify provider exists and is active in database.
@@ -14,17 +14,16 @@ async function verifyProvider(req, res, next) {
     try {
         const providerId = req.user.userId;
 
-        const query = 'SELECT id, status FROM providers WHERE id = ?';
-        const [providers] = await pool.execute(query, [providerId]);
+        const provider = await getProviderStatus(providerId);
 
-        if (providers.length === 0) {
+        if (!provider) {
             return res.status(403).json({
                 success: false,
                 message: 'Szolgáltató nem található'
             });
         }
 
-        if (providers[0].status !== 'active') {
+        if (provider.status !== 'active') {
             return res.status(403).json({
                 success: false,
                 message: 'A fiók nincs aktív státuszban'
@@ -50,17 +49,14 @@ async function isManagerMiddleware(req, res, next) {
     try {
         const providerId = req.user.userId;
 
-        const query = 'SELECT isManager, salon_id FROM providers WHERE id = ?';
-        const [providers] = await pool.execute(query, [providerId]);
+        const provider = await getProviderManagerInfo(providerId);
 
-        if (providers.length === 0) {
+        if (!provider) {
             return res.status(404).json({
                 success: false,
                 message: 'Szolgáltató nem található'
             });
         }
-
-        const provider = providers[0];
 
         if (!provider.isManager) {
             return res.status(403).json({

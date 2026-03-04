@@ -9,7 +9,7 @@ router.post('/', AuthMiddleware, async (req, res) => {
         const userId = req.user.userId;
         const { provider_id, service_id, date_from, date_to, time_from, time_to } = req.body;
         if (!provider_id || !service_id || !date_from || !date_to)
-            return res.json({ success: false, message: 'Hiányzó adatok' });
+            return res.status(400).json({ success: false, message: 'Hiányzó adatok' });
         const result = await addToWaitlist(userId, provider_id, service_id, date_from, date_to, time_from, time_to);
         res.json({ success: true, data: { id: result.insertId } });
     } catch (error) {
