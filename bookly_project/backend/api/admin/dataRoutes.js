@@ -12,6 +12,7 @@ const { logEvent } = require('../../services/logService');
 
 // ==================== Ratings ====================
 
+// GET /admin/ratings — List all ratings for admin panel
 router.get('/ratings', async (request, response) => {
     try {
         const ratings = await getAdminRatings();
@@ -22,6 +23,7 @@ router.get('/ratings', async (request, response) => {
     }
 });
 
+// DELETE /admin/ratings/:id — Deactivate a rating by ID
 router.delete('/ratings/:id', async (request, response) => {
     try {
         const ratingId = request.params.id;
@@ -41,6 +43,7 @@ router.delete('/ratings/:id', async (request, response) => {
 
 // ==================== Appointments ====================
 
+// GET /admin/appointments — List all appointments for admin panel
 router.get('/appointments', async (request, response) => {
     try {
         const appointments = await getAdminAppointments();
@@ -51,6 +54,7 @@ router.get('/appointments', async (request, response) => {
     }
 });
 
+// DELETE /admin/appointments/:id — Soft-delete an appointment with reason
 router.delete('/appointments/:id', async (request, response) => {
     try {
         const appointmentId = request.params.id;
@@ -75,6 +79,7 @@ router.delete('/appointments/:id', async (request, response) => {
 
 // ==================== System Logs ====================
 
+// GET /admin/logs — Fetch system logs with optional level/action filters
 router.get('/logs', async (request, response) => {
     try {
         const { level, action, limit = 200 } = request.query;

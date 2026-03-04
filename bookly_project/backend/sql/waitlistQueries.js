@@ -7,6 +7,7 @@ const pool = require('./pool');
 
 // ==================== READ ====================
 
+// Find waitlist entries matching a freed time slot (for notifications)
 async function getWaitlistForFreedSlot(providerId, serviceId, freedSlotDate) {
     const query = `
         SELECT w.id, w.user_id, w.preferred_time_from, w.preferred_time_to,
@@ -23,6 +24,7 @@ async function getWaitlistForFreedSlot(providerId, serviceId, freedSlotDate) {
     return rows;
 }
 
+// Get all active waitlist entries for a user (with provider/service/salon info)
 async function getUserWaitlistEntries(userId) {
     const query = `
         SELECT w.id, w.provider_id, w.service_id, w.preferred_date_from, w.preferred_date_to,
@@ -42,6 +44,7 @@ async function getUserWaitlistEntries(userId) {
 
 // ==================== CREATE ====================
 
+// Add a user to the waitlist for a provider's service
 async function addToWaitlist(userId, providerId, serviceId, dateFrom, dateTo, timeFrom, timeTo) {
     const query = `
         INSERT INTO waitlist (user_id, provider_id, service_id, preferred_date_from, preferred_date_to, preferred_time_from, preferred_time_to)
@@ -53,6 +56,7 @@ async function addToWaitlist(userId, providerId, serviceId, dateFrom, dateTo, ti
 
 // ==================== UPDATE ====================
 
+// Cancel a user's waitlist entry
 async function cancelWaitlistEntry(waitlistId, userId) {
     const query = `
         UPDATE waitlist SET status = 'canceled' WHERE id = ? AND user_id = ?
@@ -61,6 +65,7 @@ async function cancelWaitlistEntry(waitlistId, userId) {
     return result;
 }
 
+// Mark a waitlist entry as booked (after successful booking)
 async function markWaitlistBooked(waitlistId) {
     const query = `
         UPDATE waitlist SET status = 'booked' WHERE id = ?

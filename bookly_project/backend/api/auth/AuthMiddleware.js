@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
-const { getAdminById, getProviderStatus, getUserStatus } = require('../../sql/authQueries.js');
+const { getAdminById, getUserStatus } = require('../../sql/authQueries.js');
+const { getProviderStatus } = require('../../sql/providerQueries.js');
 
+// Verify JWT token, check account status (active/banned/deleted) for all roles
 const AuthMiddleware = async (request, response, next) => {
     try {
         const authHeader = request.headers['authorization'];

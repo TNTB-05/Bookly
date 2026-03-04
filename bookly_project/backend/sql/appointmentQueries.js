@@ -7,6 +7,7 @@ const pool = require('./pool');
 
 // ==================== READ ====================
 
+// Get all appointments for a user with provider, service, salon, and rating details
 async function getUserAppointments(userId) {
     const query = `
         SELECT 
@@ -43,6 +44,7 @@ async function getUserAppointments(userId) {
     return rows;
 }
 
+// Get a single appointment by ID
 async function getAppointmentById(appointmentId) {
     const query = `
         SELECT 
@@ -56,6 +58,7 @@ async function getAppointmentById(appointmentId) {
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Get all scheduled appointments for a provider on a specific date
 async function getProviderAppointmentsForDate(providerId, date) {
     const query = `
         SELECT 
@@ -70,6 +73,7 @@ async function getProviderAppointmentsForDate(providerId, date) {
     return rows;
 }
 
+// Get provider appointments with optional date range filter (includes guest info)
 async function getProviderAppointments(providerId, startDate, endDate) {
     let query = `
         SELECT 
@@ -108,6 +112,7 @@ async function getProviderAppointments(providerId, startDate, endDate) {
     return rows;
 }
 
+// Get a specific appointment belonging to a provider with user/guest details
 async function getProviderAppointmentById(appointmentId, providerId) {
     const query = `
         SELECT 
@@ -137,6 +142,7 @@ async function getProviderAppointmentById(appointmentId, providerId) {
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Get appointment details needed for provider-side cancellation emails
 async function getAppointmentWithDetailsForCancel(appointmentId) {
     const query = `
         SELECT
@@ -157,6 +163,7 @@ async function getAppointmentWithDetailsForCancel(appointmentId) {
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Get appointment details needed for user-side cancellation emails
 async function getAppointmentDetailsForUserCancel(appointmentId) {
     const query = `
         SELECT
@@ -179,6 +186,7 @@ async function getAppointmentDetailsForUserCancel(appointmentId) {
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Get appointment details for new-appointment confirmation emails
 async function getNewAppointmentDetails(appointmentId) {
     const query = `
         SELECT
@@ -200,12 +208,14 @@ async function getNewAppointmentDetails(appointmentId) {
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Get appointment's provider_id to verify ownership
 async function getAppointmentOwnership(appointmentId) {
     const query = 'SELECT id, provider_id FROM appointments WHERE id = ?';
     const [rows] = await pool.execute(query, [appointmentId]);
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Get appointment time slots for a provider within a date range (for availability calculation)
 async function getAppointmentsBatchForRange(providerId, startDate, endDate) {
     const query = `
         SELECT appointment_start, appointment_end
@@ -219,6 +229,7 @@ async function getAppointmentsBatchForRange(providerId, startDate, endDate) {
     return rows;
 }
 
+// Check if an appointment belongs to a specific salon
 async function verifyAppointmentBelongsToSalon(appointmentId, salonId) {
     const query = `
         SELECT a.id FROM appointments a
@@ -229,6 +240,7 @@ async function verifyAppointmentBelongsToSalon(appointmentId, salonId) {
     return rows.length > 0;
 }
 
+// Get a staff member's appointments for a specific date (calendar view)
 async function getStaffCalendarAppointments(staffId, date) {
     const query = `
         SELECT
@@ -259,6 +271,7 @@ async function getStaffCalendarAppointments(staffId, date) {
     return rows;
 }
 
+// Get only the status of an appointment by ID
 async function getAppointmentStatusById(appointmentId) {
     const query = 'SELECT id, status FROM appointments WHERE id = ?';
     const [rows] = await pool.execute(query, [appointmentId]);
@@ -267,6 +280,7 @@ async function getAppointmentStatusById(appointmentId) {
 
 // ==================== CREATE ====================
 
+// Create a new appointment (supports both registered users and guests)
 async function createAppointment({ userId, providerId, serviceId, appointmentStart, appointmentEnd, comment, price, guestName, guestEmail, guestPhone }) {
     const query = `
         INSERT INTO appointments (
@@ -283,18 +297,21 @@ async function createAppointment({ userId, providerId, serviceId, appointmentSta
 
 // ==================== UPDATE ====================
 
+// Update the status of an appointment (scheduled, completed, canceled)
 async function updateAppointmentStatus(appointmentId, status) {
     const query = 'UPDATE appointments SET status = ? WHERE id = ?';
     const [result] = await pool.execute(query, [status, appointmentId]);
     return result;
 }
 
+// Update the comment/note on an appointment
 async function updateAppointmentComment(appointmentId, comment) {
     const query = 'UPDATE appointments SET comment = ? WHERE id = ?';
     const [result] = await pool.execute(query, [comment, appointmentId]);
     return result;
 }
 
+// Auto-complete all past scheduled appointments for a user
 async function autoCompletePastAppointments(userId) {
     const query = `
         UPDATE appointments SET status = 'completed'
@@ -304,6 +321,7 @@ async function autoCompletePastAppointments(userId) {
     return result;
 }
 
+// Cancel all scheduled appointments for a user (used on account deactivation)
 async function cancelUserScheduledAppointments(userId) {
     const query = `
         UPDATE appointments 
@@ -314,6 +332,7 @@ async function cancelUserScheduledAppointments(userId) {
     return result;
 }
 
+// Complete all expired scheduled appointments system-wide (cron job)
 async function completeAllExpiredAppointments() {
     const query = `
         UPDATE appointments
@@ -325,6 +344,7 @@ async function completeAllExpiredAppointments() {
     return result;
 }
 
+// Soft-delete an appointment with reason and admin ID (admin action)
 async function softDeleteAppointment(appointmentId, reason, adminId) {
     const query = 'UPDATE appointments SET status = ?, deleted_reason = ?, deleted_at = NOW(), deleted_by = ? WHERE id = ?';
     const [result] = await pool.execute(query, ['deleted', reason, adminId, appointmentId]);
@@ -333,6 +353,7 @@ async function softDeleteAppointment(appointmentId, reason, adminId) {
 
 // ==================== DELETE ====================
 
+// Permanently delete an appointment record
 async function deleteAppointment(appointmentId) {
     const query = 'DELETE FROM appointments WHERE id = ?';
     const [result] = await pool.execute(query, [appointmentId]);
@@ -341,6 +362,7 @@ async function deleteAppointment(appointmentId) {
 
 // ==================== CONFLICT CHECKS ====================
 
+// Check for conflicting scheduled appointments with details (user name, service)
 async function checkAppointmentConflicts(providerId, startDatetime, endDatetime) {
     const query = `
         SELECT a.id, a.appointment_start, a.appointment_end, 
@@ -358,6 +380,7 @@ async function checkAppointmentConflicts(providerId, startDatetime, endDatetime)
     return rows;
 }
 
+// Check for conflicting scheduled appointments (returns IDs only, lightweight)
 async function checkProviderAppointmentConflicts(providerId, startFormatted, endFormatted) {
     const query = `
         SELECT id FROM appointments 
@@ -374,6 +397,7 @@ async function checkProviderAppointmentConflicts(providerId, startFormatted, end
 
 // ==================== DASHBOARD STATISTICS ====================
 
+// Get provider dashboard stats (today's appointments, weekly revenue, new customers, upcoming)
 async function getDashboardStatistics(providerId) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -445,6 +469,7 @@ async function getDashboardStatistics(providerId) {
 
 // ==================== CUSTOMER MANAGEMENT (from calendarApi) ====================
 
+// Get customer overview stats (registered, guests, returning, top services)
 async function getCustomerStats(providerId) {
     const selectRegisteredQuery = `
         SELECT COUNT(DISTINCT user_id) as count FROM appointments
@@ -496,6 +521,7 @@ async function getCustomerStats(providerId) {
     };
 }
 
+// Get list of registered customers with booking stats and optional search
 async function getRegisteredCustomers(providerId, search) {
     let query = `
         SELECT u.id, u.name, u.email, u.phone, u.profile_picture_url,
@@ -519,6 +545,7 @@ async function getRegisteredCustomers(providerId, search) {
     return rows;
 }
 
+// Get list of guest customers with booking stats and optional search
 async function getGuestCustomers(providerId, search) {
     let query = `
         SELECT NULL as id, MAX(a.guest_name) as name, a.guest_email as email,
@@ -543,6 +570,7 @@ async function getGuestCustomers(providerId, search) {
     return rows;
 }
 
+// Get detailed info of a registered customer (profile, appointments, rating)
 async function getRegisteredCustomerDetail(providerId, userId) {
     const selectUserQuery = `
         SELECT id, name, email, phone, profile_picture_url, created_at FROM users WHERE id = ?
@@ -571,6 +599,7 @@ async function getRegisteredCustomerDetail(providerId, userId) {
     return { user: users[0], appointments, rating: ratings.length > 0 ? ratings[0] : null };
 }
 
+// Get appointment history for a guest customer by email
 async function getGuestCustomerDetail(providerId, email) {
     const query = `
         SELECT a.id, a.appointment_start, a.appointment_end, a.status, a.price,
@@ -585,6 +614,7 @@ async function getGuestCustomerDetail(providerId, email) {
     return rows;
 }
 
+// Get registered customer's contact info for reminder emails
 async function getReminderCustomerInfo(providerId, userId) {
     const selectSalonQuery = `
         SELECT s.name FROM salons s JOIN providers p ON p.salon_id = s.id WHERE p.id = ?
@@ -603,6 +633,7 @@ async function getReminderCustomerInfo(providerId, userId) {
     return { salonName: salonResult[0].name, customerEmail: users[0].email, customerName: users[0].name };
 }
 
+// Get guest customer's contact info for reminder emails
 async function getReminderGuestInfo(providerId, guestEmail) {
     const selectSalonQuery = `
         SELECT s.name FROM salons s JOIN providers p ON p.salon_id = s.id WHERE p.id = ?
@@ -622,6 +653,7 @@ async function getReminderGuestInfo(providerId, guestEmail) {
 
 // ==================== ADMIN QUERIES ====================
 
+// Get all appointments for admin panel with full details
 async function getAdminAppointments() {
     const query = `
         SELECT a.id, a.appointment_start, a.appointment_end, a.status, a.price, a.comment,
@@ -640,6 +672,7 @@ async function getAdminAppointments() {
     return rows;
 }
 
+// Get a single appointment's full record for admin view
 async function getAdminAppointmentById(appointmentId) {
     const query = 'SELECT * FROM appointments WHERE id = ?';
     const [rows] = await pool.execute(query, [appointmentId]);
@@ -648,6 +681,7 @@ async function getAdminAppointmentById(appointmentId) {
 
 // ==================== USER VISITED SALONS ====================
 
+// Get salons a user has visited with last visit date and rating info
 async function getVisitedSalons(userId) {
     const query = `
         SELECT 
@@ -683,6 +717,7 @@ async function getVisitedSalons(userId) {
 
 // ==================== TRANSACTION-AWARE (user booking flow) ====================
 
+// Get user's scheduled appointments on a date within a transaction (FOR UPDATE lock)
 async function getUserConflictingAppointments(connection, userId, date) {
     const query = `
         SELECT a.id, a.appointment_start, a.appointment_end,
@@ -700,6 +735,7 @@ async function getUserConflictingAppointments(connection, userId, date) {
     return rows;
 }
 
+// Check provider conflicts within a transaction (FOR UPDATE lock)
 async function checkProviderConflictsForUpdate(connection, providerId, startFormatted, endFormatted) {
     const query = `
         SELECT id FROM appointments
@@ -715,6 +751,7 @@ async function checkProviderConflictsForUpdate(connection, providerId, startForm
     return rows;
 }
 
+// Create an appointment within a transaction (user booking flow)
 async function createAppointmentTx(connection, { userId, providerId, serviceId, appointmentStart, appointmentEnd, comment, price }) {
     const query = `
         INSERT INTO appointments (

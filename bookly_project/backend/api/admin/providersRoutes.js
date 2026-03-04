@@ -12,6 +12,7 @@ const { logEvent } = require('../../services/logService');
 const fs = require('fs').promises;
 const path = require('path');
 
+// GET /admin/providers — List all providers for admin panel
 router.get('/providers', async (request, response) => {
     try {
         const providers = await getAdminProviders();
@@ -22,6 +23,7 @@ router.get('/providers', async (request, response) => {
     }
 });
 
+// GET /admin/providers/:id — Get detailed provider info by ID
 router.get('/providers/:id', async (request, response) => {
     try {
         const providerId = request.params.id;
@@ -35,6 +37,7 @@ router.get('/providers/:id', async (request, response) => {
     }
 });
 
+// POST /admin/providers/:id/deactivate — Deactivate a provider account
 router.post('/providers/:id/deactivate', async (request, response) => {
     try {
         const providerId = request.params.id;
@@ -47,6 +50,7 @@ router.post('/providers/:id/deactivate', async (request, response) => {
     }
 });
 
+// POST /admin/providers/:id/activate — Re-activate a provider account
 router.post('/providers/:id/activate', async (request, response) => {
     try {
         const providerId = request.params.id;
@@ -59,6 +63,7 @@ router.post('/providers/:id/activate', async (request, response) => {
     }
 });
 
+// DELETE /admin/providers/:id/picture — Remove a provider's profile picture
 router.delete('/providers/:id/picture', async (request, response) => {
     try {
         const providerId = request.params.id;
@@ -78,6 +83,7 @@ router.delete('/providers/:id/picture', async (request, response) => {
     }
 });
 
+// POST /admin/providers/:id/ban — Ban a provider
 router.post('/providers/:id/ban', async (request, response) => {
     try {
         const providerId = request.params.id;
@@ -90,6 +96,7 @@ router.post('/providers/:id/ban', async (request, response) => {
     }
 });
 
+// POST /admin/providers/:id/unban — Unban a provider
 router.post('/providers/:id/unban', async (request, response) => {
     try {
         const providerId = request.params.id;

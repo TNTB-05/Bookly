@@ -3,14 +3,14 @@ const router = express.Router();
 const database = require('../sql/database.js');
 
 //!Endpoints:
-//?GET /api/test
+// GET /api/test — Health-check endpoint
 router.get('/test', (request, response) => {
     response.status(200).json({
         message: 'Ez a végpont működik.'
     });
 });
 
-//?GET /api/testsql
+// GET /api/testsql — Test database connectivity
 router.get('/testsql', async (request, response) => {
     try {
         const selectall = await database.selectall();

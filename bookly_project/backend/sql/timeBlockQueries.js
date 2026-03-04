@@ -7,6 +7,7 @@ const pool = require('./pool');
 
 // ==================== READ ====================
 
+// Get time blocks for a provider within a date range (including all recurring)
 async function getProviderTimeBlocks(providerId, startDate, endDate) {
     const query = `
         SELECT id, provider_id, start_datetime, end_datetime, 
@@ -24,6 +25,7 @@ async function getProviderTimeBlocks(providerId, startDate, endDate) {
     return rows;
 }
 
+// Get a single time block by ID
 async function getTimeBlockById(blockId) {
     const query = `
         SELECT id, provider_id, start_datetime, end_datetime, 
@@ -36,6 +38,7 @@ async function getTimeBlockById(blockId) {
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Get all active/future time blocks for a provider (raw, not expanded)
 async function getRawTimeBlocks(providerId) {
     const query = `
         SELECT id, provider_id, start_datetime, end_datetime, 
@@ -53,6 +56,7 @@ async function getRawTimeBlocks(providerId) {
     return rows;
 }
 
+// Find non-recurring time blocks that overlap with a given datetime range
 async function getOverlappingTimeBlocks(providerId, startDatetime, endDatetime, excludeId = null) {
     let query = `
         SELECT id, start_datetime, end_datetime, is_recurring, 
@@ -158,11 +162,13 @@ function expandTimeBlocks(blocks, startDate, endDate) {
 
 // ==================== COMPOSITE READS ====================
 
+// Get expanded (individual occurrences) time blocks for a single date
 async function getExpandedTimeBlocksForDate(providerId, date) {
     const blocks = await getProviderTimeBlocks(providerId, date, date);
     return expandTimeBlocks(blocks, date, date);
 }
 
+// Get expanded time blocks for a date range
 async function getExpandedTimeBlocksForRange(providerId, startDate, endDate) {
     const blocks = await getProviderTimeBlocks(providerId, startDate, endDate);
     return expandTimeBlocks(blocks, startDate, endDate);
@@ -170,6 +176,7 @@ async function getExpandedTimeBlocksForRange(providerId, startDate, endDate) {
 
 // ==================== CREATE ====================
 
+// Create a time block, auto-merging with overlapping non-recurring blocks
 async function createTimeBlock(providerId, blockData) {
     const { start_datetime, end_datetime, is_recurring, recurrence_pattern, recurrence_days, recurrence_end_date, notes } = blockData;
 
@@ -223,6 +230,7 @@ async function createTimeBlock(providerId, blockData) {
 
 // ==================== UPDATE ====================
 
+// Update all fields of an existing time block
 async function updateTimeBlock(blockId, providerId, updateData) {
     const { start_datetime, end_datetime, is_recurring, recurrence_pattern, recurrence_days, recurrence_end_date, notes } = updateData;
 
@@ -243,6 +251,7 @@ async function updateTimeBlock(blockId, providerId, updateData) {
     return result;
 }
 
+// End a recurring block at a specific date (instead of deleting)
 async function endRecurringBlockAt(blockId, providerId, endDate) {
     const query = `
         UPDATE provider_time_blocks SET recurrence_end_date = ? WHERE id = ? AND provider_id = ?
@@ -253,6 +262,7 @@ async function endRecurringBlockAt(blockId, providerId, endDate) {
 
 // ==================== DELETE ====================
 
+// Delete a time block by ID and provider
 async function deleteTimeBlock(blockId, providerId) {
     const query = `
         DELETE FROM provider_time_blocks WHERE id = ? AND provider_id = ?

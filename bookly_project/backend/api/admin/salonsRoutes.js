@@ -11,6 +11,7 @@ const { logEvent } = require('../../services/logService');
 const fs = require('fs').promises;
 const path = require('path');
 
+// GET /admin/salons — List all salons for admin panel
 router.get('/salons', async (request, response) => {
     try {
         const salons = await getAdminSalons();
@@ -21,6 +22,7 @@ router.get('/salons', async (request, response) => {
     }
 });
 
+// GET /admin/salons/:id — Get detailed salon info by ID
 router.get('/salons/:id', async (request, response) => {
     try {
         const salonId = request.params.id;
@@ -34,6 +36,7 @@ router.get('/salons/:id', async (request, response) => {
     }
 });
 
+// DELETE /admin/salons/:id/banner — Remove a salon's banner image
 router.delete('/salons/:id/banner', async (request, response) => {
     try {
         const salonId = request.params.id;
@@ -51,6 +54,7 @@ router.delete('/salons/:id/banner', async (request, response) => {
     }
 });
 
+// DELETE /admin/salons/:id/logo — Remove a salon's logo image
 router.delete('/salons/:id/logo', async (request, response) => {
     try {
         const salonId = request.params.id;
@@ -68,6 +72,7 @@ router.delete('/salons/:id/logo', async (request, response) => {
     }
 });
 
+// DELETE /admin/salons/:id/description — Clear a salon's description text
 router.delete('/salons/:id/description', async (request, response) => {
     try {
         const salonId = request.params.id;
@@ -80,6 +85,7 @@ router.delete('/salons/:id/description', async (request, response) => {
     }
 });
 
+// PUT /admin/salons/:id/status — Update a salon's status (open/closed/renovation)
 router.put('/salons/:id/status', async (request, response) => {
     try {
         const salonId = request.params.id;

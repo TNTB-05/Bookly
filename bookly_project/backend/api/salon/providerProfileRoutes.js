@@ -65,7 +65,7 @@ router.put('/me', AuthMiddleware, async (request, response) => {
 
 // POST /me/picture - Upload provider's own profile picture
 router.post('/me/picture', AuthMiddleware, (request, response, next) => {
-    upload.single('profilePicture')(req, res, (err) => {
+    upload.single('profilePicture')(request, response, (err) => {
         if (err) {
             if (err.code === 'LIMIT_FILE_SIZE') {
                 return response.status(400).json({ success: false, message: 'A fájl mérete nem haladhatja meg az 5MB-ot' });

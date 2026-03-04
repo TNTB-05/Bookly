@@ -16,6 +16,12 @@ const {
 module.exports = function (io) {
     const router = express.Router();
 
+    // Check if the requesting user is a participant of the conversation
+    function verifyParticipant(role, userId, conversation) {
+        return (role === 'provider' && conversation.provider_id === userId) ||
+               (role !== 'provider' && conversation.user_id === userId);
+    }
+
     router.use(AuthMiddleware);
 
     // GET /api/messages/conversations — list conversations for the logged-in user/provider
@@ -48,11 +54,7 @@ module.exports = function (io) {
                 return response.status(404).json({ success: false, message: 'A beszélgetés nem található' });
             }
 
-            const isParticipant =
-                (role === 'provider' && conversation.provider_id === userId) ||
-                (role !== 'provider' && conversation.user_id === userId);
-
-            if (!isParticipant) {
+            if (!verifyParticipant(role, userId, conversation)) {
                 return response.status(403).json({ success: false, message: 'Nincs hozzáférés ehhez a beszélgetéshez' });
             }
 
@@ -114,11 +116,7 @@ module.exports = function (io) {
                 return response.status(404).json({ success: false, message: 'A beszélgetés nem található' });
             }
 
-            const isParticipant =
-                (role === 'provider' && conversation.provider_id === userId) ||
-                (role !== 'provider' && conversation.user_id === userId);
-
-            if (!isParticipant) {
+            if (!verifyParticipant(role, userId, conversation)) {
                 return response.status(403).json({ success: false, message: 'Nincs hozzáférés ehhez a beszélgetéshez' });
             }
 
@@ -152,11 +150,7 @@ module.exports = function (io) {
                 return response.status(404).json({ success: false, message: 'A beszélgetés nem található' });
             }
 
-            const isParticipant =
-                (role === 'provider' && conversation.provider_id === userId) ||
-                (role !== 'provider' && conversation.user_id === userId);
-
-            if (!isParticipant) {
+            if (!verifyParticipant(role, userId, conversation)) {
                 return response.status(403).json({ success: false, message: 'Nincs hozzáférés ehhez a beszélgetéshez' });
             }
 
@@ -179,11 +173,7 @@ module.exports = function (io) {
                 return response.status(404).json({ success: false, message: 'A beszélgetés nem található' });
             }
 
-            const isParticipant =
-                (role === 'provider' && conversation.provider_id === userId) ||
-                (role !== 'provider' && conversation.user_id === userId);
-
-            if (!isParticipant) {
+            if (!verifyParticipant(role, userId, conversation)) {
                 return response.status(403).json({ success: false, message: 'Nincs hozzáférés ehhez a beszélgetéshez' });
             }
 

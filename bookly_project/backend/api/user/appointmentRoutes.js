@@ -22,6 +22,7 @@ const { formatLocalDatetime } = require('../../utils/dateUtils');
 // Travel time multiplier (minutes per km) — single config point
 const TRAVEL_TIME_MULTIPLIER_MIN_PER_KM = 2;
 
+// Calculate travel buffer in minutes based on distance (min 5 min)
 function calculateTravelBuffer(distanceKm) {
     return Math.max(5, Math.round(distanceKm * TRAVEL_TIME_MULTIPLIER_MIN_PER_KM));
 }

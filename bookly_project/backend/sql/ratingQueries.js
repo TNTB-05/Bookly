@@ -7,12 +7,14 @@ const pool = require('./pool');
 
 // ==================== READ ====================
 
+// Get a rating by its associated appointment ID
 async function getRatingByAppointment(appointmentId) {
     const query = 'SELECT * FROM ratings WHERE appointment_id = ?';
     const [rows] = await pool.execute(query, [appointmentId]);
     return rows[0] || null;
 }
 
+// Get all ratings for admin listing with user, salon, and provider names
 async function getAdminRatings() {
     const query = `
         SELECT r.id, r.user_id, r.appointment_id, r.salon_id, r.provider_id,
@@ -31,6 +33,7 @@ async function getAdminRatings() {
     return rows;
 }
 
+// Get a single rating by its ID
 async function getRatingById(ratingId) {
     const query = 'SELECT * FROM ratings WHERE id = ?';
     const [rows] = await pool.execute(query, [ratingId]);
@@ -39,6 +42,7 @@ async function getRatingById(ratingId) {
 
 // ==================== CREATE ====================
 
+// Create or update a rating (upsert on duplicate appointment)
 async function createRating(userId, appointmentId, salonId, providerId, salonRating, providerRating, salonComment, providerComment) {
     const query = `
         INSERT INTO ratings (user_id, appointment_id, salon_id, provider_id, salon_rating, provider_rating, salon_comment, provider_comment)
@@ -55,6 +59,7 @@ async function createRating(userId, appointmentId, salonId, providerId, salonRat
 
 // ==================== UPDATE ====================
 
+// Deactivate (soft-delete) a rating
 async function deactivateRating(ratingId) {
     const query = 'UPDATE ratings SET active = FALSE WHERE id = ?';
     const [result] = await pool.execute(query, [ratingId]);

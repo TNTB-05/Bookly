@@ -8,6 +8,7 @@ const pool = require('./pool');
 
 // ==================== CONVERSATIONS ====================
 
+// Get all conversations for a provider with user info
 async function getConversationsForProvider(providerId) {
     const query = `
         SELECT conversations.id,
@@ -25,6 +26,7 @@ async function getConversationsForProvider(providerId) {
     return rows;
 }
 
+// Get all conversations for a user with provider/salon info
 async function getConversationsForUser(userId) {
     const query = `
         SELECT conversations.id,
@@ -44,29 +46,34 @@ async function getConversationsForUser(userId) {
     return rows;
 }
 
+// Get a conversation by its ID
 async function getConversationById(conversationId) {
     const query = `SELECT * FROM conversations WHERE id = ?`;
     const [rows] = await pool.execute(query, [conversationId]);
     return rows[0] || null;
 }
 
+// Find an existing conversation between a provider and user
 async function getConversationByParticipants(providerId, userId) {
     const query = `SELECT id FROM conversations WHERE provider_id = ? AND user_id = ?`;
     const [rows] = await pool.execute(query, [providerId, userId]);
     return rows[0] || null;
 }
 
+// Create a new conversation between a provider and user
 async function createConversation(providerId, userId) {
     const query = `INSERT INTO conversations (provider_id, user_id) VALUES (?, ?)`;
     const [result] = await pool.execute(query, [providerId, userId]);
     return result.insertId;
 }
 
+// Delete a conversation by its ID
 async function deleteConversation(conversationId) {
     const query = `DELETE FROM conversations WHERE id = ?`;
     await pool.execute(query, [conversationId]);
 }
 
+// Mark a conversation as read for a specific role (provider/user)
 async function markConversationRead(conversationId, role) {
     const query = `
         UPDATE conversations
@@ -79,6 +86,7 @@ async function markConversationRead(conversationId, role) {
 
 // ==================== MESSAGES ====================
 
+// Get messages for a conversation with sender names (limited, ASC order)
 async function getMessages(conversationId, limit = 50) {
     const safeLimit = Math.max(1, Math.min(parseInt(limit, 10) || 50, 200));
     const query = `
@@ -96,6 +104,7 @@ async function getMessages(conversationId, limit = 50) {
     return rows;
 }
 
+// Insert a message and update conversation's last_message/unread counts
 async function insertMessage(conversationId, senderRole, senderId, content, appointmentId) {
     const insertQuery = `
         INSERT INTO messages (conversation_id, sender_role, sender_id, content, appointment_id) VALUES (?, ?, ?, ?, ?)
@@ -122,6 +131,7 @@ async function insertMessage(conversationId, senderRole, senderId, content, appo
 
 // ==================== BOOKING CHECK ====================
 
+// Check if a user has any appointment with a provider (messaging prerequisite)
 async function checkBookingExists(userId, providerId) {
     const query = `SELECT id FROM appointments WHERE user_id = ? AND provider_id = ? LIMIT 1`;
     const [rows] = await pool.execute(query, [userId, providerId]);

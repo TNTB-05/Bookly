@@ -13,12 +13,12 @@ const { sendWelcomeEmail } = require('../../services/emailService.js');
 
 //!Endpoints:
 
-// Helper function to generate unique salon share code
+// Generate a random 6-character hex code for salon sharing
 function generateShareCode() {
     return crypto.randomBytes(3).toString('hex').toUpperCase();
 }
 
-// Validate salon code endpoint
+// POST /api/provider/auth/validate-salon-code — validate a salon sharecode
 router.post('/validate-salon-code', async (request, response) => {
     const { code } = request.body;
 
@@ -53,6 +53,7 @@ router.post('/validate-salon-code', async (request, response) => {
     }
 });
 
+// POST /api/provider/auth/register — register provider (create or join salon, transactional)
 router.post('/register', async (request, response) => {
     const { name, email, password, phone, registrationType, salonId, salon } = request.body;
 
@@ -225,6 +226,7 @@ router.post('/register', async (request, response) => {
     }
 });
 
+// POST /api/provider/auth/login — authenticate provider and return JWT tokens
 router.post('/login', async (request, response) => {
     const { email, password } = request.body;
 

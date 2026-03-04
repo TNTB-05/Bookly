@@ -8,6 +8,7 @@ const router = express.Router();
 const { getDashboardStatistics, getMonthlyRevenue } = require('../../sql/adminQueries');
 const { getTopRatedSalons } = require('../../sql/salonQueries');
 
+// GET /admin/statistics — Fetch aggregated dashboard statistics
 router.get('/statistics', async (request, response) => {
     try {
         const {

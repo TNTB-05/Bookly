@@ -31,7 +31,22 @@ function formatLocalDate(date) {
     return `${y}-${m}-${d}`;
 }
 
+/**
+ * Format an ISO datetime string to Hungarian locale display.
+ * E.g. "2026. februar 23. 14:30"
+ * @param {string} isoString
+ * @returns {string}
+ */
+function formatHungarianDateTime(isoString) {
+    const date = new Date(isoString);
+    return date.toLocaleString('hu-HU', {
+        year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
+}
+
 module.exports = {
     formatLocalDatetime,
-    formatLocalDate
+    formatLocalDate,
+    formatHungarianDateTime
 };

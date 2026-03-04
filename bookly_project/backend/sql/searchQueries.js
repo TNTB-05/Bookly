@@ -7,6 +7,7 @@ const pool = require('./pool');
 
 // ==================== READ ====================
 
+// Search salon suggestions by name (autocomplete, max 5)
 async function getSalonSuggestions(searchTerm) {
     const query = `
         SELECT DISTINCT id, name, address, type
@@ -19,6 +20,7 @@ async function getSalonSuggestions(searchTerm) {
     return rows;
 }
 
+// Search salon type suggestions (autocomplete, max 3)
 async function getTypeSuggestions(searchTerm) {
     const query = `
         SELECT DISTINCT type
@@ -33,6 +35,7 @@ async function getTypeSuggestions(searchTerm) {
     return rows.map(row => row.type);
 }
 
+// Search salons by dynamic WHERE conditions with ratings
 async function searchSalonsByName(whereConditions, queryParams) {
     const query = `
         SELECT s.id, s.name, s.address, s.type, s.description, s.banner_color, s.logo_url, s.banner_image_url,
@@ -49,6 +52,7 @@ async function searchSalonsByName(whereConditions, queryParams) {
     return rows;
 }
 
+// Get recent active reviews with comments for the landing page
 async function getRecentReviews(limit) {
     const query = `
         SELECT 
@@ -73,6 +77,7 @@ async function getRecentReviews(limit) {
     return rows;
 }
 
+// Get personalized salon recommendations using collaborative filtering and distance
 async function getRecommendedSalons(userId, lat, lng, limit = 8) {
     const query = `
         WITH

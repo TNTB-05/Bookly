@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { getUserByEmail, addUser } = require('../../sql/userQueries.js');
+const { getUserByEmail, addUser, reactivateUser } = require('../../sql/userQueries.js');
 const {
     findRefreshToken,
     insertUserRefreshToken,
@@ -12,12 +12,11 @@ const {
     getAdminByEmail,
     getAdminById,
     getUserStatus,
-    getProviderStatus,
     updateUserLastLogin,
     updateAdminLastLogin,
-    getUserForReactivation,
-    reactivateUser
+    getUserForReactivation
 } = require('../../sql/authQueries.js');
+const { getProviderStatus } = require('../../sql/providerQueries.js');
 const { generateCustomerTokens, generateAdminTokens, setAuthCookies } = require('../../utils/authUtils.js');
 const { logEvent } = require('../../services/logService.js');
 const { sendWelcomeEmail } = require('../../services/emailService.js');
@@ -25,6 +24,7 @@ const { sendWelcomeEmail } = require('../../services/emailService.js');
 
 //!Endpoints:
 
+// POST /api/auth/register — register a new customer account
 router.post('/register', async (request, response) => {
     const { name, email, password } = request.body;
 
@@ -72,6 +72,7 @@ router.post('/register', async (request, response) => {
     }
 });
 
+// POST /api/auth/login — authenticate customer and return JWT tokens
 router.post('/login', async (request, response) => {
     const { email, password } = request.body;
 
@@ -172,7 +173,7 @@ router.post('/login', async (request, response) => {
     }
 });
 
-// Refresh token endpoint (works for both customers and providers)
+// POST /api/auth/refresh — refresh access token using HTTP-only cookie
 router.post('/refresh', async (request, response) => {
     const refreshToken = request.cookies.refreshToken;
 
@@ -314,7 +315,7 @@ router.post('/refresh', async (request, response) => {
     }
 });
 
-// Logout endpoint (works for both customers and providers)
+// POST /api/auth/logout — clear refresh token cookie and delete from DB
 router.post('/logout', async (request, response) => {
     const refreshToken = request.cookies.refreshToken;
     
@@ -340,7 +341,7 @@ router.post('/logout', async (request, response) => {
     });
 });
 
-// Admin login endpoint - authenticates against separate admins table
+// POST /api/auth/admin/login — authenticate admin with separate credentials
 router.post('/admin/login', async (request, response) => {
     const { email, password } = request.body;
 
@@ -400,7 +401,7 @@ router.post('/admin/login', async (request, response) => {
     }
 });
 
-// Reactivate a self-deleted user account
+// POST /api/auth/reactivate — reactivate a self-deleted user account
 router.post('/reactivate', async (request, response) => {
     const { reactivationToken, name, phone, address } = request.body;
 

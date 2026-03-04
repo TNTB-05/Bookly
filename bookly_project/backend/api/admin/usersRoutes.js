@@ -11,6 +11,7 @@ const { logEvent } = require('../../services/logService');
 const fs = require('fs').promises;
 const path = require('path');
 
+// GET /admin/users — List all users for admin panel
 router.get('/users', async (request, response) => {
     try {
         const users = await getAdminUsers();
@@ -21,6 +22,7 @@ router.get('/users', async (request, response) => {
     }
 });
 
+// GET /admin/users/:id — Get detailed user info by ID
 router.get('/users/:id', async (request, response) => {
     try {
         const userId = request.params.id;
@@ -34,6 +36,7 @@ router.get('/users/:id', async (request, response) => {
     }
 });
 
+// POST /admin/users/:id/ban — Ban a user account
 router.post('/users/:id/ban', async (request, response) => {
     try {
         const userId = request.params.id;
@@ -46,6 +49,7 @@ router.post('/users/:id/ban', async (request, response) => {
     }
 });
 
+// POST /admin/users/:id/unban — Unban a user account
 router.post('/users/:id/unban', async (request, response) => {
     try {
         const userId = request.params.id;
@@ -58,6 +62,7 @@ router.post('/users/:id/unban', async (request, response) => {
     }
 });
 
+// POST /admin/users/:id/gdpr-delete — Anonymize user data (GDPR deletion)
 router.post('/users/:id/gdpr-delete', async (request, response) => {
     try {
         const userId = request.params.id;
@@ -79,6 +84,7 @@ router.post('/users/:id/gdpr-delete', async (request, response) => {
     }
 });
 
+// DELETE /admin/users/:id/picture — Remove a user's profile picture
 router.delete('/users/:id/picture', async (request, response) => {
     try {
         const userId = request.params.id;

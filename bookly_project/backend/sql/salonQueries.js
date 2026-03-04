@@ -7,6 +7,7 @@ const pool = require('./pool');
 
 // ==================== READ ====================
 
+// Get all non-closed salons with basic info
 async function getAllSalons() {
     const query = `
         SELECT id, name, address, phone, email, type, description, latitude, longitude, status, banner_color, logo_url, banner_image_url, created_at
@@ -17,6 +18,7 @@ async function getAllSalons() {
     return rows;
 }
 
+// Get a salon by ID with basic public info
 async function getSalonById(salonId) {
     const query = `
         SELECT id, name, address, phone, email, type, description, latitude, longitude, status, banner_color, logo_url, banner_image_url, created_at
@@ -27,6 +29,7 @@ async function getSalonById(salonId) {
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Get all unique salon types (for filter dropdowns)
 async function getDistinctSalonTypes() {
     const query = `
         SELECT DISTINCT type
@@ -38,6 +41,7 @@ async function getDistinctSalonTypes() {
     return rows.map(row => row.type);
 }
 
+// Get top-rated open salons with average rating and count
 async function getTopRatedSalons(limit = 10) {
     const query = `
         SELECT 
@@ -62,6 +66,7 @@ async function getTopRatedSalons(limit = 10) {
     return rows;
 }
 
+// Get all available services in a salon with provider name and images
 async function getServicesBySalonId(salonId) {
     const query = `
         SELECT s.id, s.provider_id, s.name, s.description, s.duration_minutes, s.price, s.status, s.created_at,
@@ -81,6 +86,7 @@ async function getServicesBySalonId(salonId) {
 
 // ==================== UPDATE ====================
 
+// Dynamically update allowed salon fields
 async function updateSalon(salonId, updateData) {
     const allowedFields = ['name', 'address', 'phone', 'email', 'type', 'opening_hours', 'closing_hours', 'description', 'latitude', 'longitude', 'status', 'banner_color', 'logo_url', 'banner_image_url'];
     const fields = Object.keys(updateData).filter(f => allowedFields.includes(f));
@@ -95,6 +101,7 @@ async function updateSalon(salonId, updateData) {
 
 // ==================== SALON MANAGEMENT (from salonApi inline SQL) ====================
 
+// Get the salon that a provider belongs to (plus isManager flag)
 async function getMySalon(providerId) {
     const selectProviderQuery = 'SELECT salon_id, isManager FROM providers WHERE id = ?';
     const [providers] = await pool.execute(selectProviderQuery, [providerId]);
@@ -116,24 +123,28 @@ async function getMySalon(providerId) {
     return { salon: salons[0], isManager };
 }
 
+// Update a salon's status (open/closed)
 async function updateSalonStatus(salonId, status) {
     const query = 'UPDATE salons SET status = ? WHERE id = ?';
     const [result] = await pool.execute(query, [status, salonId]);
     return result;
 }
 
+// Get a salon's branding info (logo, banner, color)
 async function getSalonBranding(salonId) {
     const query = 'SELECT logo_url, banner_image_url, banner_color FROM salons WHERE id = ?';
     const [rows] = await pool.execute(query, [salonId]);
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Dynamically update salon branding fields
 async function updateSalonBranding(salonId, updates, values) {
     const query = `UPDATE salons SET ${updates.join(', ')} WHERE id = ?`;
     const [result] = await pool.execute(query, [...values, salonId]);
     return result;
 }
 
+// Get full salon details including sharecode and hours (manager view)
 async function getFullSalonById(salonId) {
     const query = `
         SELECT id, name, address, phone, email, type, opening_hours, closing_hours,
@@ -144,12 +155,14 @@ async function getFullSalonById(salonId) {
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Get a salon's banner image URL
 async function getSalonBannerUrl(salonId) {
     const query = 'SELECT banner_image_url FROM salons WHERE id = ?';
     const [rows] = await pool.execute(query, [salonId]);
     return rows.length > 0 ? rows[0].banner_image_url : null;
 }
 
+// Remove a salon's banner image (set to NULL)
 async function removeSalonBanner(salonId) {
     const query = 'UPDATE salons SET banner_image_url = NULL WHERE id = ?';
     const [result] = await pool.execute(query, [salonId]);
@@ -158,6 +171,7 @@ async function removeSalonBanner(salonId) {
 
 // ==================== ADMIN SALON QUERIES ====================
 
+// Get all salons for admin listing with provider count and ratings
 async function getAdminSalons() {
     const query = `
         SELECT s.id, s.name, s.address, s.phone, s.email, s.type, s.description, s.status,
@@ -175,6 +189,7 @@ async function getAdminSalons() {
     return rows;
 }
 
+// Get detailed salon info for admin (providers, services, ratings)
 async function getAdminSalonById(salonId) {
     const selectSalonQuery = 'SELECT * FROM salons WHERE id = ?';
     const [salons] = await pool.execute(selectSalonQuery, [salonId]);

@@ -7,7 +7,7 @@ const { getSalonSuggestions, getTypeSuggestions, searchSalonsByName, getRecentRe
 const locationService = require('../services/locationService.js');
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
 
-// Közeli szalonok keresése koordináták vagy helynév alapján
+// POST /api/search/nearby — search nearby salons by coordinates or place name
 router.post('/nearby', async (request, response) => {
     try {
         let { latitude, longitude, place, radius_km, service_name } = request.body;
@@ -113,7 +113,7 @@ router.post('/nearby', async (request, response) => {
     }
 });
 
-// Helynév geokódolása koordinátákká
+// POST /api/search/geocode — convert place name to coordinates
 router.post('/geocode', async (request, response) => {
     try {
         const { place } = request.body;
@@ -142,7 +142,7 @@ router.post('/geocode', async (request, response) => {
     }
 });
 
-// Get distinct salon types
+// GET /api/search/types — get all distinct salon types for filter dropdown
 router.get('/types', async (request, response) => {
     try {
         const types = await getDistinctSalonTypes();
@@ -161,7 +161,7 @@ router.get('/types', async (request, response) => {
     }
 });
 
-// Get top-rated salons
+// GET /api/search/top-rated — get top-rated salons with providers
 router.get('/top-rated', async (request, response) => {
     try {
         const limit = parseInt(request.query.limit) || 10;
@@ -192,7 +192,7 @@ router.get('/top-rated', async (request, response) => {
     }
 });
 
-// Get search suggestions for autocomplete
+// GET /api/search/suggestions — autocomplete suggestions for salon/type search
 router.get('/suggestions', async (request, response) => {
     try {
         const { query } = request.query;
@@ -228,7 +228,7 @@ router.get('/suggestions', async (request, response) => {
     }
 });
 
-// Get salon details with providers and services
+// GET /api/search/salon/:id — get salon details with providers and services
 router.get('/salon/:id', async (request, response) => {
     try {
         const salonId = parseInt(request.params.id);
@@ -285,7 +285,7 @@ router.get('/salon/:id', async (request, response) => {
     }
 });
 
-// Search salons by name without location requirement
+// GET /api/search/by-name — search salons by name/type without location
 router.get('/by-name', async (request, response) => {
     try {
         const { query, service_type } = request.query;
@@ -334,7 +334,7 @@ router.get('/by-name', async (request, response) => {
     }
 });
 
-// Get recent reviews for the overview page
+// GET /api/search/recent-reviews — get recent reviews for overview page
 router.get('/recent-reviews', async (request, response) => {
     try {
         const limit = parseInt(request.query.limit) || 8;
@@ -355,7 +355,7 @@ router.get('/recent-reviews', async (request, response) => {
     }
 });
 
-// Address autocomplete using Nominatim
+// GET /api/search/address-autocomplete — autocomplete address from Nominatim
 router.get('/address-autocomplete', async (request, response) => {
     try {
         const { q } = request.query;
@@ -383,7 +383,7 @@ router.get('/address-autocomplete', async (request, response) => {
     }
 });
 
-// Reverse geocode: coordinates to address
+// POST /api/search/reverse-geocode — convert coordinates to address
 router.post('/reverse-geocode', async (request, response) => {
     try {
         const { latitude, longitude } = request.body;
@@ -421,7 +421,7 @@ router.post('/reverse-geocode', async (request, response) => {
     }
 });
 
-// Get personalized salon recommendations
+// GET /api/search/recommendations — get personalized salon recommendations
 router.get('/recommendations', AuthMiddleware, async (request, response) => {
     try {
         const userId = request.user.userId;

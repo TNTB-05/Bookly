@@ -7,6 +7,7 @@ const pool = require('./pool');
 
 // ==================== READ ====================
 
+// Get active providers for a salon with average ratings
 async function getProvidersBySalonId(salonId) {
     const query = `
         SELECT 
@@ -32,6 +33,7 @@ async function getProvidersBySalonId(salonId) {
     return rows;
 }
 
+// Get basic provider info by ID
 async function getProviderById(providerId) {
     const query = `
         SELECT id, salon_id, name, email, phone, description, status, role, isManager, created_at
@@ -42,6 +44,7 @@ async function getProviderById(providerId) {
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Get provider profile including profile picture URL
 async function getProviderProfile(providerId) {
     const query = `
         SELECT id, salon_id, name, email, phone, description, status, role, isManager, profile_picture_url, created_at
@@ -51,30 +54,35 @@ async function getProviderProfile(providerId) {
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Get provider's password hash for verification
 async function getProviderPasswordHash(providerId) {
     const query = 'SELECT password_hash FROM providers WHERE id = ?';
     const [rows] = await pool.execute(query, [providerId]);
     return rows.length > 0 ? rows[0].password_hash : null;
 }
 
+// Get provider's profile picture URL
 async function getProviderPictureUrl(providerId) {
     const query = 'SELECT profile_picture_url FROM providers WHERE id = ?';
     const [rows] = await pool.execute(query, [providerId]);
     return rows.length > 0 ? rows[0].profile_picture_url : null;
 }
 
+// Get the salon ID that a provider belongs to
 async function getProviderSalonId(providerId) {
     const query = 'SELECT salon_id FROM providers WHERE id = ?';
     const [rows] = await pool.execute(query, [providerId]);
     return rows.length > 0 ? rows[0].salon_id : null;
 }
 
+// Get provider's ID and status for auth checks
 async function getProviderStatus(providerId) {
     const query = 'SELECT id, status FROM providers WHERE id = ?';
     const [rows] = await pool.execute(query, [providerId]);
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Get provider's manager status and salon ID
 async function getProviderManagerInfo(providerId) {
     const query = 'SELECT isManager, salon_id FROM providers WHERE id = ?';
     const [rows] = await pool.execute(query, [providerId]);
@@ -83,32 +91,30 @@ async function getProviderManagerInfo(providerId) {
 
 // ==================== UPDATE ====================
 
+// Update provider's name, phone, and description
 async function updateProviderProfile(providerId, { name, phone, description }) {
     const query = 'UPDATE providers SET name = ?, phone = ?, description = ? WHERE id = ?';
     const [result] = await pool.execute(query, [name, phone, description, providerId]);
     return result;
 }
 
+// Update provider's profile picture URL
 async function updateProviderPicture(providerId, imageUrl) {
     const query = 'UPDATE providers SET profile_picture_url = ? WHERE id = ?';
     const [result] = await pool.execute(query, [imageUrl, providerId]);
     return result;
 }
 
+// Update provider's password hash
 async function updateProviderPassword(providerId, newHashedPassword) {
     const query = 'UPDATE providers SET password_hash = ? WHERE id = ?';
     const [result] = await pool.execute(query, [newHashedPassword, providerId]);
     return result;
 }
 
-async function updateProviderLastLogin(providerId) {
-    const query = 'UPDATE providers SET last_login = NOW() WHERE id = ?';
-    const [result] = await pool.execute(query, [providerId]);
-    return result;
-}
-
 // ==================== SALON PROVIDER MANAGEMENT (from salonApi inline SQL) ====================
 
+// Get all providers in a salon with appointment counts (manager view)
 async function getSalonProviders(salonId) {
     const query = `
         SELECT p.id, p.name, p.email, p.phone, p.description, p.status, p.role, p.isManager,
@@ -124,24 +130,28 @@ async function getSalonProviders(salonId) {
     return rows;
 }
 
+// Get provider for permission checks (id, salon_id, isManager)
 async function getProviderForUpdate(providerId) {
     const query = 'SELECT id, salon_id, isManager FROM providers WHERE id = ?';
     const [rows] = await pool.execute(query, [providerId]);
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Count the number of managers in a salon
 async function getManagerCount(salonId) {
     const query = 'SELECT COUNT(*) as count FROM providers WHERE salon_id = ? AND isManager = TRUE';
     const [rows] = await pool.execute(query, [salonId]);
     return rows[0].count;
 }
 
+// Dynamically update provider fields
 async function updateProviderDetails(providerId, updates, values) {
     const query = `UPDATE providers SET ${updates.join(', ')} WHERE id = ?`;
     const [result] = await pool.execute(query, [...values, providerId]);
     return result;
 }
 
+// Get basic provider info (without profile picture)
 async function getProviderBasicInfo(providerId) {
     const query = `
         SELECT id, name, email, phone, description, status, role, isManager, created_at
@@ -151,6 +161,7 @@ async function getProviderBasicInfo(providerId) {
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Soft-delete a provider (set status to 'deleted')
 async function softDeleteProvider(providerId) {
     const query = 'UPDATE providers SET status = ? WHERE id = ?';
     const [result] = await pool.execute(query, ['deleted', providerId]);
@@ -159,6 +170,7 @@ async function softDeleteProvider(providerId) {
 
 // ==================== ADMIN PROVIDER QUERIES ====================
 
+// Get all providers for admin panel listing
 async function getAdminProviders() {
     const query = `
         SELECT p.id, p.name, p.email, p.phone, p.description, p.status, p.role, p.isManager,
@@ -172,6 +184,7 @@ async function getAdminProviders() {
     return rows;
 }
 
+// Get detailed provider info for admin (includes appointments, ratings, services)
 async function getAdminProviderById(providerId) {
     const selectProviderQuery = `
         SELECT p.*, s.name as salon_name, s.address as salon_address
@@ -208,27 +221,9 @@ async function getAdminProviderById(providerId) {
     return { provider: providers[0], appointments, ratings, services };
 }
 
-// ==================== AUTH QUERIES (from ProvLoginApi, LoginApi) ====================
-
-async function getProviderByEmail(email) {
-    const query = `
-        SELECT p.id, p.name, p.email, p.password_hash, p.salon_id, p.isManager, p.status, s.name as salon_name 
-        FROM providers p 
-        JOIN salons s ON p.salon_id = s.id 
-        WHERE p.email = ?
-    `;
-    const [rows] = await pool.execute(query, [email]);
-    return rows.length > 0 ? rows[0] : null;
-}
-
-async function checkProviderExists(email, phone) {
-    const query = 'SELECT id FROM providers WHERE email = ? OR phone = ?';
-    const [rows] = await pool.execute(query, [email, phone]);
-    return rows.length > 0;
-}
-
 // ==================== STAFF QUERIES (from staffApi) ====================
 
+// Verify that a staff member belongs to a specific salon
 async function verifyStaffBelongsToSalon(staffId, salonId) {
     const query = 'SELECT id FROM providers WHERE id = ? AND salon_id = ?';
     const [rows] = await pool.execute(query, [staffId, salonId]);
@@ -247,7 +242,6 @@ module.exports = {
     updateProviderProfile,
     updateProviderPicture,
     updateProviderPassword,
-    updateProviderLastLogin,
     getSalonProviders,
     getProviderForUpdate,
     getManagerCount,
@@ -256,6 +250,5 @@ module.exports = {
     softDeleteProvider,
     getAdminProviders,
     getAdminProviderById,
-    getProviderByEmail,
     verifyStaffBelongsToSalon
 };

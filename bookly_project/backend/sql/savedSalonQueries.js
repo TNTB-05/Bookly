@@ -7,6 +7,7 @@ const pool = require('./pool');
 
 // ==================== READ ====================
 
+// Get a user's saved salons with ratings info
 async function getSavedSalonsByUserId(userId) {
     const query = `
         SELECT s.id, s.name, s.address, s.phone, s.email, s.type, s.description, 
@@ -25,6 +26,7 @@ async function getSavedSalonsByUserId(userId) {
     return rows;
 }
 
+// Check if a specific salon is saved by a user
 async function isSalonSaved(userId, salonId) {
     const query = `
         SELECT id FROM saved_salons
@@ -34,6 +36,7 @@ async function isSalonSaved(userId, salonId) {
     return rows.length > 0;
 }
 
+// Get just the IDs of all salons saved by a user
 async function getSavedSalonIds(userId) {
     const query = `
         SELECT salon_id FROM saved_salons
@@ -45,6 +48,7 @@ async function getSavedSalonIds(userId) {
 
 // ==================== CREATE ====================
 
+// Save a salon to user's favorites (upsert)
 async function saveSalon(userId, salonId) {
     const query = `
         INSERT INTO saved_salons (user_id, salon_id)
@@ -57,6 +61,7 @@ async function saveSalon(userId, salonId) {
 
 // ==================== DELETE ====================
 
+// Remove a salon from user's favorites
 async function unsaveSalon(userId, salonId) {
     const query = `
         DELETE FROM saved_salons

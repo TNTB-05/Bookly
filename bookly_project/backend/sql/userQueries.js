@@ -7,48 +7,42 @@ const pool = require('./pool');
 
 // ==================== READ ====================
 
+// Get a user by their ID (excludes password hash)
 async function getUserById(userId) {
     const query = 'SELECT id, name, email, phone, address, role, status, profile_picture_url, created_at, deleted_at FROM users WHERE id = ?';
     const [rows] = await pool.execute(query, [userId]);
     return rows[0] || null;
 }
 
+// Get a user by their email address (full row)
 async function getUserByEmail(email) {
     const query = 'SELECT * FROM users WHERE email = ?';
     const [rows] = await pool.execute(query, [email]);
     return rows[0] || null;
 }
 
-async function getUsers() {
-    const query = 'SELECT * FROM users';
-    const [rows] = await pool.execute(query);
-    return rows;
-}
-
+// Get a user's password hash for verification
 async function getUserPasswordHash(userId) {
     const query = 'SELECT password_hash FROM users WHERE id = ?';
     const [rows] = await pool.execute(query, [userId]);
     return rows[0]?.password_hash || null;
 }
 
+// Check if an email is already in use (excluding a specific user)
 async function checkEmailExists(email, excludeUserId) {
     const query = 'SELECT id FROM users WHERE email = ? AND id != ?';
     const [rows] = await pool.execute(query, [email, excludeUserId]);
     return rows.length > 0;
 }
 
+// Get a user's profile picture URL
 async function getUserPictureUrl(userId) {
     const query = 'SELECT profile_picture_url FROM users WHERE id = ?';
     const [rows] = await pool.execute(query, [userId]);
     return rows.length > 0 ? rows[0].profile_picture_url : null;
 }
 
-async function getUserByIdForReactivation(userId) {
-    const query = 'SELECT id, email, status, deleted_at FROM users WHERE id = ?';
-    const [rows] = await pool.execute(query, [userId]);
-    return rows.length > 0 ? rows[0] : null;
-}
-
+// Find a user by email, returning only their ID
 async function findUserByEmail(email) {
     const query = 'SELECT id FROM users WHERE email = ?';
     const [rows] = await pool.execute(query, [email]);
@@ -57,12 +51,14 @@ async function findUserByEmail(email) {
 
 // ==================== CREATE ====================
 
+// Create a new user account
 async function addUser(name, email, hashedPassword, role) {
     const query = 'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)';
     const [result] = await pool.execute(query, [name, email, hashedPassword, role]);
     return result.insertId;
 }
 
+// Create a user account when booked by a provider (auto-active, customer role)
 async function createUserFromProviderBooking(name, email, phone, hashedPassword) {
     const query = `
         INSERT INTO users (name, email, phone, password_hash, status, role) 
@@ -74,30 +70,35 @@ async function createUserFromProviderBooking(name, email, phone, hashedPassword)
 
 // ==================== UPDATE ====================
 
+// Update user profile fields (name, email, phone, address, status)
 async function updateUserProfile(userId, { name, email, phone, address, status }) {
     const query = 'UPDATE users SET name = ?, email = ?, phone = ?, address = ?, status = ? WHERE id = ?';
     const [result] = await pool.execute(query, [name, email, phone, address, status, userId]);
     return result.affectedRows > 0;
 }
 
+// Update user's password hash
 async function updateUserPassword(userId, hashedPassword) {
     const query = 'UPDATE users SET password_hash = ? WHERE id = ?';
     const [result] = await pool.execute(query, [hashedPassword, userId]);
     return result.affectedRows > 0;
 }
 
+// Update user's profile picture URL
 async function updateUserPicture(userId, imageUrl) {
     const query = 'UPDATE users SET profile_picture_url = ? WHERE id = ?';
     const [result] = await pool.execute(query, [imageUrl, userId]);
     return result;
 }
 
+// Update user's last login timestamp
 async function updateUserLastLogin(userId) {
     const query = 'UPDATE users SET last_login = NOW() WHERE id = ?';
     const [result] = await pool.execute(query, [userId]);
     return result;
 }
 
+// Update only user's name and phone number
 async function updateUserNameAndPhone(userId, name, phone) {
     const query = 'UPDATE users SET name = ?, phone = ? WHERE id = ?';
     const [result] = await pool.execute(query, [name, phone, userId]);
@@ -106,6 +107,7 @@ async function updateUserNameAndPhone(userId, name, phone) {
 
 // ==================== DELETE (soft) ====================
 
+// Soft-delete a user (anonymize name, clear phone/address)
 async function deleteUser(userId) {
     const query = `
         UPDATE users 
@@ -120,6 +122,7 @@ async function deleteUser(userId) {
     return result.affectedRows > 0;
 }
 
+// Restore a self-deleted user within the 30-day grace period
 async function restoreUser(userId) {
     const query = `
         UPDATE users 
@@ -133,12 +136,7 @@ async function restoreUser(userId) {
     return result.affectedRows > 0;
 }
 
-async function permanentlyDeleteUser(userId) {
-    const query = 'DELETE FROM users WHERE id = ?';
-    const [result] = await pool.execute(query, [userId]);
-    return result.affectedRows > 0;
-}
-
+// Reactivate a deleted user account with new profile data
 async function reactivateUser(userId, name, phone, address) {
     const query = `
         UPDATE users 
@@ -155,12 +153,14 @@ async function reactivateUser(userId, name, phone, address) {
 
 // ==================== ACCOUNT DELETION CLEANUP ====================
 
+// Remove all saved salons for a user
 async function deleteSavedSalonsForUser(userId) {
     const query = 'DELETE FROM saved_salons WHERE user_id = ?';
     const [result] = await pool.execute(query, [userId]);
     return result;
 }
 
+// Delete all refresh tokens for a user
 async function deleteRefTokensForUser(userId) {
     const query = 'DELETE FROM RefTokens WHERE user_id = ?';
     const [result] = await pool.execute(query, [userId]);
@@ -169,6 +169,7 @@ async function deleteRefTokensForUser(userId) {
 
 // ==================== ADMIN USER QUERIES ====================
 
+// Get all users for admin panel listing
 async function getAdminUsers() {
     const query = `
         SELECT id, name, email, phone, role, status, last_login, profile_picture_url, created_at
@@ -178,6 +179,7 @@ async function getAdminUsers() {
     return rows;
 }
 
+// Get detailed user info for admin (includes appointments, ratings)
 async function getAdminUserById(userId) {
     const selectUserQuery = 'SELECT id, name, email, phone, address, role, status, last_login, profile_picture_url, created_at FROM users WHERE id = ?';
     const [users] = await pool.execute(selectUserQuery, [userId]);
@@ -207,6 +209,7 @@ async function getAdminUserById(userId) {
     return { user: users[0], appointments, ratings };
 }
 
+// Ban a user and invalidate all their refresh tokens
 async function banUser(userId) {
     const query = "UPDATE users SET status = 'banned' WHERE id = ?";
     const [result] = await pool.execute(query, [userId]);
@@ -215,12 +218,14 @@ async function banUser(userId) {
     return result;
 }
 
+// Unban a user (set status back to active)
 async function unbanUser(userId) {
     const query = "UPDATE users SET status = 'active' WHERE id = ?";
     const [result] = await pool.execute(query, [userId]);
     return result;
 }
 
+// GDPR-anonymize a user (nullify personal data)
 async function gdprDeleteUser(userId, anonymizedName) {
     const query = `
         UPDATE users SET 
@@ -233,12 +238,7 @@ async function gdprDeleteUser(userId, anonymizedName) {
     return result;
 }
 
-async function getAdminUserFull(userId) {
-    const query = 'SELECT * FROM users WHERE id = ?';
-    const [rows] = await pool.execute(query, [userId]);
-    return rows.length > 0 ? rows[0] : null;
-}
-
+// Remove user's profile picture from database
 async function removeUserPicture(userId) {
     const query = 'UPDATE users SET profile_picture_url = NULL WHERE id = ?';
     const [result] = await pool.execute(query, [userId]);
@@ -251,14 +251,12 @@ module.exports = {
     getUserPasswordHash,
     checkEmailExists,
     getUserPictureUrl,
-    getUserByIdForReactivation,
     findUserByEmail,
     addUser,
     createUserFromProviderBooking,
     updateUserProfile,
     updateUserPassword,
     updateUserPicture,
-    updateUserLastLogin,
     updateUserNameAndPhone,
     deleteUser,
     restoreUser,

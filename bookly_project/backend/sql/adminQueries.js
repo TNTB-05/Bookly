@@ -13,6 +13,7 @@ const pool = require('./pool');
 
 // ==================== STATISTICS ====================
 
+// Get admin dashboard statistics (users, providers, salons, appointments, revenue)
 async function getDashboardStatistics() {
     const [
         [usersResult],
@@ -65,6 +66,7 @@ async function getDashboardStatistics() {
     };
 }
 
+// Get monthly revenue and appointment counts for the last 6 months
 async function getMonthlyRevenue() {
     const query = `
         SELECT DATE_FORMAT(appointment_start, '%Y-%m') as month,
@@ -79,6 +81,7 @@ async function getMonthlyRevenue() {
 
 // ==================== ADMIN-ONLY USER OPERATIONS ====================
 
+// GDPR-delete a user by anonymizing their data and deleting tokens
 async function gdprDeleteUser(userId) {
     const selectQuery = `SELECT * FROM users WHERE id = ?`;
     const [users] = await pool.execute(selectQuery, [userId]);
@@ -101,27 +104,32 @@ async function gdprDeleteUser(userId) {
 
 // ==================== ADMIN-ONLY PROVIDER OPERATIONS ====================
 
+// Deactivate a provider (set status to 'inactive')
 async function deactivateProvider(providerId) {
     const query = `UPDATE providers SET status = 'inactive' WHERE id = ?`;
     await pool.execute(query, [providerId]);
 }
 
+// Activate a provider (set status to 'active')
 async function activateProvider(providerId) {
     const query = `UPDATE providers SET status = 'active' WHERE id = ?`;
     await pool.execute(query, [providerId]);
 }
 
+// Get a provider's profile picture URL
 async function getProviderProfilePicture(providerId) {
     const query = `SELECT profile_picture_url FROM providers WHERE id = ?`;
     const [rows] = await pool.execute(query, [providerId]);
     return rows.length > 0 ? rows[0].profile_picture_url : null;
 }
 
+// Remove a provider's profile picture (set to NULL)
 async function removeProviderProfilePicture(providerId) {
     const query = `UPDATE providers SET profile_picture_url = NULL WHERE id = ?`;
     await pool.execute(query, [providerId]);
 }
 
+// Ban a provider and delete their refresh tokens
 async function banProvider(providerId) {
     const updateQuery = `UPDATE providers SET status = 'banned' WHERE id = ?`;
     await pool.execute(updateQuery, [providerId]);
@@ -129,24 +137,25 @@ async function banProvider(providerId) {
     await pool.execute(deleteTokensQuery, [providerId]);
 }
 
-async function unbanProvider(providerId) {
-    const query = `UPDATE providers SET status = 'active' WHERE id = ?`;
-    await pool.execute(query, [providerId]);
-}
+// Unban a provider (set status back to 'active') — semantic alias for activateProvider
+const unbanProvider = activateProvider;
 
 // ==================== ADMIN-ONLY SALON OPERATIONS ====================
 
+// Get a salon's logo URL
 async function getSalonLogoUrl(salonId) {
     const query = `SELECT logo_url FROM salons WHERE id = ?`;
     const [rows] = await pool.execute(query, [salonId]);
     return rows.length > 0 ? rows[0].logo_url : null;
 }
 
+// Remove a salon's logo (set to NULL)
 async function removeSalonLogo(salonId) {
     const query = `UPDATE salons SET logo_url = NULL WHERE id = ?`;
     await pool.execute(query, [salonId]);
 }
 
+// Remove a salon's description (set to NULL)
 async function removeSalonDescription(salonId) {
     const query = `UPDATE salons SET description = NULL WHERE id = ?`;
     await pool.execute(query, [salonId]);
@@ -154,12 +163,14 @@ async function removeSalonDescription(salonId) {
 
 // ==================== SYSTEM LOGS ====================
 
+// Insert a system log event (used by logService)
 async function insertLogEvent(level, action, actorType, actorId, targetType = null, targetId = null, details = null) {
     const query = 'INSERT INTO system_logs (level, action, actor_type, actor_id, target_type, target_id, details) VALUES (?, ?, ?, ?, ?, ?, ?)';
     const [result] = await pool.execute(query, [level, action, actorType, actorId, targetType, targetId, details]);
     return result;
 }
 
+// Get system logs with optional filters (level, action, limit)
 async function getSystemLogs(filters = {}) {
     let query = 'SELECT * FROM system_logs WHERE 1=1';
     const params = [];

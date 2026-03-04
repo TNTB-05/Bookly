@@ -1,6 +1,7 @@
 const { getWaitlistForFreedSlot } = require('../sql/waitlistQueries.js');
 const { sendWaitlistNotification } = require('./emailService.js');
 
+// Notify all waitlisted users when a slot opens up from a cancellation
 async function notifyWaitlistForCancelledSlot(providerId, serviceId, slotStart, salonName, serviceName, providerName) {
     const freedDate = new Date(slotStart).toISOString().split('T')[0]; // YYYY-MM-DD
     const waitlisted = await getWaitlistForFreedSlot(providerId, serviceId, freedDate);
