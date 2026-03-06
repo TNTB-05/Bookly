@@ -4,7 +4,8 @@
     "description": "Template project",
     "main": "server.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "test": "jest --coverage",
+        "test:watch": "jest --watch",
         "start": "node server.js",
         "db:up": "cd .. && docker-compose up -d db",
         "myadmin:up": "cd .. && docker-compose up -d phpmyadmin",
@@ -16,7 +17,9 @@
     "author": "Kardos Krisztián",
     "license": "ISC",
     "devDependencies": {
-        "nodemon": "^3.1.10"
+        "jest": "^30.2.0",
+        "nodemon": "^3.1.10",
+        "supertest": "^7.2.2"
     },
     "dependencies": {
         "bcryptjs": "^3.0.3",
