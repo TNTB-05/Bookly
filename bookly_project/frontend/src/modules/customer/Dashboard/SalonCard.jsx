@@ -3,7 +3,7 @@ import SaveIcon from '../../../icons/SaveIcon';
 import { useNavigate } from 'react-router-dom';
 
 // Szalon kártya komponens - szalon adatainak megjelenítése
-export default function SalonCard({ salon, savedSalonIds, toggleSaveSalon, showDistance }) {
+export default function SalonCard({ salon, savedSalonIds, toggleSaveSalon, showDistance, compact = false, onCardClick }) {
     const navigate = useNavigate();
     
     // Ellenőrizzük, hogy a szalon mentve van-e
@@ -15,10 +15,13 @@ export default function SalonCard({ salon, savedSalonIds, toggleSaveSalon, showD
     }
 
     return (
-        <div className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col">
+        <div
+            className={`bg-white/40 backdrop-blur-md ${compact ? 'rounded-xl' : 'rounded-2xl'} shadow-lg border border-white/50 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col ${onCardClick ? 'cursor-pointer' : ''}`}
+            onClick={onCardClick}
+        >
             {/* Kártya fejléc */}
             <div
-                className="h-24 relative shrink-0"
+                className={`${compact ? 'h-16' : 'h-24'} relative shrink-0`}
                 style={
                     salon.banner_image_url
                         ? { backgroundImage: `url(${(import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.banner_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
@@ -26,8 +29,8 @@ export default function SalonCard({ salon, savedSalonIds, toggleSaveSalon, showD
                 }
             >
                 {/* Szalon logo / kezdőbetű */}
-                <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 z-10">
-                    <div className="w-20 h-20 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-lg overflow-hidden">
+                <div className={`absolute ${compact ? '-bottom-7' : '-bottom-10'} left-1/2 transform -translate-x-1/2 z-10`}>
+                    <div className={`${compact ? 'w-14 h-14 text-lg' : 'w-20 h-20 text-2xl'} rounded-full border-4 border-white bg-white flex items-center justify-center font-bold text-dark-blue shadow-lg overflow-hidden`}>
                         {salon.logo_url ? (
                             <img src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.logo_url} alt={salon.name} className="w-full h-full object-cover" />
                         ) : (
@@ -61,23 +64,23 @@ export default function SalonCard({ salon, savedSalonIds, toggleSaveSalon, showD
             </div>
 
             {/* Kártya tartalom */}
-            <div className="pt-12 px-4 pb-4 text-center flex flex-col flex-1">
-                {/* Szalon név - 2 soros */}
-                <div className="mb-3">
-                    <h3 className="text-lg font-bold text-gray-900 line-clamp-2 leading-snug min-h-14 px-2">
+            <div className={`${compact ? 'pt-9 px-3 pb-3' : 'pt-12 px-4 pb-4'} text-center flex flex-col flex-1`}>
+                {/* Szalon név - fixed height for consistency */}
+                <div className={`${compact ? 'mb-1' : 'mb-3'} h-14 flex items-center justify-center`}>
+                    <h3 className={`${compact ? 'text-sm' : 'text-lg'} font-bold text-gray-900 line-clamp-2 leading-snug px-2`}>
                         {salon.name}
                     </h3>
                 </div>
                 
                 {/* Cím - 1 soros */}
-                <div className="mb-3">
+                <div className={compact ? 'mb-1' : 'mb-3'}>
                     <p className="text-xs text-gray-500 line-clamp-1 min-h-5">
                         {salon.address}
                     </p>
                 </div>
                 
                 {/* Szolgáltatók száma - mindig látható */}
-                <div className="mb-3">
+                <div className={compact ? 'mb-1' : 'mb-3'}>
                     <p className="text-xs text-gray-400 min-h-5">
                         {salon.providers && salon.providers.length > 0 
                             ? `${salon.providers.length} szolgáltató` 
@@ -86,7 +89,7 @@ export default function SalonCard({ salon, savedSalonIds, toggleSaveSalon, showD
                 </div>
                 
                 {/* Értékelés csillagokkal - mindig látható */}
-                <div className="flex items-center justify-center text-yellow-400 text-base mb-4 min-h-7">
+                <div className={`flex items-center justify-center text-yellow-400 text-base ${compact ? 'mb-2' : 'mb-4'} min-h-7`}>
                     {salon.average_rating > 0 ? (
                         <>
                             <span className="tracking-wide">
@@ -111,7 +114,7 @@ export default function SalonCard({ salon, savedSalonIds, toggleSaveSalon, showD
                 {/* Megnézem gomb - mindig alul */}
                 <button
                     onClick={handleViewDetails}
-                    className="w-full py-2.5 bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors shadow-sm"
+                    className={`w-full ${compact ? 'py-2 text-sm' : 'py-2.5'} bg-dark-blue text-white rounded-xl font-medium hover:bg-blue-800 transition-colors shadow-sm`}
                 >
                     Megnézem
                 </button>

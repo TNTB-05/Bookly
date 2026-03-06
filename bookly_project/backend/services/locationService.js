@@ -7,7 +7,7 @@ https://nominatim.openstreetmap.org/search?street=Akácfa%20utca%2057&city=Budap
 https://nominatim.openstreetmap.org/search?street={utca, hazszam}&city={varos}&postalcode={iranyitoszam}&country={orszag}&format=json&limit=1
 */
 
-// Parse address string into components
+// Parse a Hungarian address string into street, city, and postal code components
 function parseAddress(addressString) {
     // Expected format: "Budapest, Istvánmezei út 3, 1146" or "Istvánmezei út 3, Budapest, 1146"
     const parts = addressString.split(',').map(p => p.trim());
@@ -49,6 +49,7 @@ function parseAddress(addressString) {
 }
 
 //Átalakítja a helynevet koordinátákká és kiszámítja a távolságot a felhasználó és a szalonok között
+// Geocode a place name or address to latitude/longitude coordinates
 async function placeToCoordinate(placeName) {
     try {
         let url;
@@ -129,6 +130,7 @@ async function placeToCoordinate(placeName) {
 }
 
 //Kiszámítja a távolságot két koordináta között (Haversine formula)
+// Calculate distance between two coordinates using Haversine formula (in km)
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; // Earth's radius in kilometers
     const dLat = toRadians(lat2 - lat1);
@@ -148,11 +150,13 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 }
 
 //Segédfüggvény a fokok radiánokká alakításához
+// Convert degrees to radians
 function toRadians(degrees) {
     return degrees * (Math.PI / 180);
 }
 
 //Megtalálja a megadott sugáron belüli szalonokat
+// Filter and sort salons within a radius from user's position
 function findNearbySalons(salons, userLat, userLon, radiusKm = 50) {
     return salons
         .map((salon) => {
@@ -177,7 +181,7 @@ function findNearbySalons(salons, userLat, userLon, radiusKm = 50) {
         .sort((a, b) => a.distance - b.distance);
 }
 
-// Koordináták visszaalakítása címmé (reverse geocoding)
+// Reverse-geocode coordinates to a Hungarian address string
 async function coordinateToPlace(latitude, longitude) {
     try {
         const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`;
@@ -224,7 +228,7 @@ async function coordinateToPlace(latitude, longitude) {
     }
 }
 
-// Cím autocomplete Nominatim használatával
+// Autocomplete address suggestions from Nominatim (Hungary only)
 async function addressAutocomplete(query) {
     try {
         const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=hu&limit=5&addressdetails=1`;

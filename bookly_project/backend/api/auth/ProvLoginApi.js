@@ -1,67 +1,24 @@
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../../sql/database.js');
-const fs = require('fs/promises');
-const bcrypt = require('bcryptjs'); //?npm install bcrypt
-const jwt = require('jsonwebtoken'); //?npm install jsonwebtoken
+const pool = require('../../sql/pool.js');
+const { validateSalonCode, insertProviderRefreshToken, updateProviderLastLogin, getProviderForLogin,
+    checkProviderExistsByEmailOrPhone, checkSalonExistsByNameAndAddress, checkSharecodeUnique,
+    createSalon, checkSalonExistsById, createProvider } = require('../../sql/authQueries.js');
+const { generateProviderTokens, setAuthCookies } = require('../../utils/authUtils.js');
+const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const locationService = require('../../services/locationService.js');
 const { sendWelcomeEmail } = require('../../services/emailService.js');
 
 
-
-//!Multer
-const multer = require('multer'); //?npm install multer
-const path = require('path');
-
-const storage = multer.diskStorage({
-    destination: (request, file, callback) => {
-        callback(null, path.join(__dirname, '../uploads'));
-    },
-    filename: (request, file, callback) => {
-        callback(null, Date.now() + '-' + file.originalname); //?egyedi név: dátum - file eredeti neve
-    }
-});
-
-const upload = multer({ storage });
-
 //!Endpoints:
 
-const Users = [];
-
-// Helper function to generate unique salon share code
+// Generate a random 6-character hex code for salon sharing
 function generateShareCode() {
     return crypto.randomBytes(3).toString('hex').toUpperCase();
 }
 
-// Helper function to generate tokens  
-const generateTokens = (email, userId, name) => {
-    if (!process.env.JWT_SECRET) {
-        console.error('JWT_SECRET is not configured');
-        throw new Error('Server configuration error: JWT_SECRET missing');
-    }
-    
-    if (!process.env.JWT_REFRESH_SECRET) {
-        console.error('JWT_REFRESH_SECRET is not configured');
-        throw new Error('Server configuration error: JWT_REFRESH_SECRET missing');
-    }
-
-    const accessToken = jwt.sign(
-        { email, userId , role: 'provider',name},
-        process.env.JWT_SECRET,
-        { expiresIn: '15m' } // Short-lived access token
-    );
-
-    const refreshToken = jwt.sign(
-        { email, userId , role: 'provider',name},
-        process.env.JWT_REFRESH_SECRET,
-        { expiresIn: '7d' } // Long-lived refresh token
-    );
-
-    return { accessToken, refreshToken };
-};        
-
-// Validate salon code endpoint
+// POST /api/provider/auth/validate-salon-code — validate a salon sharecode
 router.post('/validate-salon-code', async (request, response) => {
     const { code } = request.body;
 
@@ -73,19 +30,14 @@ router.post('/validate-salon-code', async (request, response) => {
     }
 
     try {
-        const [salons] = await pool.query(
-            'SELECT id, name FROM salons WHERE sharecode = ? AND status != "closed"',
-            [code.trim().toUpperCase()]
-        );
+        const salon = await validateSalonCode(code.trim().toUpperCase());
 
-        if (salons.length === 0) {
+        if (!salon) {
             return response.status(404).json({
                 success: false,
                 message: 'Nem található szalon ezzel a kóddal'
             });
         }
-
-        const salon = salons[0];
 
         response.status(200).json({
             success: true,
@@ -101,6 +53,7 @@ router.post('/validate-salon-code', async (request, response) => {
     }
 });
 
+// POST /api/provider/auth/register — register provider (create or join salon, transactional)
 router.post('/register', async (request, response) => {
     const { name, email, password, phone, registrationType, salonId, salon } = request.body;
 
@@ -150,12 +103,9 @@ router.post('/register', async (request, response) => {
         await connection.beginTransaction();
 
         // Check if provider already exists
-        const [existingProviders] = await connection.query(
-            'SELECT id FROM providers WHERE email = ? OR phone = ?',
-            [email, phone]
-        );
+        const providerExists = await checkProviderExistsByEmailOrPhone(connection, email, phone);
 
-        if (existingProviders.length > 0) {
+        if (providerExists) {
             await connection.rollback();
             return response.status(409).json({
                 success: false,
@@ -168,12 +118,9 @@ router.post('/register', async (request, response) => {
 
         if (registrationType === 'create') {
             // Verify salon doesn't already exist with same name at same address
-            const [existingSalons] = await connection.query(
-                'SELECT id FROM salons WHERE name = ? AND address = ?',
-                [salon.companyName.trim(), salon.address.trim()]
-            );
+            const salonExists = await checkSalonExistsByNameAndAddress(connection, salon.companyName.trim(), salon.address.trim());
 
-            if (existingSalons.length > 0) {
+            if (salonExists) {
                 await connection.rollback();
                 return response.status(409).json({
                     success: false,
@@ -186,13 +133,7 @@ router.post('/register', async (request, response) => {
             let isUnique = false;
             while (!isUnique) {
                 shareCode = generateShareCode();
-                const [existing] = await connection.query(
-                    'SELECT id FROM salons WHERE sharecode = ?',
-                    [shareCode]
-                );
-                if (existing.length === 0) {
-                    isUnique = true;
-                }
+                isUnique = await checkSharecodeUnique(connection, shareCode);
             }
 
             // Geocode the address to get coordinates
@@ -212,30 +153,21 @@ router.post('/register', async (request, response) => {
             }
 
             // Create new salon with coordinates
-            const [salonResult] = await connection.query(
-                `INSERT INTO salons (name, address, description, sharecode, status, type, latitude, longitude) 
-                 VALUES (?, ?, ?, ?, 'open', ?, ?, ?)`,
-                [
-                    salon.companyName.trim(),
-                    salon.address.trim(),
-                    salon.description.trim(),
-                    shareCode,
-                    salon.salonType.trim(),
-                    latitude,
-                    longitude
-                ]
-            );
-
-            finalSalonId = salonResult.insertId;
+            finalSalonId = await createSalon(connection, {
+                name: salon.companyName.trim(),
+                address: salon.address.trim(),
+                description: salon.description.trim(),
+                sharecode: shareCode,
+                salonType: salon.salonType.trim(),
+                latitude,
+                longitude
+            });
             isManager = true; // Creator becomes manager
         } else {
             // Join existing salon - verify it exists
-            const [salons] = await connection.query(
-                'SELECT id FROM salons WHERE id = ?',
-                [salonId]
-            );
+            const salonFound = await checkSalonExistsById(connection, salonId);
 
-            if (salons.length === 0) {
+            if (!salonFound) {
                 await connection.rollback();
                 return response.status(404).json({
                     success: false,
@@ -251,19 +183,15 @@ router.post('/register', async (request, response) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create provider
-        const [providerResult] = await connection.query(
-            `INSERT INTO providers (salon_id, name, email, phone, status, role, isManager, password_hash) 
-             VALUES (?, ?, ?, ?, 'active', ?, ?, ?)`,
-            [
-                finalSalonId,
-                name.trim(),
-                email.trim().toLowerCase(),
-                phone.trim(),
-                isManager ? 'manager' : 'provider',
-                isManager,
-                hashedPassword
-            ]
-        );
+        const providerId = await createProvider(connection, {
+            salonId: finalSalonId,
+            name: name.trim(),
+            email: email.trim().toLowerCase(),
+            phone: phone.trim(),
+            role: isManager ? 'manager' : 'provider',
+            isManager,
+            passwordHash: hashedPassword
+        });
 
         await connection.commit();
 
@@ -275,7 +203,7 @@ router.post('/register', async (request, response) => {
         response.status(201).json({
             success: true,
             message: 'Sikeres regisztráció',
-            providerId: providerResult.insertId,
+            providerId: providerId,
             isManager
         });
     } catch (error) {
@@ -298,6 +226,7 @@ router.post('/register', async (request, response) => {
     }
 });
 
+// POST /api/provider/auth/login — authenticate provider and return JWT tokens
 router.post('/login', async (request, response) => {
     const { email, password } = request.body;
 
@@ -310,22 +239,14 @@ router.post('/login', async (request, response) => {
 
     try {
         // Query provider from database
-        const [providers] = await pool.query(
-            `SELECT p.id, p.name, p.email, p.password_hash, p.salon_id, p.isManager, p.status, s.name as salon_name 
-             FROM providers p 
-             JOIN salons s ON p.salon_id = s.id 
-             WHERE p.email = ?`,
-            [email.trim().toLowerCase()]
-        );
+        const provider = await getProviderForLogin(email.trim().toLowerCase());
 
-        if (providers.length === 0) {
+        if (!provider) {
             return response.status(422).json({
                 success: false,
                 message: 'Hibás email vagy jelszó'
             });
         }
-
-        const provider = providers[0];
 
         if (provider.status === 'banned') {
             return response.status(403).json({
@@ -354,28 +275,16 @@ router.post('/login', async (request, response) => {
         }
 
         // Generate both access and refresh tokens
-        const { accessToken, refreshToken } = generateTokens(email, provider.id, provider.name);
+        const { accessToken, refreshToken } = generateProviderTokens({ email, userId: provider.id, name: provider.name });
 
         // Store refresh token in database (provider_id for providers)
-        const [tokenResult] = await pool.query(
-            'INSERT INTO RefTokens (provider_id, refresh_token) VALUES (?, ?)',
-            [provider.id, refreshToken]
-        );
+        await insertProviderRefreshToken(provider.id, refreshToken);
 
         // Update last login
-        await pool.query(
-            'UPDATE providers SET last_login = NOW() WHERE id = ?',
-            [provider.id]
-        );
+        await updateProviderLastLogin(provider.id);
 
         // Send refresh token as HTTP-only cookie
-        response.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-            path: '/',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-        });
+        setAuthCookies(response, refreshToken);
 
         response.status(200).json({
             success: true,

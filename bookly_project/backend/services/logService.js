@@ -1,4 +1,4 @@
-const { pool } = require('../sql/database.js');
+const { insertLogEvent } = require('../sql/adminQueries.js');
 
 /**
  * Log a system event to the system_logs table
@@ -12,10 +12,7 @@ const { pool } = require('../sql/database.js');
  */
 async function logEvent(level, action, actorType, actorId, targetType = null, targetId = null, details = null) {
     try {
-        await pool.query(
-            'INSERT INTO system_logs (level, action, actor_type, actor_id, target_type, target_id, details) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [level, action, actorType, actorId, targetType, targetId, details]
-        );
+        await insertLogEvent(level, action, actorType, actorId, targetType, targetId, details);
     } catch (err) {
         console.error('[LogService] Failed to log event:', err.message);
     }

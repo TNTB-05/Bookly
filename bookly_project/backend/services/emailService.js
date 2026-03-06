@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const { formatHungarianDateTime: formatDateTime } = require('../utils/dateUtils');
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
@@ -10,14 +11,7 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-function formatDateTime(isoString) {
-    const date = new Date(isoString);
-    return date.toLocaleString('hu-HU', {
-        year: 'numeric', month: 'long', day: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-    });
-}
-
+// Send appointment confirmation email to customer
 async function sendAppointmentConfirmation(appointment) {
     const { customer_email, customer_name, salon_name, service_name, provider_name, appointment_start, appointment_end, price } = appointment;
 
@@ -77,6 +71,7 @@ async function sendAppointmentConfirmation(appointment) {
     });
 }
 
+// Send welcome email to newly registered user or provider
 async function sendWelcomeEmail(user) {
     const { email, name, role } = user;
 
@@ -128,6 +123,7 @@ async function sendWelcomeEmail(user) {
     });
 }
 
+// Send email notifying customer about appointment time/date modification
 async function sendAppointmentModification(appointment) {
     const { customer_email, customer_name, salon_name, service_name, provider_name, appointment_start, appointment_end, price } = appointment;
 
@@ -187,6 +183,7 @@ async function sendAppointmentModification(appointment) {
     });
 }
 
+// Send email notifying customer about appointment cancellation
 async function sendAppointmentCancellation(appointment) {
     const { customer_email, customer_name, salon_name, service_name, appointment_start } = appointment;
 
@@ -242,6 +239,7 @@ async function sendAppointmentCancellation(appointment) {
     });
 }
 
+// Send email confirming password change
 async function sendPasswordChangeConfirmation(user) {
     const { email, name } = user;
 
@@ -293,6 +291,7 @@ async function sendPasswordChangeConfirmation(user) {
     });
 }
 
+// Send waitlist notification when a time slot frees up
 async function sendWaitlistNotification({ user_email, user_name, salon_name, service_name, provider_name, freed_slot_date }) {
     const formattedDate = new Date(freed_slot_date).toLocaleDateString('hu-HU', {
         year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
@@ -363,6 +362,7 @@ async function sendWaitlistNotification({ user_email, user_name, salon_name, ser
     });
 }
 
+// Send a "we miss you" reminder email to an inactive customer
 async function sendCustomerReminder({ customer_email, customer_name, salon_name }) {
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">

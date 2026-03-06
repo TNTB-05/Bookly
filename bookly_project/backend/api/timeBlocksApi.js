@@ -1,63 +1,30 @@
 const express = require('express');
 const router = express.Router();
 const { 
-    pool, 
     getExpandedTimeBlocksForRange,
-    checkAppointmentConflicts,
+    getRawTimeBlocks,
     createTimeBlock, 
     updateTimeBlock, 
     deleteTimeBlock, 
     getTimeBlockById,
     endRecurringBlockAt
-} = require('../sql/database.js');
+} = require('../sql/timeBlockQueries.js');
+const { checkAppointmentConflicts } = require('../sql/appointmentQueries.js');
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
 const { requireRole } = require('./auth/RoleMiddleware.js');
-
-// Middleware to verify provider exists and is active
-const verifyProvider = async (req, res, next) => {
-    try {
-        const providerId = req.user.userId;
-        const [providers] = await pool.query(
-            'SELECT id, status FROM providers WHERE id = ?',
-            [providerId]
-        );
-
-        if (providers.length === 0) {
-            return res.status(403).json({
-                success: false,
-                message: 'Szolgáltató nem található'
-            });
-        }
-
-        if (providers[0].status !== 'active') {
-            return res.status(403).json({
-                success: false,
-                message: 'A fiók nincs aktív státuszban'
-            });
-        }
-
-        req.providerId = providerId;
-        next();
-    } catch (error) {
-        console.error('Provider verification error:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'Hiba történt a hitelesítés során'
-        });
-    }
-};
+const { verifyProvider } = require('../middleware/providerMiddleware.js');
 
 // Apply middleware to all routes
 router.use(AuthMiddleware, requireRole(['provider']), verifyProvider);
 
 // GET /api/provider/time-blocks - List time blocks (expanded) for date range
-router.get('/', async (req, res) => {
+router.get('/', async (request, response) => {
     try {
-        const providerId = req.providerId;
-        const { startDate, endDate } = req.query;
+        const providerId = request.providerId;
+        const { startDate, endDate } = request.query;
 
         if (!startDate || !endDate) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'Kezdő és záró dátum megadása kötelező'
             });
@@ -65,13 +32,13 @@ router.get('/', async (req, res) => {
 
         const expanded = await getExpandedTimeBlocksForRange(providerId, startDate, endDate);
 
-        res.status(200).json({
+        response.status(200).json({
             success: true,
             timeBlocks: expanded
         });
     } catch (error) {
         console.error('Get time blocks error:', error);
-        res.status(500).json({
+        response.status(500).json({
             success: false,
             message: 'Hiba történt az időblokkok lekérdezésekor'
         });
@@ -79,31 +46,19 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/provider/time-blocks/raw - List raw (non-expanded) time blocks
-router.get('/raw', async (req, res) => {
+router.get('/raw', async (request, response) => {
     try {
-        const providerId = req.providerId;
+        const providerId = request.providerId;
 
-        const [rows] = await pool.execute(
-            `SELECT id, provider_id, start_datetime, end_datetime, 
-                    is_recurring, recurrence_pattern, recurrence_days, 
-                    recurrence_end_date, notes, created_at
-             FROM provider_time_blocks
-             WHERE provider_id = ?
-             AND (
-                 (is_recurring = 0 AND DATE(CONVERT_TZ(end_datetime, '+00:00', '+01:00')) >= DATE(CONVERT_TZ(NOW(), '+00:00', '+01:00')))
-                 OR (is_recurring = 1 AND (recurrence_end_date IS NULL OR recurrence_end_date >= DATE(CONVERT_TZ(NOW(), '+00:00', '+01:00'))))
-             )
-             ORDER BY created_at DESC`,
-            [providerId]
-        );
+        const rows = await getRawTimeBlocks(providerId);
 
-        res.status(200).json({
+        response.status(200).json({
             success: true,
             timeBlocks: rows
         });
     } catch (error) {
         console.error('Get raw time blocks error:', error);
-        res.status(500).json({
+        response.status(500).json({
             success: false,
             message: 'Hiba történt az időblokkok lekérdezésekor'
         });
@@ -111,14 +66,14 @@ router.get('/raw', async (req, res) => {
 });
 
 // POST /api/provider/time-blocks - Create new time block
-router.post('/', async (req, res) => {
+router.post('/', async (request, response) => {
     try {
-        const providerId = req.providerId;
-        const { start_datetime, end_datetime, is_recurring, recurrence_pattern, recurrence_days, recurrence_end_date, notes } = req.body;
+        const providerId = request.providerId;
+        const { start_datetime, end_datetime, is_recurring, recurrence_pattern, recurrence_days, recurrence_end_date, notes } = request.body;
 
         // Validate required fields
         if (!start_datetime || !end_datetime) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'Kezdő és záró időpont megadása kötelező'
             });
@@ -129,7 +84,7 @@ router.post('/', async (req, res) => {
 
         // Validate end is after start
         if (endDt <= startDt) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'A záró időpontnak a kezdő időpont után kell lennie'
             });
@@ -138,7 +93,7 @@ router.post('/', async (req, res) => {
         // Validate not in the past
         const now = new Date();
         if (startDt < now && !is_recurring) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'Múltbeli időpontra nem lehet időblokkot létrehozni'
             });
@@ -148,7 +103,7 @@ router.post('/', async (req, res) => {
         if (!is_recurring) {
             const diffDays = (endDt - startDt) / (1000 * 60 * 60 * 24);
             if (diffDays > 30) {
-                return res.status(400).json({
+                return response.status(400).json({
                     success: false,
                     message: 'Az időblokk maximális időtartama 30 nap'
                 });
@@ -158,13 +113,13 @@ router.post('/', async (req, res) => {
         // Validate recurring fields
         if (is_recurring) {
             if (!recurrence_pattern || !['daily', 'weekly'].includes(recurrence_pattern)) {
-                return res.status(400).json({
+                return response.status(400).json({
                     success: false,
                     message: 'Érvénytelen ismétlődési minta'
                 });
             }
             if (recurrence_pattern === 'weekly' && (!recurrence_days || !Array.isArray(recurrence_days) || recurrence_days.length === 0)) {
-                return res.status(400).json({
+                return response.status(400).json({
                     success: false,
                     message: 'Heti ismétlődéshez válasszon napokat'
                 });
@@ -174,7 +129,7 @@ router.post('/', async (req, res) => {
         // Check for appointment conflicts (non-recurring only - for recurring, check first occurrence)
         const conflicts = await checkAppointmentConflicts(providerId, start_datetime, end_datetime);
         if (conflicts.length > 0) {
-            return res.status(409).json({
+            return response.status(409).json({
                 success: false,
                 message: 'Az időblokk ütközik meglévő foglalásokkal',
                 conflicts: conflicts.map(c => ({
@@ -197,7 +152,7 @@ router.post('/', async (req, res) => {
             notes
         });
 
-        res.status(201).json({
+        response.status(201).json({
             success: true,
             message: result.merged 
                 ? `Időblokk sikeresen létrehozva (${result.mergedCount} átfedő blokk összevonva)`
@@ -207,7 +162,7 @@ router.post('/', async (req, res) => {
         });
     } catch (error) {
         console.error('Create time block error:', error);
-        res.status(500).json({
+        response.status(500).json({
             success: false,
             message: 'Hiba történt az időblokk létrehozásakor'
         });
@@ -215,14 +170,14 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/provider/time-blocks/:id - Update time block
-router.put('/:id', async (req, res) => {
+router.put('/:id', async (request, response) => {
     try {
-        const providerId = req.providerId;
-        const blockId = parseInt(req.params.id);
-        const { start_datetime, end_datetime, is_recurring, recurrence_pattern, recurrence_days, recurrence_end_date, notes, targetInstance } = req.body;
+        const providerId = request.providerId;
+        const blockId = parseInt(request.params.id);
+        const { start_datetime, end_datetime, is_recurring, recurrence_pattern, recurrence_days, recurrence_end_date, notes, targetInstance } = request.body;
 
         if (isNaN(blockId)) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'Érvénytelen időblokk azonosító'
             });
@@ -231,7 +186,7 @@ router.put('/:id', async (req, res) => {
         // Verify ownership
         const block = await getTimeBlockById(blockId);
         if (!block || block.provider_id !== providerId) {
-            return res.status(404).json({
+            return response.status(404).json({
                 success: false,
                 message: 'Időblokk nem található'
             });
@@ -242,7 +197,7 @@ router.put('/:id', async (req, res) => {
             const startDt = new Date(start_datetime);
             const endDt = new Date(end_datetime);
             if (endDt <= startDt) {
-                return res.status(400).json({
+                return response.status(400).json({
                     success: false,
                     message: 'A záró időpontnak a kezdő időpont után kell lennie'
                 });
@@ -287,7 +242,7 @@ router.put('/:id', async (req, res) => {
                 notes: block.notes
             });
 
-            return res.status(200).json({
+            return response.status(200).json({
                 success: true,
                 message: 'Időblokk példány sikeresen módosítva'
             });
@@ -298,7 +253,7 @@ router.put('/:id', async (req, res) => {
         if (start_datetime && end_datetime) {
             const conflicts = await checkAppointmentConflicts(providerId, start_datetime, end_datetime);
             if (conflicts.length > 0) {
-                return res.status(409).json({
+                return response.status(409).json({
                     success: false,
                     message: 'Az időblokk ütközik meglévő foglalásokkal',
                     conflicts: conflicts.map(c => ({
@@ -322,13 +277,13 @@ router.put('/:id', async (req, res) => {
             notes: notes !== undefined ? notes : block.notes
         });
 
-        res.status(200).json({
+        response.status(200).json({
             success: true,
             message: 'Időblokk sikeresen frissítve'
         });
     } catch (error) {
         console.error('Update time block error:', error);
-        res.status(500).json({
+        response.status(500).json({
             success: false,
             message: 'Hiba történt az időblokk frissítésekor'
         });
@@ -336,14 +291,14 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/provider/time-blocks/:id - Delete time block
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', async (request, response) => {
     try {
-        const providerId = req.providerId;
-        const blockId = parseInt(req.params.id);
-        const { targetInstance, instanceDate } = req.query;
+        const providerId = request.providerId;
+        const blockId = parseInt(request.params.id);
+        const { targetInstance, instanceDate } = request.query;
 
         if (isNaN(blockId)) {
-            return res.status(400).json({
+            return response.status(400).json({
                 success: false,
                 message: 'Érvénytelen időblokk azonosító'
             });
@@ -352,7 +307,7 @@ router.delete('/:id', async (req, res) => {
         // Verify ownership
         const block = await getTimeBlockById(blockId);
         if (!block || block.provider_id !== providerId) {
-            return res.status(404).json({
+            return response.status(404).json({
                 success: false,
                 message: 'Időblokk nem található'
             });
@@ -389,7 +344,7 @@ router.delete('/:id', async (req, res) => {
                 notes: block.notes
             });
 
-            return res.status(200).json({
+            return response.status(200).json({
                 success: true,
                 message: 'Időblokk példány sikeresen törölve'
             });
@@ -398,13 +353,13 @@ router.delete('/:id', async (req, res) => {
         // Delete entire block (or all future for recurring)
         await deleteTimeBlock(blockId, providerId);
 
-        res.status(200).json({
+        response.status(200).json({
             success: true,
             message: 'Időblokk sikeresen törölve'
         });
     } catch (error) {
         console.error('Delete time block error:', error);
-        res.status(500).json({
+        response.status(500).json({
             success: false,
             message: 'Hiba történt az időblokk törlésekor'
         });

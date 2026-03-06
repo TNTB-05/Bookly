@@ -1,4 +1,4 @@
-const { pool } = require('../sql/database.js');
+const { completeAllExpiredAppointments } = require('../sql/appointmentQueries.js');
 const { logEvent } = require('./logService.js');
 
 // Interval in milliseconds (5 minutes)
@@ -10,14 +10,9 @@ const EXPIRATION_CHECK_INTERVAL = 5 * 60 * 1000;
  *
  * This runs as a background heartbeat — no external scheduler needed.
  */
-async function completeExpiredAppointments() {
+async function runExpirationCheck() {
     try {
-        const [result] = await pool.query(
-            `UPDATE appointments
-             SET status = 'completed'
-             WHERE status = 'scheduled'
-               AND appointment_end < NOW()`
-        );
+        const result = await completeAllExpiredAppointments();
 
         if (result.affectedRows > 0) {
             console.log(`[ExpirationService] Auto-completed ${result.affectedRows} past-due appointment(s)`);
@@ -42,14 +37,14 @@ async function completeExpiredAppointments() {
  */
 function startExpirationJob() {
     // Run immediately on startup
-    completeExpiredAppointments();
+    runExpirationCheck();
 
     // Then run every EXPIRATION_CHECK_INTERVAL ms
-    const intervalId = setInterval(completeExpiredAppointments, EXPIRATION_CHECK_INTERVAL);
+    const intervalId = setInterval(runExpirationCheck, EXPIRATION_CHECK_INTERVAL);
 
     console.log(`[ExpirationService] Heartbeat started (every ${EXPIRATION_CHECK_INTERVAL / 1000}s)`);
 
     return intervalId;
 }
 
-module.exports = { startExpirationJob, completeExpiredAppointments };
+module.exports = { startExpirationJob, runExpirationCheck };

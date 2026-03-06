@@ -7,7 +7,7 @@ const cookieParser = require('cookie-parser'); //?npm install cookie-parser
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, 'Secret.env') }); //?npm install dotenv
 const jwt = require('jsonwebtoken'); //?npm install jsonwebtoken
-const { pool } = require('./sql/database.js'); //?Adatbázis kapcsolat importálása
+const pool = require('./sql/pool'); //?Adatbázis kapcsolat importálása
 
 //!Beállítások
 const app = express();

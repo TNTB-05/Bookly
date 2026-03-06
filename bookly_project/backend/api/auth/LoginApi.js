@@ -1,83 +1,30 @@
 const express = require('express');
 const router = express.Router();
-const database = require('../../sql/database.js');
-const { pool } = require('../../sql/database.js');
-const fs = require('fs/promises');
-const bcrypt = require('bcryptjs'); //?npm install bcrypt
-const jwt = require('jsonwebtoken'); //?npm install jsonwebtoken
-const addUser = require('../../sql/users.js').addUser;
-const getUserByEmail = require('../../sql/users.js').getUserByEmail;
-const getUsers = require('../../sql/users.js').getUsers;
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { getUserByEmail, addUser, reactivateUser } = require('../../sql/userQueries.js');
+const {
+    findRefreshToken,
+    insertUserRefreshToken,
+    insertAdminRefreshToken,
+    deleteRefreshTokenById,
+    deleteRefreshToken,
+    getAdminByEmail,
+    getAdminById,
+    getUserStatus,
+    updateUserLastLogin,
+    updateAdminLastLogin,
+    getUserForReactivation
+} = require('../../sql/authQueries.js');
+const { getProviderStatus } = require('../../sql/providerQueries.js');
+const { generateCustomerTokens, generateAdminTokens, setAuthCookies } = require('../../utils/authUtils.js');
 const { logEvent } = require('../../services/logService.js');
 const { sendWelcomeEmail } = require('../../services/emailService.js');
 
 
-//!Multer
-const multer = require('multer'); //?npm install multer
-const path = require('path');
-
-const storage = multer.diskStorage({
-    destination: (request, file, callback) => {
-        callback(null, path.join(__dirname, '../uploads'));
-    },
-    filename: (request, file, callback) => {
-        callback(null, Date.now() + '-' + file.originalname); //?egyedi név: dátum - file eredeti neve
-    }
-});
-
-const upload = multer({ storage });
-
-
 //!Endpoints:
 
-// Helper function to generate tokens
-const generateTokens = (email, userId, name, role = 'customer') => {
-    if (!process.env.JWT_SECRET) {
-        console.error('JWT_SECRET is not configured');
-        throw new Error('Server configuration error: JWT_SECRET missing');
-    }
-    
-    if (!process.env.JWT_REFRESH_SECRET) {
-        console.error('JWT_REFRESH_SECRET is not configured');
-        throw new Error('Server configuration error: JWT_REFRESH_SECRET missing');
-    }
-
-    const accessToken = jwt.sign(
-        { email, userId, name, role },
-        process.env.JWT_SECRET,
-        { expiresIn: '15m' } // Short-lived access token
-    );
-
-    const refreshToken = jwt.sign(
-        { email, userId, name, role },
-        process.env.JWT_REFRESH_SECRET,
-        { expiresIn: '7d' } // Long-lived refresh token
-    );
-
-    return { accessToken, refreshToken };
-};
-
-// Stricter token generation for admin accounts
-const generateAdminTokens = (email, adminId, name) => {
-    if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
-        throw new Error('Server configuration error: JWT secrets missing');
-    }
-
-    const accessToken = jwt.sign(
-        { email, userId: adminId, name, role: 'admin' },
-        process.env.JWT_SECRET,
-        { expiresIn: '5m' } // Very short-lived for admin security
-    );
-
-    const refreshToken = jwt.sign(
-        { email, userId: adminId, name, role: 'admin' },
-        process.env.JWT_REFRESH_SECRET,
-        { expiresIn: '1h' } // 1 hour admin session max
-    );
-
-    return { accessToken, refreshToken };
-};
-
+// POST /api/auth/register — register a new customer account
 router.post('/register', async (request, response) => {
     const { name, email, password } = request.body;
 
@@ -125,6 +72,7 @@ router.post('/register', async (request, response) => {
     }
 });
 
+// POST /api/auth/login — authenticate customer and return JWT tokens
 router.post('/login', async (request, response) => {
     const { email, password } = request.body;
 
@@ -197,28 +145,19 @@ router.post('/login', async (request, response) => {
         }
 
         // Generate both access and refresh tokens
-        const { accessToken, refreshToken } = generateTokens(email, user.id, user.name, 'customer');
+        const { accessToken, refreshToken } = generateCustomerTokens({ email, userId: user.id, name: user.name });
 
         // Store refresh token in database (user_id for customers)
-        await pool.query(
-            'INSERT INTO RefTokens (user_id, refresh_token) VALUES (?, ?)',
-            [user.id, refreshToken]
-        );
+        await insertUserRefreshToken(user.id, refreshToken);
 
         // Update last_login
-        await pool.query('UPDATE users SET last_login = NOW() WHERE id = ?', [user.id]);
+        await updateUserLastLogin(user.id);
 
         // Log login event
         await logEvent('INFO', 'USER_LOGIN', 'user', user.id, 'user', user.id, `User ${email} logged in`);
 
         // Send refresh token as HTTP-only cookie
-        response.cookie('refreshToken', refreshToken, {
-            httpOnly: true,      
-            secure: false,  
-            sameSite: 'lax',  
-            path: '/',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-        });
+        setAuthCookies(response, refreshToken);
 
         response.status(200).json({
             success: true,
@@ -234,7 +173,7 @@ router.post('/login', async (request, response) => {
     }
 });
 
-// Refresh token endpoint (works for both customers and providers)
+// POST /api/auth/refresh — refresh access token using HTTP-only cookie
 router.post('/refresh', async (request, response) => {
     const refreshToken = request.cookies.refreshToken;
 
@@ -261,12 +200,9 @@ router.post('/refresh', async (request, response) => {
         );
 
         // Check if token exists in database
-        const [tokens] = await pool.query(
-            'SELECT id, user_id, provider_id, admin_id FROM RefTokens WHERE refresh_token = ?',
-            [refreshToken]
-        );
+        const tokenRecord = await findRefreshToken(refreshToken);
 
-        if (tokens.length === 0) {
+        if (!tokenRecord) {
             response.clearCookie('refreshToken');
             return response.status(401).json({
                 success: false,
@@ -274,13 +210,11 @@ router.post('/refresh', async (request, response) => {
             });
         }
 
-        const tokenRecord = tokens[0];
-
         // Validate user still exists and is active based on role
         if (decoded.role === 'provider') {
             // Verify token belongs to a provider
             if (!tokenRecord.provider_id) {
-                await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
+                await deleteRefreshTokenById(tokenRecord.id);
                 response.clearCookie('refreshToken');
                 return response.status(401).json({
                     success: false,
@@ -288,15 +222,12 @@ router.post('/refresh', async (request, response) => {
                 });
             }
 
-            const [providers] = await pool.query(
-                'SELECT id, status FROM providers WHERE id = ?',
-                [tokenRecord.provider_id]
-            );
+            const provider = await getProviderStatus(tokenRecord.provider_id);
 
-            if (providers.length === 0 || providers[0].status === 'deleted' || providers[0].status === 'banned') {
-                await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
+            if (!provider || provider.status === 'deleted' || provider.status === 'banned') {
+                await deleteRefreshTokenById(tokenRecord.id);
                 response.clearCookie('refreshToken');
-                const reason = providers.length > 0 && providers[0].status === 'banned' ? 'banned' : 'gdpr';
+                const reason = provider && provider.status === 'banned' ? 'banned' : 'gdpr';
                 return response.status(401).json({
                     success: false,
                     message: reason === 'banned' ? 'A fiókod le lett tiltva.' : 'A fiók GDPR törlés miatt megszűnt.',
@@ -307,7 +238,7 @@ router.post('/refresh', async (request, response) => {
         } else if (decoded.role === 'admin') {
             // Admin validation - verify token belongs to an admin
             if (!tokenRecord.admin_id) {
-                await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
+                await deleteRefreshTokenById(tokenRecord.id);
                 response.clearCookie('refreshToken');
                 return response.status(401).json({
                     success: false,
@@ -315,13 +246,10 @@ router.post('/refresh', async (request, response) => {
                 });
             }
 
-            const [admins] = await pool.query(
-                'SELECT id FROM admins WHERE id = ?',
-                [tokenRecord.admin_id]
-            );
+            const admin = await getAdminById(tokenRecord.admin_id);
 
-            if (admins.length === 0) {
-                await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
+            if (!admin) {
+                await deleteRefreshTokenById(tokenRecord.id);
                 response.clearCookie('refreshToken');
                 return response.status(401).json({
                     success: false,
@@ -331,7 +259,7 @@ router.post('/refresh', async (request, response) => {
         } else {
             // Customer validation - verify token belongs to a user
             if (!tokenRecord.user_id) {
-                await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
+                await deleteRefreshTokenById(tokenRecord.id);
                 response.clearCookie('refreshToken');
                 return response.status(401).json({
                     success: false,
@@ -339,15 +267,12 @@ router.post('/refresh', async (request, response) => {
                 });
             }
 
-            const [users] = await pool.query(
-                'SELECT id, status FROM users WHERE id = ?',
-                [tokenRecord.user_id]
-            );
+            const user = await getUserStatus(tokenRecord.user_id);
 
-            if (users.length === 0 || users[0].status === 'banned' || users[0].status === 'deleted') {
-                await pool.query('DELETE FROM RefTokens WHERE id = ?', [tokenRecord.id]);
+            if (!user || user.status === 'banned' || user.status === 'deleted') {
+                await deleteRefreshTokenById(tokenRecord.id);
                 response.clearCookie('refreshToken');
-                const reason = users.length > 0 && users[0].status === 'banned' ? 'banned' : 'gdpr';
+                const reason = user && user.status === 'banned' ? 'banned' : 'gdpr';
                 return response.status(401).json({
                     success: false,
                     message: reason === 'banned' ? 'A fiókod le lett tiltva.' : 'A fiók GDPR törlés miatt megszűnt.',
@@ -376,7 +301,7 @@ router.post('/refresh', async (request, response) => {
         
         // Remove invalid token from database if it exists
         try {
-            await pool.query('DELETE FROM RefTokens WHERE refresh_token = ?', [refreshToken]);
+            await deleteRefreshToken(refreshToken);
         } catch (dbError) {
             console.error('Error removing invalid token:', dbError);
         }
@@ -390,22 +315,14 @@ router.post('/refresh', async (request, response) => {
     }
 });
 
-// Logout endpoint (works for both customers and providers)
+// POST /api/auth/logout — clear refresh token cookie and delete from DB
 router.post('/logout', async (request, response) => {
     const refreshToken = request.cookies.refreshToken;
-    
-    console.log('=== LOGOUT ===');
-    console.log('Cookie received:', !!refreshToken);
     
     // Remove token from database
     if (refreshToken) {
         try {
-            // Decode token to get user/provider ID
-            const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-            
-            // Delete the token from RefTokens table
-            const [result] = await pool.query('DELETE FROM RefTokens WHERE refresh_token = ?', [refreshToken]);
-            console.log('Deleted rows:', result.affectedRows);
+            await deleteRefreshToken(refreshToken);
         } catch (error) {
             console.error('Error deleting refresh token:', error);
         }
@@ -424,7 +341,7 @@ router.post('/logout', async (request, response) => {
     });
 });
 
-// Admin login endpoint - authenticates against separate admins table
+// POST /api/auth/admin/login — authenticate admin with separate credentials
 router.post('/admin/login', async (request, response) => {
     const { email, password } = request.body;
 
@@ -437,19 +354,14 @@ router.post('/admin/login', async (request, response) => {
 
     try {
         // Query admins table (separate from users for security)
-        const [admins] = await pool.query(
-            'SELECT id, name, email, password_hash FROM admins WHERE email = ?',
-            [email]
-        );
+        const admin = await getAdminByEmail(email);
 
-        if (admins.length === 0) {
+        if (!admin) {
             return response.status(422).json({
                 success: false,
                 message: 'Érvénytelen email vagy jelszó'
             });
         }
-
-        const admin = admins[0];
 
         const passwordMatch = await bcrypt.compare(password, admin.password_hash);
         
@@ -461,28 +373,19 @@ router.post('/admin/login', async (request, response) => {
         }
 
         // Generate tokens with admin-specific shorter durations
-        const { accessToken, refreshToken } = generateAdminTokens(email, admin.id, admin.name);
+        const { accessToken, refreshToken } = generateAdminTokens({ email, adminId: admin.id, name: admin.name });
 
         // Store refresh token in database (admin_id for admins - separate column)
-        await pool.query(
-            'INSERT INTO RefTokens (admin_id, refresh_token) VALUES (?, ?)',
-            [admin.id, refreshToken]
-        );
+        await insertAdminRefreshToken(admin.id, refreshToken);
 
         // Update last_login on admins table
-        await pool.query('UPDATE admins SET last_login = NOW() WHERE id = ?', [admin.id]);
+        await updateAdminLastLogin(admin.id);
 
         // Log admin login event
         await logEvent('INFO', 'ADMIN_LOGIN', 'admin', admin.id, 'admin', admin.id, `Admin ${email} logged in`);
 
         // Send refresh token as HTTP-only cookie (1 hour for admin)
-        response.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: false,
-            sameSite: 'lax',
-            path: '/',
-            maxAge: 1 * 60 * 60 * 1000 // 1 hour (admin)
-        });
+        setAuthCookies(response, refreshToken, { maxAge: 1 * 60 * 60 * 1000 });
 
         response.status(200).json({
             success: true,
@@ -498,7 +401,7 @@ router.post('/admin/login', async (request, response) => {
     }
 });
 
-// Reactivate a self-deleted user account
+// POST /api/auth/reactivate — reactivate a self-deleted user account
 router.post('/reactivate', async (request, response) => {
     const { reactivationToken, name, phone, address } = request.body;
 
@@ -537,19 +440,14 @@ router.post('/reactivate', async (request, response) => {
         const userId = decoded.userId;
 
         // Verify user exists and is still in deleted state
-        const [users] = await pool.query(
-            'SELECT id, email, status, deleted_at FROM users WHERE id = ?',
-            [userId]
-        );
+        const user = await getUserForReactivation(userId);
 
-        if (users.length === 0) {
+        if (!user) {
             return response.status(404).json({
                 success: false,
                 message: 'Felhasználó nem található'
             });
         }
-
-        const user = users[0];
 
         if (user.status !== 'deleted') {
             return response.status(400).json({
@@ -572,40 +470,22 @@ router.post('/reactivate', async (request, response) => {
         }
 
         // Reactivate: update profile and set status to active
-        await pool.query(
-            `UPDATE users 
-             SET status = 'active',
-                 name = ?,
-                 phone = ?,
-                 address = ?,
-                 deleted_at = NULL
-             WHERE id = ?`,
-            [name.trim(), phone?.trim() || null, address?.trim() || null, userId]
-        );
+        await reactivateUser(userId, name.trim(), phone?.trim() || null, address?.trim() || null);
 
         // Generate tokens for the reactivated user
-        const { accessToken, refreshToken } = generateTokens(user.email, userId, name.trim(), 'customer');
+        const { accessToken, refreshToken } = generateCustomerTokens({ email: user.email, userId, name: name.trim() });
 
         // Store refresh token in database
-        await pool.query(
-            'INSERT INTO RefTokens (user_id, refresh_token) VALUES (?, ?)',
-            [userId, refreshToken]
-        );
+        await insertUserRefreshToken(userId, refreshToken);
 
         // Update last_login
-        await pool.query('UPDATE users SET last_login = NOW() WHERE id = ?', [userId]);
+        await updateUserLastLogin(userId);
 
         // Log reactivation event
         await logEvent('INFO', 'USER_REACTIVATION', 'user', userId, 'user', userId, `User ${user.email} reactivated their account`);
 
         // Send refresh token as HTTP-only cookie
-        response.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: false,
-            sameSite: 'lax',
-            path: '/',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
+        setAuthCookies(response, refreshToken);
 
         response.status(200).json({
             success: true,

@@ -11,6 +11,8 @@ import BuildingIcon from '../../../../icons/BuildingIcon';
 import CalendarSimpleIcon from '../../../../icons/CalendarSimpleIcon';
 import ClipboardCheckIcon from '../../../../icons/ClipboardCheckIcon';
 import StarSmallIcon from '../../../../icons/StarSmallIcon';
+import LeftArrowIcon from '../../../../icons/LeftArrowIcon';
+import RightArrowIcon from '../../../../icons/RightArrowIcon';
 
 // Komponensek
 import SalonCard from '../SalonCard';
@@ -42,12 +44,14 @@ export default function OverviewTab({
     // Map state
     const [mapSalons, setMapSalons] = useState([]);
     const [mapLoading, setMapLoading] = useState(false);
+    const [selectedSalonId, setSelectedSalonId] = useState(null);
     
     // Suggestions state
     const [suggestions, setSuggestions] = useState({ salons: [], serviceTypes: [] });
     const [showSuggestions, setShowSuggestions] = useState(false);
     const searchContainerRef = useRef(null);
     const locationContainerRef = useRef(null);
+    const recommendedCarouselRef = useRef(null);
 
     // Address autocomplete for the location input (shared hook)
     const {
@@ -157,14 +161,20 @@ export default function OverviewTab({
         setSearchActive(true);
         setSearchLoading(true);
 
-        const results = await searchSalons({
+        const { salons, resolvedLocation } = await searchSalons({
             searchQuery,
             locationSearch,
             serviceFilter,
             userLocation
         });
 
-        setSearchResults(results || []);
+        setSearchResults(salons || []);
+
+        // If backend geocoded a place name, set user location for red marker + distances
+        if (resolvedLocation && !userLocation) {
+            setUserLocation(resolvedLocation);
+        }
+
         setSearchLoading(false);
     }
 
@@ -240,6 +250,20 @@ export default function OverviewTab({
         setLocationSearch(shortAddress);
         setUserLocation({ latitude: parseFloat(lat), longitude: parseFloat(lon) });
         clearAddressSuggestions();
+    }
+
+    // Scroll the recommended salons carousel left/right
+    function scrollRecommendedCarousel(direction) {
+        if (recommendedCarouselRef.current) {
+            const cardWidth = 320;
+            const gap = 24;
+            const scrollAmount = cardWidth + gap;
+            const newScrollPosition = recommendedCarouselRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+            recommendedCarouselRef.current.scrollTo({
+                left: newScrollPosition,
+                behavior: 'smooth'
+            });
+        }
     }
 
     // Close address suggestions on outside click
@@ -411,67 +435,77 @@ export default function OverviewTab({
                             </p>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                                {/* Keresési eredmények cards - Show when search is active */}
-            {searchActive && (
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                    <div className="flex items-center justify-between mb-8">
+            {/* Search results + Map — side-by-side when search active */}
+            {searchActive ? (
+                <div className="w-[92%] mx-auto pt-4 pb-0 flex flex-col" style={{ height: 'calc(100vh - 80px)' }}>
+                    {/* Header — compact */}
+                    <div className="flex items-center justify-between mb-3 px-1">
                         <div>
-                            <h2 className="text-2xl font-bold text-dark-blue">Keresési eredmények</h2>
-                            <p className="text-gray-600 mt-1">{searchLoading ? 'Keresés...' : `${searchResults.length} találat`}</p>
+                            <h2 className="text-xl font-bold text-dark-blue">Keresési eredmények</h2>
+                            <p className="text-gray-600 text-sm">{searchLoading ? 'Keresés...' : `${searchResults.length} találat`}</p>
                         </div>
                     </div>
-                    {searchLoading ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {Array(4).fill(0).map((_, i) => (
-                                <SkeletonCard key={i} className="p-0 overflow-hidden">
-                                    <SkeletonBlock className="h-36 w-full rounded-none rounded-t-xl" />
-                                    <div className="p-4 space-y-2">
-                                        <SkeletonText lines={2} />
-                                    </div>
-                                </SkeletonCard>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {searchResults.map((salon) => (
-                                <SalonCard
-                                    key={salon.id}
-                                    salon={salon}
-                                    savedSalonIds={savedSalonIds}
-                                    toggleSaveSalon={toggleSaveSalon}
-                                    showDistance={true}
-                                />
-                            ))}
 
-                            {/* Empty state */}
-                            {searchResults.length === 0 && (
-                                <div className="col-span-full text-center py-12 bg-white/40 backdrop-blur-md rounded-xl border border-white/50">
+                    {/* Side-by-side layout: Map (left ~78%) + Cards (right ~22%) */}
+                    <div className="flex flex-col lg:flex-row gap-3 flex-1 min-h-0">
+                        {/* Map — dominant area, fills remaining height */}
+                        <div className="w-full lg:w-[78%] h-80 sm:h-96 lg:h-full">
+                            <SalonMap salons={displayedMapSalons} userLocation={userLocation} height="100%" selectedSalonId={selectedSalonId} />
+                        </div>
+
+                        {/* Cards column — compact, scrollable */}
+                        <div className="w-full lg:w-[22%] lg:h-full lg:overflow-y-auto space-y-2 lg:pr-0.5">
+                            {searchLoading ? (
+                                <div className="space-y-2">
+                                    {Array(3).fill(0).map((_, i) => (
+                                        <SkeletonCard key={i} className="p-0 overflow-hidden">
+                                            <SkeletonBlock className="h-16 w-full rounded-none rounded-t-xl" />
+                                            <div className="p-3 space-y-2">
+                                                <SkeletonText lines={2} />
+                                            </div>
+                                        </SkeletonCard>
+                                    ))}
+                                </div>
+                            ) : searchResults.length > 0 ? (
+                                searchResults.map((salon) => (
+                                    <SalonCard
+                                        key={salon.id}
+                                        salon={salon}
+                                        savedSalonIds={savedSalonIds}
+                                        toggleSaveSalon={toggleSaveSalon}
+                                        showDistance={true}
+                                        compact={true}
+                                        onCardClick={() => setSelectedSalonId(prev => prev === salon.id ? null : salon.id)}
+                                    />
+                                ))
+                            ) : (
+                                <div className="text-center py-8 bg-white/40 backdrop-blur-md rounded-xl border border-white/50">
                                     {!searchQuery.trim() && !locationSearch.trim() && serviceFilter === 'all' ? (
                                         <div>
-                                            <p className="text-gray-700 font-medium text-lg mb-2">Keresési feltétel szükséges</p>
-                                            <p className="text-gray-500">Kérjük, adj meg egy szalon nevet, válassz szolgáltatást vagy add meg a helyzeted!</p>
+                                            <p className="text-gray-700 font-medium text-sm mb-1">Keresési feltétel szükséges</p>
+                                            <p className="text-gray-500 text-xs">Kérjük, adj meg egy szalon nevet, válassz szolgáltatást vagy add meg a helyzeted!</p>
                                         </div>
                                     ) : (
-                                        <p className="text-gray-500">Nincs találat a keresési feltételeknek megfelelően</p>
+                                        <p className="text-gray-500 text-sm">Nincs találat a keresési feltételeknek megfelelően</p>
                                     )}
                                 </div>
                             )}
                         </div>
+                    </div>
+                </div>
+            ) : (
+                /* Default map — full width, no search results */
+                <div className="max-w-7xl mx-auto mt-6 px-4 sm:px-6 lg:px-8">
+                    {mapLoading ? (
+                        <div className="h-125 rounded-2xl animate-pulse bg-gray-200" />
+                    ) : (
+                        <SalonMap salons={displayedMapSalons} userLocation={userLocation} />
                     )}
                 </div>
             )}
-
-                    {/* Map Section */}
-                    <div className="max-w-7xl mx-auto mt-6 px-4 sm:px-6 lg:px-8">
-                        {mapLoading ? (
-                            <div className="h-125 rounded-2xl animate-pulse bg-gray-200" />
-                        ) : (
-                            <SalonMap salons={displayedMapSalons} userLocation={userLocation} />
-                        )}
-                    </div>
-                </div>
-            </div>
 
 
 
@@ -484,17 +518,39 @@ export default function OverviewTab({
                         <h2 className="text-2xl font-bold text-dark-blue">Ajánlott neked</h2>
                         <span className="text-sm text-gray-400">aktivitásod alapján</span>
                     </div>
-                    <div className="flex gap-4 overflow-x-auto pb-2">
-                        {recommendedSalons.map(salon => (
-                            <div key={salon.id} className="shrink-0 w-72">
-                                <SalonCard
-                                    salon={salon}
-                                    savedSalonIds={savedSalonIds}
-                                    toggleSaveSalon={toggleSaveSalon}
-                                    showDistance={true}
-                                />
+                    <div className="relative group">
+                        {/* Left Arrow */}
+                        <button
+                            onClick={() => scrollRecommendedCarousel('left')}
+                            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
+                            aria-label="Scroll left"
+                        >
+                            <LeftArrowIcon />
+                        </button>
+
+                        {/* Right Arrow */}
+                        <button
+                            onClick={() => scrollRecommendedCarousel('right')}
+                            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
+                            aria-label="Scroll right"
+                        >
+                            <RightArrowIcon />
+                        </button>
+
+                        <div ref={recommendedCarouselRef} className="overflow-x-auto pb-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                            <div className="flex gap-6" style={{ minWidth: 'min-content' }}>
+                                {recommendedSalons.map(salon => (
+                                    <div key={salon.id} className="shrink-0 w-80">
+                                        <SalonCard
+                                            salon={salon}
+                                            savedSalonIds={savedSalonIds}
+                                            toggleSaveSalon={toggleSaveSalon}
+                                            showDistance={true}
+                                        />
+                                    </div>
+                                ))}
                             </div>
-                        ))}
+                        </div>
                     </div>
                 </div>
             )}
