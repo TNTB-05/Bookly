@@ -1,50 +1,94 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Login page', () => {
+test.beforeEach(async ({ page }) => {
+  await page.goto('/login');
+});
 
-  test('shows error with empty fields', async ({ page }) => {
-    await page.goto('/login');
-    await page.screenshot({ path: 'screenshots/login-1-empty-form.png' });
+test('login page loads correctly', async ({ page }) => {
+  await expect(page).toHaveURL(/\/login/);
+  await expect(page.getByRole('textbox', { name: 'Email cím' })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Jelszó' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Bejelentkezés' })).toBeVisible();
+  await page.screenshot({ path: 'screenshots/login/01-login-page.png' });
+});
 
-    // Submit the form without filling anything in
-    await page.getByRole('button', { name: 'Bejelentkezés' }).click();
+test('login fails with both fields empty', async ({ page }) => {
+  // Disable HTML5 native validation so React's error handler fires
+  await page.locator('form').evaluate(form => form.noValidate = true);
+  await page.getByRole('button', { name: 'Bejelentkezés' }).click();
+  await expect(page.getByText('Minden mező kitöltése kötelező')).toBeVisible();
+  await page.screenshot({ path: 'screenshots/login/02-both-empty.png' });
+  await expect(page).toHaveURL(/\/login/);
+});
 
-    // Expect client-side validation error
-    await expect(page.locator('.text-red-700')).toContainText('Minden mező kitöltése kötelező');
-    await page.screenshot({ path: 'screenshots/login-2-empty-error.png' });
-  });
+test('login fails with empty email', async ({ page }) => {
+  await page.locator('form').evaluate(form => form.noValidate = true);
+  await page.getByRole('textbox', { name: 'Jelszó' }).fill('password123');
+  await page.getByRole('button', { name: 'Bejelentkezés' }).click();
+  await expect(page.getByText('Minden mező kitöltése kötelező')).toBeVisible();
+  await page.screenshot({ path: 'screenshots/login/03-empty-email.png' });
+  await expect(page).toHaveURL(/\/login/);
+});
 
-  test('shows error with wrong credentials', async ({ page }) => {
-    await page.goto('/login');
+test('login fails with empty password', async ({ page }) => {
+  await page.locator('form').evaluate(form => form.noValidate = true);
+  await page.getByRole('textbox', { name: 'Email cím' }).fill('test@test.com');
+  await page.getByRole('button', { name: 'Bejelentkezés' }).click();
+  await expect(page.getByText('Minden mező kitöltése kötelező')).toBeVisible();
+  await page.screenshot({ path: 'screenshots/login/04-empty-password.png' });
+  await expect(page).toHaveURL(/\/login/);
+});
 
-    // Fill in wrong credentials
-    await page.getByLabel('Email cím').fill('nonexistent@test.com');
-    await page.getByLabel('Jelszó').fill('wrongpassword');
-    await page.screenshot({ path: 'screenshots/login-3-wrong-creds.png' });
+test('login fails with wrong password', async ({ page }) => {
+  await page.getByRole('textbox', { name: 'Email cím' }).fill('test@test.com');
+  await page.getByRole('textbox', { name: 'Jelszó' }).fill('wrongpassword');
+  await page.getByRole('button', { name: 'Bejelentkezés' }).click();
+  await expect(page.getByText('Hibás e-mail vagy jelszó')).toBeVisible({ timeout: 10000 });
+  await page.screenshot({ path: 'screenshots/login/05-wrong-password.png' });
+  await expect(page).toHaveURL(/\/login/);
+});
 
-    // Submit the form
-    await page.getByRole('button', { name: 'Bejelentkezés' }).click();
+test('login fails with invalid email format', async ({ page }) => {
+  // Disable HTML5 native validation (type="email" would catch this before React)
+  await page.locator('form').evaluate(form => form.noValidate = true);
+  await page.getByRole('textbox', { name: 'Email cím' }).fill('notanemail');
+  await page.getByRole('textbox', { name: 'Jelszó' }).fill('password123');
+  await page.getByRole('button', { name: 'Bejelentkezés' }).click();
+  await expect(page.locator('.text-red-700')).toBeVisible({ timeout: 10000 });
+  await page.screenshot({ path: 'screenshots/login/06-invalid-email.png' });
+  await expect(page).toHaveURL(/\/login/);
+});
 
-    // Wait for server response error
-    await expect(page.locator('.text-red-700')).toBeVisible({ timeout: 10000 });
-    await page.screenshot({ path: 'screenshots/login-4-wrong-creds-error.png' });
-  });
+test('login fails with non-existent email', async ({ page }) => {
+  await page.getByRole('textbox', { name: 'Email cím' }).fill('nonexistent@email.com');
+  await page.getByRole('textbox', { name: 'Jelszó' }).fill('password123');
+  await page.getByRole('button', { name: 'Bejelentkezés' }).click();
+  await expect(page.getByText('Hibás e-mail vagy jelszó')).toBeVisible({ timeout: 10000 });
+  await page.screenshot({ path: 'screenshots/login/07-nonexistent-email.png' });
+  await expect(page).toHaveURL(/\/login/);
+});
 
-  test('successful login redirects to dashboard', async ({ page }) => {
-    await page.goto('/login');
+test('login succeeds with correct credentials', async ({ page }) => {
+  // Ensure a user exists: register first (idempotent — duplicate email is silently ignored)
+  const email = 'playwright-login@test.com';
+  const password = 'asdasdasd';
+  await page.goto('/register');
+  await page.getByRole('textbox', { name: 'Név' }).fill('Login Tester');
+  await page.getByRole('textbox', { name: 'Email cím' }).fill(email);
+  await page.getByRole('textbox', { name: 'Jelszó', exact: true }).fill(password);
+  await page.getByRole('textbox', { name: 'Jelszó megerősítése' }).fill(password);
+  await page.getByRole('button', { name: 'Regisztráció' }).click();
+  await Promise.race([
+    page.waitForURL('**/login', { timeout: 10000 }),
+    expect(page.getByText('Ez az e-mail cím már használatban van')).toBeVisible({ timeout: 10000 }),
+  ]).catch(() => {});
 
-    // Fill in valid credentials (test user must already exist)
-    await page.getByLabel('Email cím').fill('test@test.com');
-    await page.getByLabel('Jelszó').fill('asdasdasd');
-    await page.screenshot({ path: 'screenshots/login-5-valid-creds.png' });
-
-    // Submit the form
-    await page.getByRole('button', { name: 'Bejelentkezés' }).click();
-
-    // Should redirect to dashboard
-    await page.waitForURL('**/dashboard', { timeout: 10000 });
-    await expect(page).toHaveURL(/\/dashboard/);
-    await page.screenshot({ path: 'screenshots/login-6-dashboard.png' });
-  });
-
+  // Now login with the guaranteed-existing user
+  await page.goto('/login');
+  await page.getByRole('textbox', { name: 'Email cím' }).fill(email);
+  await page.getByRole('textbox', { name: 'Jelszó' }).fill(password);
+  await page.getByRole('button', { name: 'Bejelentkezés' }).click();
+  await page.waitForURL(/\/dashboard/, { timeout: 10000 });
+  await page.screenshot({ path: 'screenshots/login/08-login-success.png' });
+  await expect(page).toHaveURL(/\/dashboard/);
 });
