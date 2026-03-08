@@ -136,7 +136,7 @@ test.describe('Registration and login', () => {
     await page.getByRole('textbox', { name: 'Jelszó' }).fill(password);
     await page.screenshot({ path: 'screenshots/register/13-login-form.png' });
     await page.getByRole('button', { name: 'Bejelentkezés' }).click();
-    await page.waitForURL('**/dashboard', { timeout: 10000 });
+    await page.waitForTimeout(5000);
     await expect(page).toHaveURL(/\/dashboard/);
     await page.screenshot({ path: 'screenshots/register/14-dashboard.png' });
   });

@@ -88,7 +88,7 @@ test('login succeeds with correct credentials', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Email cím' }).fill(email);
   await page.getByRole('textbox', { name: 'Jelszó' }).fill(password);
   await page.getByRole('button', { name: 'Bejelentkezés' }).click();
-  await page.waitForURL(/\/dashboard/, { timeout: 10000 });
+  await page.waitForTimeout(5000);
   await page.screenshot({ path: 'screenshots/login/08-login-success.png' });
   await expect(page).toHaveURL(/\/dashboard/);
 });
