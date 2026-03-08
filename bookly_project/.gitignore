@@ -3,3 +3,7 @@
 -env fájlok ignorálása
 .env
 .DS_Store
+# Playwright generated output
+tests/playwright-report/
+tests/test-results/
+tests/screenshots/
