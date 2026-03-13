@@ -3,6 +3,7 @@ import { authApi } from '../auth/auth';
 import AddressInput from './AddressInput';
 import { useNotification } from '../../components/NotificationContext';
 import { SkeletonBlock } from '../../components/skeletons';
+import { API_URL } from '../../config';
 
 const PRESET_COLORS = [
     '#3B82F6', '#1E40AF', '#6366F1', '#8B5CF6', '#A855F7',
@@ -578,7 +579,7 @@ const SalonManagement = () => {
                                 className="h-28 relative"
                                 style={
                                     bannerPreview || salon.banner_image_url
-                                        ? { backgroundImage: `url(${bannerPreview || (import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.banner_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                                        ? { backgroundImage: `url(${bannerPreview || API_URL + salon.banner_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
                                         : { background: `linear-gradient(135deg, ${brandingColor} 0%, ${brandingColor}dd 100%)` }
                                 }
                             >
@@ -586,7 +587,7 @@ const SalonManagement = () => {
                                     <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center shadow-md overflow-hidden">
                                         {logoPreview || salon.logo_url ? (
                                             <img
-                                                src={logoPreview || (import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.logo_url}
+                                                src={logoPreview || API_URL + salon.logo_url}
                                                 alt="Logo"
                                                 className="w-full h-full object-cover"
                                             />
@@ -642,7 +643,7 @@ const SalonManagement = () => {
                             <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50">
                                 {logoPreview || salon.logo_url ? (
                                     <img
-                                        src={logoPreview || (import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.logo_url}
+                                        src={logoPreview || API_URL + salon.logo_url}
                                         alt="Logo preview"
                                         className="w-full h-full object-cover"
                                     />
@@ -686,7 +687,7 @@ const SalonManagement = () => {
                             {(bannerPreview || salon.banner_image_url) && (
                                 <div className="w-full h-20 rounded-lg overflow-hidden border border-gray-200">
                                     <img
-                                        src={bannerPreview || (import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.banner_image_url}
+                                        src={bannerPreview || API_URL + salon.banner_image_url}
                                         alt="Banner preview"
                                         className="w-full h-full object-cover"
                                     />

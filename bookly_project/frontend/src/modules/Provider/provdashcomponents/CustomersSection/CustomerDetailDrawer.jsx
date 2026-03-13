@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { authApi } from '../../../auth/auth';
 import { SkeletonCard, SkeletonAvatar, SkeletonText } from '../../../../components/skeletons';
+import { API_URL } from '../../../../config';
 
 const getInitials = (name) => {
     if (!name) return '?';
@@ -42,7 +43,7 @@ const CustomerDetailDrawer = ({ customer, onClose, onRemind, onOpenChat }) => {
     const [detail, setDetail] = useState(null);
     const [loading, setLoading] = useState(false);
     const [reminding, setReminding] = useState(false);
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const apiUrl = API_URL;
 
     const formatDate = (d) => d ? new Date(d).toLocaleDateString('hu-HU', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Europe/Budapest' }) : '–';
     const formatDateShort = (d) => d ? new Date(d).toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Budapest' }) : '–';

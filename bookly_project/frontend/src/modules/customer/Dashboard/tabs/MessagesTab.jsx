@@ -5,6 +5,7 @@ import { getUserFromToken, authApi } from '../../../auth/auth.js';
 import { getConversations, getMessages, startConversation, sendMessage, markRead, deleteConversation } from '../../../../services/messagingService.js';
 import ConversationList from '../../../messaging/ConversationList.jsx';
 import MessageThread from '../../../messaging/MessageThread.jsx';
+import { API_URL } from '../../../../config';
 
 export default function MessagesTab({ onUnreadChange }) {
     const [conversations, setConversations] = useState([]);
@@ -23,7 +24,7 @@ export default function MessagesTab({ onUnreadChange }) {
 
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const apiUrl = API_URL;
 
         socketRef.current = io(apiUrl, { auth: { token } });
 

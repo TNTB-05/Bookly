@@ -1,4 +1,5 @@
-const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+import { API_URL } from '../../../config';
+const apiUrl = API_URL;
 
 const getInitials = (name) => {
     if (!name) return '?';

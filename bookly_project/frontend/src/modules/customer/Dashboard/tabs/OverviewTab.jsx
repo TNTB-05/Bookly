@@ -19,6 +19,7 @@ import SalonCard from '../SalonCard';
 import SalonMap from '../SalonMap';
 import SearchSuggestions from './SearchSuggestions';
 import { useNotification } from '../../../../components/NotificationContext';
+import { API_URL } from '../../../../config';
 
 // Áttekintés tab - keresés, térkép és szolgáltatások
 export default function OverviewTab({
@@ -68,7 +69,7 @@ export default function OverviewTab({
         async function fetchMapSalons() {
             setMapLoading(true);
             try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                const apiUrl = API_URL;
                 const params = new URLSearchParams();
                 if (serviceFilter !== 'all') {
                     params.append('service_type', serviceFilter);
@@ -97,7 +98,7 @@ export default function OverviewTab({
     useEffect(() => {
         async function fetchRecentReviews() {
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/search/recent-reviews?limit=8`);
+                const response = await fetch(`${API_URL}/api/search/recent-reviews?limit=8`);
                 const data = await response.json();
                 if (data.success) {
                     setRecentReviews(data.reviews);
@@ -191,7 +192,7 @@ export default function OverviewTab({
                 setUserLocation({ latitude, longitude });
 
                 try {
-                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                    const apiUrl = API_URL;
                     const response = await fetch(`${apiUrl}/api/search/reverse-geocode`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },

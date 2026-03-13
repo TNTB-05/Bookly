@@ -25,6 +25,7 @@ import NavButton from './provdashcomponents/NavButton';
 import UserDropdown from './provdashcomponents/UserDropdown';
 import ProfileModal from './provdashcomponents/ProfileModal';
 import PasswordModal from './provdashcomponents/PasswordModal';
+import { API_URL } from '../../config';
 
 export default function ProvDash() {
     const [activeTab, setActiveTab] = useState('overview');
@@ -36,7 +37,7 @@ export default function ProvDash() {
     const { setIsAuthenticated } = useAuth();
     const { showToast } = useNotification();
     const user = getUserFromToken();
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const apiUrl = API_URL;
 
     // Provider profile state
     const [providerProfile, setProviderProfile] = useState(null);

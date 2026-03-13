@@ -12,6 +12,7 @@ import CustomerAppointmentModal from '../CustomerAppointmentModal';
 import RatingModal from '../RatingModal';
 import AddToCalendarButton from '../AddToCalendarButton';
 import { useNotification } from '../../../../components/NotificationContext';
+import { API_URL } from '../../../../config';
 
 // ========================
 // Constants
@@ -116,7 +117,7 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
         setSelectedWaitlistEntry(entry);
         setWaitlistSlots({});
         setWaitlistSlotsLoading(true);
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const apiUrl = API_URL;
         const msPerDay = 86400000;
         const today = new Date();
         today.setHours(0, 0, 0, 0);

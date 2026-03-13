@@ -9,6 +9,7 @@ import RightArrowIcon from '../../../icons/RightArrowIcon';
 import TickIcon from '../../../icons/TickIcon';
 import { authApi } from '../../auth/auth';
 import { useNotification } from '../../../components/NotificationContext';
+import { API_URL } from '../../../config';
 
 // Register Hungarian locale for date picker
 registerLocale('hu', hu);
@@ -132,7 +133,7 @@ export default function SalonModal() {
     async function loadSalonDetails() {
         try {
             setLoading(true);
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const apiUrl = API_URL;
             const response = await fetch(`${apiUrl}/api/search/salon/${salonId}`);
             const data = await response.json();
 
@@ -167,7 +168,7 @@ export default function SalonModal() {
             setSelectedTime(null);
 
             const dateStr = formatDateLocal(selectedDate);
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const apiUrl = API_URL;
             const response = await fetch(
                 `${apiUrl}/api/user/provider/${selectedProvider.id}/availability?date=${dateStr}&serviceDuration=${selectedService.duration_minutes}`
             );
@@ -309,7 +310,7 @@ export default function SalonModal() {
             evening: { from: '17:00', to: '20:00' },
         };
         const timeRange = timeMap[waitlistTimePreference] || {};
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const apiUrl = API_URL;
         const msPerDay = 86400000;
         const totalDays = Math.min(Math.round((waitlistDateTo - waitlistDateFrom) / msPerDay) + 1, 60);
         try {
@@ -483,7 +484,7 @@ export default function SalonModal() {
                                     className="h-32 rounded-2xl relative"
                                     style={
                                         salon.banner_image_url
-                                            ? { backgroundImage: `url(${(import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.banner_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '1rem' }
+                                            ? { backgroundImage: `url(${API_URL + salon.banner_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '1rem' }
                                             : { 
                                                 background: salon.banner_color 
                                                     ? `linear-gradient(135deg, ${salon.banner_color} 0%, ${salon.banner_color}dd 100%)` 
@@ -494,7 +495,7 @@ export default function SalonModal() {
                                     <div className="absolute -bottom-10 left-6">
                                         <div className="w-20 h-20 rounded-full border-4 border-white bg-white flex items-center justify-center shadow-lg overflow-hidden">
                                             {salon.logo_url ? (
-                                                <img src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.logo_url} alt={salon.name} className="w-full h-full object-cover" />
+                                                <img src={API_URL + salon.logo_url} alt={salon.name} className="w-full h-full object-cover" />
                                             ) : (
                                                 <span className="text-3xl font-bold text-dark-blue">{salon.name.charAt(0).toUpperCase()}</span>
                                             )}
@@ -562,7 +563,7 @@ export default function SalonModal() {
                                             title={provider.name}
                                         >
                                             {provider.profile_picture_url ? (
-                                                <img src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + provider.profile_picture_url} alt={provider.name} className="w-full h-full object-cover" />
+                                                <img src={API_URL + provider.profile_picture_url} alt={provider.name} className="w-full h-full object-cover" />
                                             ) : (
                                                 provider.name.charAt(0).toUpperCase()
                                             )}
@@ -591,7 +592,7 @@ export default function SalonModal() {
                                         <div className="flex items-center gap-4">
                                             <div className="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center text-xl font-bold text-indigo-600 group-hover:bg-indigo-200 transition-colors overflow-hidden">
                                                 {provider.profile_picture_url ? (
-                                                    <img src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + provider.profile_picture_url} alt={provider.name} className="w-full h-full object-cover" />
+                                                    <img src={API_URL + provider.profile_picture_url} alt={provider.name} className="w-full h-full object-cover" />
                                                 ) : (
                                                     provider.name.charAt(0).toUpperCase()
                                                 )}
@@ -641,7 +642,7 @@ export default function SalonModal() {
                             <div className="flex items-center gap-3 mb-6 p-3 bg-indigo-50 rounded-xl">
                                 <div className="w-10 h-10 rounded-full bg-indigo-200 flex items-center justify-center font-bold text-indigo-700 overflow-hidden">
                                     {selectedProvider.profile_picture_url ? (
-                                        <img src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + selectedProvider.profile_picture_url} alt={selectedProvider.name} className="w-full h-full object-cover" />
+                                        <img src={API_URL + selectedProvider.profile_picture_url} alt={selectedProvider.name} className="w-full h-full object-cover" />
                                     ) : (
                                         selectedProvider.name.charAt(0).toUpperCase()
                                     )}
@@ -681,7 +682,7 @@ export default function SalonModal() {
                                                 {service.images.map((img) => (
                                                     <img
                                                         key={img.id}
-                                                        src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + img.image_url}
+                                                        src={API_URL + img.image_url}
                                                         alt=""
                                                         className="h-16 w-20 object-cover rounded flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
                                                         onClick={(e) => {
@@ -720,7 +721,7 @@ export default function SalonModal() {
                             <div className="flex items-center gap-3 mb-6 p-3 bg-indigo-50 rounded-xl">
                                 <div className="w-10 h-10 rounded-full bg-indigo-200 flex items-center justify-center font-bold text-indigo-700 overflow-hidden">
                                     {selectedProvider.profile_picture_url ? (
-                                        <img src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + selectedProvider.profile_picture_url} alt={selectedProvider.name} className="w-full h-full object-cover" />
+                                        <img src={API_URL + selectedProvider.profile_picture_url} alt={selectedProvider.name} className="w-full h-full object-cover" />
                                     ) : (
                                         selectedProvider.name.charAt(0).toUpperCase()
                                     )}
@@ -1089,7 +1090,7 @@ export default function SalonModal() {
                     </svg>
                 </button>
                 <img
-                    src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + lightboxImage}
+                    src={API_URL + lightboxImage}
                     alt=""
                     className="max-w-full max-h-full object-contain rounded-lg"
                     onClick={(e) => e.stopPropagation()}

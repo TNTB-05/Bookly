@@ -4,6 +4,7 @@ import ServicesIcon from '../../../../icons/ServicesIcon';
 import { SkeletonCard, SkeletonBlock, SkeletonText } from '../../../../components/skeletons';
 import ServiceFormModal from './ServiceFormModal';
 import DeleteServiceModal from './DeleteServiceModal';
+import { API_URL } from '../../../../config';
 
 const ServicesSection = () => {
     const [services, setServices] = useState([]);
@@ -220,7 +221,7 @@ const ServicesSection = () => {
                                     {service.images.slice(0, 5).map((img) => (
                                         <img
                                             key={img.id}
-                                            src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + img.image_url}
+                                            src={API_URL + img.image_url}
                                             alt=""
                                             className="w-14 h-14 object-cover rounded-lg border border-gray-200"
                                         />

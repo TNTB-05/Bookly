@@ -1,6 +1,7 @@
 // Ikon
 import SaveIcon from '../../../icons/SaveIcon';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from '../../../config';
 
 // Szalon kártya komponens - szalon adatainak megjelenítése
 export default function SalonCard({ salon, savedSalonIds, toggleSaveSalon, showDistance, compact = false, onCardClick }) {
@@ -24,7 +25,7 @@ export default function SalonCard({ salon, savedSalonIds, toggleSaveSalon, showD
                 className={`${compact ? 'h-16' : 'h-24'} relative shrink-0`}
                 style={
                     salon.banner_image_url
-                        ? { backgroundImage: `url(${(import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.banner_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                        ? { backgroundImage: `url(${API_URL + salon.banner_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
                         : { background: `linear-gradient(135deg, ${salon.banner_color || '#3B82F6'} 0%, ${salon.banner_color || '#3B82F6'}dd 100%)` }
                 }
             >
@@ -32,7 +33,7 @@ export default function SalonCard({ salon, savedSalonIds, toggleSaveSalon, showD
                 <div className={`absolute ${compact ? '-bottom-7' : '-bottom-10'} left-1/2 transform -translate-x-1/2 z-10`}>
                     <div className={`${compact ? 'w-14 h-14 text-lg' : 'w-20 h-20 text-2xl'} rounded-full border-4 border-white bg-white flex items-center justify-center font-bold text-dark-blue shadow-lg overflow-hidden`}>
                         {salon.logo_url ? (
-                            <img src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.logo_url} alt={salon.name} className="w-full h-full object-cover" />
+                            <img src={API_URL + salon.logo_url} alt={salon.name} className="w-full h-full object-cover" />
                         ) : (
                             salon.name.charAt(0).toUpperCase()
                         )}

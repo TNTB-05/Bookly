@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { authApi } from '../../../auth/auth';
+import { API_URL } from '../../../../config';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE = API_URL;
 
 const ServiceFormModal = ({ isOpen, onClose, editingService, formData, setFormData, saving, onSave }) => {
     const [images, setImages] = useState([]);

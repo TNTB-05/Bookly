@@ -3,8 +3,9 @@ import { authApi } from '../../auth/auth';
 import { useNotification } from '../../../components/NotificationContext';
 import CreateAppointmentModal from './CalendarSection/CreateAppointmentModal';
 import AppointmentDetailModal from './CalendarSection/AppointmentDetailModal';
+import { API_URL } from '../../../config';
 
-const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const apiUrl = API_URL;
 
 const getInitials = (name) => {
     if (!name) return '?';

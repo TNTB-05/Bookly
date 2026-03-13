@@ -149,42 +149,42 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">const express = <span class="cstat-no" title="statement not covered" >require('express');</span>
 const router = <span class="cstat-no" title="statement not covered" >express.Router();</span>
-const database = <span class="cstat-no" title="statement not covered" >require('../sql/database.js');</span>
+const { addToWaitlist, getUserWaitlistEntries, cancelWaitlistEntry } = <span class="cstat-no" title="statement not covered" >require('../sql/waitlistQueries.js');</span>
 const AuthMiddleware = <span class="cstat-no" title="statement not covered" >require('./auth/AuthMiddleware.js');</span>
 &nbsp;
 // POST /api/waitlist — join waitlist
-<span class="cstat-no" title="statement not covered" >router.post('/', AuthMiddleware, <span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >router.post('/', AuthMiddleware, <span class="fstat-no" title="function not covered" >as</span>ync (request, response) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
-        const userId = <span class="cstat-no" title="statement not covered" >req.user.userId;</span>
-        const { provider_id, service_id, date_from, date_to, time_from, time_to } = <span class="cstat-no" title="statement not covered" >req.body;</span>
+        const userId = <span class="cstat-no" title="statement not covered" >request.user.userId;</span>
+        const { provider_id, service_id, date_from, date_to, time_from, time_to } = <span class="cstat-no" title="statement not covered" >request.body;</span>
 <span class="cstat-no" title="statement not covered" >        if (!provider_id || !service_id || !date_from || !date_to)</span>
-<span class="cstat-no" title="statement not covered" >            return res.json({ success: false, message: 'Hiányzó adatok' });</span>
-        const result = <span class="cstat-no" title="statement not covered" >await database.addToWaitlist(userId, provider_id, service_id, date_from, date_to, time_from, time_to);</span>
-<span class="cstat-no" title="statement not covered" >        res.json({ success: true, data: { id: result.insertId } });</span>
+<span class="cstat-no" title="statement not covered" >            return response.status(400).json({ success: false, message: 'Hiányzó adatok' });</span>
+        const result = <span class="cstat-no" title="statement not covered" >await addToWaitlist(userId, provider_id, service_id, date_from, date_to, time_from, time_to);</span>
+<span class="cstat-no" title="statement not covered" >        return response.status(201).json({ success: true, data: { id: result.insertId } });</span>
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >        res.status(500).json({ success: false, message: 'Hiba a várólistára való feliratkozáskor', error: error.message });</span>
+<span class="cstat-no" title="statement not covered" >        return response.status(500).json({ success: false, message: 'Hiba a várólistára való feliratkozáskor', error: error.message });</span>
     }
 });
 &nbsp;
 // GET /api/waitlist — get user's active waitlist entries
-<span class="cstat-no" title="statement not covered" >router.get('/', AuthMiddleware, <span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >router.get('/', AuthMiddleware, <span class="fstat-no" title="function not covered" >as</span>ync (request, response) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
-        const userId = <span class="cstat-no" title="statement not covered" >req.user.userId;</span>
-        const entries = <span class="cstat-no" title="statement not covered" >await database.getUserWaitlistEntries(userId);</span>
-<span class="cstat-no" title="statement not covered" >        res.json({ success: true, data: { entries } });</span>
+        const userId = <span class="cstat-no" title="statement not covered" >request.user.userId;</span>
+        const entries = <span class="cstat-no" title="statement not covered" >await getUserWaitlistEntries(userId);</span>
+<span class="cstat-no" title="statement not covered" >        return response.status(200).json({ success: true, data: { entries } });</span>
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >        res.status(500).json({ success: false, message: 'Hiba a várólistás bejegyzések lekérésekor', error: error.message });</span>
+<span class="cstat-no" title="statement not covered" >        return response.status(500).json({ success: false, message: 'Hiba a várólistás bejegyzések lekérésekor', error: error.message });</span>
     }
 });
 &nbsp;
 // DELETE /api/waitlist/:id — cancel waitlist entry
-<span class="cstat-no" title="statement not covered" >router.delete('/:id', AuthMiddleware, <span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >router.delete('/:id', AuthMiddleware, <span class="fstat-no" title="function not covered" >as</span>ync (request, response) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
-        const userId = <span class="cstat-no" title="statement not covered" >req.user.userId;</span>
-<span class="cstat-no" title="statement not covered" >        await database.cancelWaitlistEntry(parseInt(req.params.id), userId);</span>
-<span class="cstat-no" title="statement not covered" >        res.json({ success: true });</span>
+        const userId = <span class="cstat-no" title="statement not covered" >request.user.userId;</span>
+<span class="cstat-no" title="statement not covered" >        await cancelWaitlistEntry(parseInt(request.params.id), userId);</span>
+<span class="cstat-no" title="statement not covered" >        return response.status(200).json({ success: true });</span>
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >        res.status(500).json({ success: false, message: 'Hiba a várólistás bejegyzés törlésekor', error: error.message });</span>
+<span class="cstat-no" title="statement not covered" >        return response.status(500).json({ success: false, message: 'Hiba a várólistás bejegyzés törlésekor', error: error.message });</span>
     }
 });
 &nbsp;
@@ -196,7 +196,7 @@ const AuthMiddleware = <span class="cstat-no" title="statement not covered" >req
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-08T00:21:40.596Z
+                at 2026-03-11T17:07:26.061Z
             </div>
         <script src="../prettify.js"></script>
         <script>

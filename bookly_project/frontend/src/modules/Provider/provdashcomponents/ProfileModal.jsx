@@ -1,4 +1,5 @@
 import { createPortal } from 'react-dom';
+import { API_URL } from '../../../config';
 
 const ProfileModal = ({ 
     isOpen, 
@@ -15,7 +16,7 @@ const ProfileModal = ({
     onPictureUpload,
     onPasswordModalOpen
 }) => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const apiUrl = API_URL;
 
     const getProviderInitials = (name) => {
         if (!name) return '?';

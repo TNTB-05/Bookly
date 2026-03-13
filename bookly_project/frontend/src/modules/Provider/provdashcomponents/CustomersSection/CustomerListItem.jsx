@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { API_URL } from '../../../../config';
 
 const getInitials = (name) => {
     if (!name) return '?';
@@ -30,7 +31,7 @@ const getDaysSince = (dateStr) => {
 };
 
 const CustomerListItem = ({ customer, onClick, onRemind }) => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const apiUrl = API_URL;
     const [reminding, setReminding] = useState(false);
 
     const formatDate = (d) => d ? new Date(d).toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'Europe/Budapest' }) : '–';

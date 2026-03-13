@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { authApi } from '../auth/auth';
 import RefreshIcon from '../../icons/RefreshIcon';
+import { API_URL } from '../../config';
 
 export default function ProviderManagement() {
     const [providers, setProviders] = useState([]);
@@ -254,7 +255,7 @@ export default function ProviderManagement() {
                                             {provider.profile_picture_url ? (
                                                 <>
                                                     <img
-                                                        src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${provider.profile_picture_url.startsWith('/') ? '' : '/'}${provider.profile_picture_url}`}
+                                                        src={`${API_URL}${provider.profile_picture_url.startsWith('/') ? '' : '/'}${provider.profile_picture_url}`}
                                                         alt={provider.name || ''}
                                                         className="w-7 h-7 rounded-full object-cover"
                                                         onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
