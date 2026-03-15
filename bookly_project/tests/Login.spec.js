@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { generateUser } from './helpers/testData.js';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/login');
@@ -70,13 +71,12 @@ test('login fails with non-existent email', async ({ page }) => {
 
 test('login succeeds with correct credentials', async ({ page }) => {
   // Ensure a user exists: register first (idempotent — duplicate email is silently ignored)
-  const email = 'playwright-login@test.com';
-  const password = 'asdasdasd';
+  const user = generateUser('login-test');
   await page.goto('/register');
-  await page.getByRole('textbox', { name: 'Név' }).fill('Login Tester');
-  await page.getByRole('textbox', { name: 'Email cím' }).fill(email);
-  await page.getByRole('textbox', { name: 'Jelszó', exact: true }).fill(password);
-  await page.getByRole('textbox', { name: 'Jelszó megerősítése' }).fill(password);
+  await page.getByRole('textbox', { name: 'Név' }).fill(user.name);
+  await page.getByRole('textbox', { name: 'Email cím' }).fill(user.email);
+  await page.getByRole('textbox', { name: 'Jelszó', exact: true }).fill(user.password);
+  await page.getByRole('textbox', { name: 'Jelszó megerősítése' }).fill(user.password);
   await page.getByRole('button', { name: 'Regisztráció' }).click();
   await Promise.race([
     page.waitForURL('**/login', { timeout: 10000 }),
@@ -85,10 +85,10 @@ test('login succeeds with correct credentials', async ({ page }) => {
 
   // Now login with the guaranteed-existing user
   await page.goto('/login');
-  await page.getByRole('textbox', { name: 'Email cím' }).fill(email);
-  await page.getByRole('textbox', { name: 'Jelszó' }).fill(password);
+  await page.getByRole('textbox', { name: 'Email cím' }).fill(user.email);
+  await page.getByRole('textbox', { name: 'Jelszó' }).fill(user.password);
   await page.getByRole('button', { name: 'Bejelentkezés' }).click();
-  await page.waitForTimeout(5000);
+  await page.waitForURL('**/dashboard', { timeout: 10000 });
   await page.screenshot({ path: 'screenshots/login/08-login-success.png' });
   await expect(page).toHaveURL(/\/dashboard/);
 });

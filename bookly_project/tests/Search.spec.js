@@ -1,15 +1,14 @@
-import { test, expect } from '@playwright/test';
-import { login } from './helpers.js';
+import { test, expect } from './fixtures/authFixture.js';
 
 test.describe('Search bar', () => {
 
-  test.beforeEach(async ({ page }) => {
-    await login(page);
+  test.beforeEach(async ({ loggedInPage }) => {
+    // loggedInPage is already authenticated via the fixture
   });
 
   // ─── Elements visible on load ───────────────────────────────────────────────
 
-  test('all search elements are visible on the overview tab', async ({ page }) => {
+  test('all search elements are visible on the overview tab', async ({ loggedInPage: page }) => {
     await expect(page.getByPlaceholder('Keress szolgáltatót vagy szolgáltatást...')).toBeVisible();
     await expect(page.getByPlaceholder('Helyszín (pl. Budapest, Kossuth utca 12)')).toBeVisible();
     await expect(page.getByText('Jelenlegi helyzetem')).toBeVisible();
@@ -23,7 +22,7 @@ test.describe('Search bar', () => {
 
   // ─── Empty / no-criteria search ─────────────────────────────────────────────
 
-  test('clicking Keresés with no criteria shows empty search message', async ({ page }) => {
+  test('clicking Keresés with no criteria shows empty search message', async ({ loggedInPage: page }) => {
     await page.getByRole('button', { name: 'Keresés' }).click();
     await expect(page.getByText('Keresési feltétel szükséges')).toBeVisible({ timeout: 10000 });
     await page.waitForTimeout(2000);
@@ -32,7 +31,7 @@ test.describe('Search bar', () => {
 
   // ─── Text search ────────────────────────────────────────────────────────────
 
-  test('typing in search input shows suggestions dropdown', async ({ page }) => {
+  test('typing in search input shows suggestions dropdown', async ({ loggedInPage: page }) => {
     // Mock the suggestions API so the test works regardless of DB content
     await page.route('**/api/search/suggestions**', async (route) => {
       await route.fulfill({
@@ -56,7 +55,7 @@ test.describe('Search bar', () => {
     await page.unroute('**/api/search/suggestions**');
   });
 
-  test('text search returns results', async ({ page }) => {
+  test('text search returns results', async ({ loggedInPage: page }) => {
     await page.getByPlaceholder('Keress szolgáltatót vagy szolgáltatást...').fill('Salon');
     await page.getByRole('button', { name: 'Keresés' }).click();
     await expect(page.getByText('Keresési eredmények')).toBeVisible({ timeout: 10000 });
@@ -65,7 +64,7 @@ test.describe('Search bar', () => {
     await page.screenshot({ path: 'screenshots/search/04-text-search-results.png' });
   });
 
-  test('text search with no matching query shows no results', async ({ page }) => {
+  test('text search with no matching query shows no results', async ({ loggedInPage: page }) => {
     await page.getByPlaceholder('Keress szolgáltatót vagy szolgáltatást...').fill('xyznonexistent99999');
     await page.getByRole('button', { name: 'Keresés' }).click();
     await expect(page.getByText('Nincs találat')).toBeVisible({ timeout: 10000 });
@@ -75,7 +74,7 @@ test.describe('Search bar', () => {
 
   // ─── Service type filter ────────────────────────────────────────────────────
 
-  test('service type dropdown has options and filters results', async ({ page }) => {
+  test('service type dropdown has options and filters results', async ({ loggedInPage: page }) => {
     const dropdown = page.locator('select');
     await expect(dropdown).toHaveValue('all');
     await page.waitForTimeout(2000);
@@ -96,7 +95,7 @@ test.describe('Search bar', () => {
 
   // ─── Location input ─────────────────────────────────────────────────────────
 
-  test('typing in location input shows address suggestions', async ({ page }) => {
+  test('typing in location input shows address suggestions', async ({ loggedInPage: page }) => {
     const locationInput = page.getByPlaceholder('Helyszín (pl. Budapest, Kossuth utca 12)');
     await locationInput.fill('Budapest');
     // Wait for debounced address autocomplete (400ms + network)
@@ -110,7 +109,7 @@ test.describe('Search bar', () => {
     }
   });
 
-  test('searching with location only returns results', async ({ page }) => {
+  test('searching with location only returns results', async ({ loggedInPage: page }) => {
     const locationInput = page.getByPlaceholder('Helyszín (pl. Budapest, Kossuth utca 12)');
     await locationInput.fill('Budapest');
     await page.waitForTimeout(1500);
@@ -127,7 +126,7 @@ test.describe('Search bar', () => {
 
   // ─── Jelenlegi helyzetem (My Location) button ───────────────────────────────
 
-  test('clicking Jelenlegi helyzetem fills the location input', async ({ page }) => {
+  test('clicking Jelenlegi helyzetem fills the location input', async ({ loggedInPage: page }) => {
     // Grant geolocation permission and set a fake location (Budapest)
     await page.context().grantPermissions(['geolocation']);
     await page.context().setGeolocation({ latitude: 47.4979, longitude: 19.0402 });
@@ -144,7 +143,7 @@ test.describe('Search bar', () => {
 
   // ─── Combined filters ──────────────────────────────────────────────────────
 
-  test('combined text + service type + location search', async ({ page }) => {
+  test('combined text + service type + location search', async ({ loggedInPage: page }) => {
     await page.getByPlaceholder('Keress szolgáltatót vagy szolgáltatást...').fill('Salon');
 
     const dropdown = page.locator('select');
@@ -166,7 +165,7 @@ test.describe('Search bar', () => {
 
   // ─── Reset search ──────────────────────────────────────────────────────────
 
-  test('Keresés törlése button resets all filters', async ({ page }) => {
+  test('Keresés törlése button resets all filters', async ({ loggedInPage: page }) => {
     await page.getByPlaceholder('Keress szolgáltatót vagy szolgáltatást...').fill('Salon');
     await page.getByRole('button', { name: 'Keresés' }).click();
     await expect(page.getByText('Keresési eredmények')).toBeVisible({ timeout: 10000 });

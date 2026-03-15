@@ -7,8 +7,8 @@ export default defineConfig({
   // Fail the build on CI if test.only is left in the source code
   forbidOnly: !!process.env.CI,
 
-  // Retry failed tests once
-  retries: 0,
+  // Retry failed tests once on CI
+  retries: process.env.CI ? 1 : 0,
 
   // Reporter: HTML report + console output
   reporter: [['html', { open: 'never' }], ['list']],
@@ -19,14 +19,14 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:5173',
 
-    // Only capture screenshots automatically when a test fails
+    // Capture screenshots automatically when a test fails
     screenshot: 'only-on-failure',
 
-    // Save trace on failure for debugging
-    trace: 'retain-on-failure',
+    // Record trace on first retry for detailed debugging (npx playwright show-trace)
+    trace: 'on-first-retry',
 
-    // No video recording (saves disk space)
-    video: 'off',
+    // Keep video recording on failure for visual debugging
+    video: 'retain-on-failure',
   },
 
   projects: [

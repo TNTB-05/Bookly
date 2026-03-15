@@ -1,6 +1,5 @@
 /**
- * Shared helper: logs in as the test user.
- * Assumes the user already exists in the database.
+ * Logs in as the test user and waits for the dashboard to load.
  *
  * @param {import('@playwright/test').Page} page
  * @param {string} email

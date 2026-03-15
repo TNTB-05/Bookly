@@ -1,29 +1,33 @@
-import { test, expect } from '@playwright/test';
-import { login } from './helpers.js';
+import { test, expect } from './fixtures/authFixture.js';
 
 test.describe('Cancel appointment', () => {
 
-  test.beforeEach(async ({ page }) => {
-    await login(page);
+  test.beforeEach(async ({ loggedInPage }) => {
+    // loggedInPage is already authenticated via the fixture
   });
 
   // ─── Tab loading ─────────────────────────────────────────────────────────────
 
-  test('appointments tab loads correctly', async ({ page }) => {
+  test('appointments tab loads correctly', async ({ loggedInPage: page }) => {
     await page.goto('/dashboard?tab=appointments');
-    await page.waitForTimeout(2000);
-    // Either upcoming appointments or "Nincs" empty state should show
+    await page.waitForLoadState('networkidle');
+    // Either upcoming appointments or the appointments empty state should show.
     const appointments = page.getByRole('button', { name: 'Lemondás' }).first();
-    const noAppointments = page.getByText(/nincs/i);
-    await expect(appointments.or(noAppointments)).toBeVisible({ timeout: 10000 });
+    const hasAppointments = await appointments.isVisible().catch(() => false);
+
+    if (hasAppointments) {
+      await expect(appointments).toBeVisible();
+    } else {
+      await expect(page.getByText('Nincs foglalás erre a napra')).toBeVisible({ timeout: 10000 });
+    }
     await page.screenshot({ path: 'screenshots/booking/cancel-01-appointments-tab.png' });
   });
 
   // ─── Modal dismiss ───────────────────────────────────────────────────────────
 
-  test('dismiss cancel modal without cancelling', async ({ page }) => {
+  test('dismiss cancel modal without cancelling', async ({ loggedInPage: page }) => {
     await page.goto('/dashboard?tab=appointments');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle');
 
     const cancelButton = page.getByRole('button', { name: 'Lemondás' }).first();
     const hasAppointments = await cancelButton.isVisible().catch(() => false);
@@ -49,9 +53,9 @@ test.describe('Cancel appointment', () => {
 
   // ─── Cancel confirmation ─────────────────────────────────────────────────────
 
-  test('confirm cancel removes appointment', async ({ page }) => {
+  test('confirm cancel removes appointment', async ({ loggedInPage: page }) => {
     await page.goto('/dashboard?tab=appointments');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle');
 
     const cancelButton = page.getByRole('button', { name: 'Lemondás' }).first();
     const hasAppointments = await cancelButton.isVisible().catch(() => false);

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { generateUser } from './helpers/testData.js';
 
 test.describe('Registration and login', () => {
 
@@ -101,12 +102,11 @@ test.describe('Registration and login', () => {
 
   test('user can register and then login', async ({ page }) => {
     // Unique email so this test always works regardless of DB state
-    const email = `playwright-${Date.now()}@test.com`;
-    const password = 'asdasdasd';
+    const user = generateUser('register-e2e');
 
     // Navigate to the home page
     await page.goto('/');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'screenshots/register/08-home.png' });
 
     // Open the login modal and navigate to the registration page
@@ -119,10 +119,10 @@ test.describe('Registration and login', () => {
     await page.screenshot({ path: 'screenshots/register/10-register-page.png' });
 
     // Fill in the registration form with the unique email
-    await page.getByRole('textbox', { name: 'Név' }).fill('Playwright Tester');
-    await page.getByRole('textbox', { name: 'Email cím' }).fill(email);
-    await page.getByRole('textbox', { name: 'Jelszó', exact: true }).fill(password);
-    await page.getByRole('textbox', { name: 'Jelszó megerősítése' }).fill(password);
+    await page.getByRole('textbox', { name: 'Név' }).fill(user.name);
+    await page.getByRole('textbox', { name: 'Email cím' }).fill(user.email);
+    await page.getByRole('textbox', { name: 'Jelszó', exact: true }).fill(user.password);
+    await page.getByRole('textbox', { name: 'Jelszó megerősítése' }).fill(user.password);
     await page.screenshot({ path: 'screenshots/register/11-form-filled.png' });
 
     // Submit the registration form and wait for redirect to login
@@ -132,11 +132,11 @@ test.describe('Registration and login', () => {
     await page.screenshot({ path: 'screenshots/register/12-redirected-to-login.png' });
 
     // Fill in the login form and submit
-    await page.getByRole('textbox', { name: 'Email cím' }).fill(email);
-    await page.getByRole('textbox', { name: 'Jelszó' }).fill(password);
+    await page.getByRole('textbox', { name: 'Email cím' }).fill(user.email);
+    await page.getByRole('textbox', { name: 'Jelszó' }).fill(user.password);
     await page.screenshot({ path: 'screenshots/register/13-login-form.png' });
     await page.getByRole('button', { name: 'Bejelentkezés' }).click();
-    await page.waitForTimeout(5000);
+    await page.waitForURL('**/dashboard', { timeout: 10000 });
     await expect(page).toHaveURL(/\/dashboard/);
     await page.screenshot({ path: 'screenshots/register/14-dashboard.png' });
   });
