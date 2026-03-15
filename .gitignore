@@ -9,3 +9,6 @@ bookly_project/backend/uploads/salons/*
 !bookly_project/backend/uploads/salons/.gitkeep
 bookly_project/CLAUDE.md
 /bookly_project/.claude
+
+# Playwright screenshot output
+bookly_project/tests/screenshots/
