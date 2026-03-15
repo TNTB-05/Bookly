@@ -195,6 +195,8 @@ test.describe('Saved salons feature', () => {
       if (salonCountBefore <= 1) {
         await expect(page.getByRole('heading', { name: 'Még nincs mentett helyed' })).toBeVisible({ timeout: 10000 });
       } else {
+        // Wait for React to update the DOM before counting
+        await expect(page.getByRole('button', { name: 'Megnézem' })).not.toHaveCount(salonCountBefore, { timeout: 10000 });
         const countAfter = await page.getByRole('button', { name: 'Megnézem' }).count();
         expect(countAfter).toBeLessThan(salonCountBefore);
       }
