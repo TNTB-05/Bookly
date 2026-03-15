@@ -7,33 +7,69 @@ test.describe('Cancel appointment', () => {
     await login(page);
   });
 
-  test('user can cancel an upcoming appointment', async ({ page }) => {
-    // Navigate to the appointments tab
+  // ─── Tab loading ─────────────────────────────────────────────────────────────
+
+  test('appointments tab loads correctly', async ({ page }) => {
     await page.goto('/dashboard?tab=appointments');
     await page.waitForTimeout(2000);
-    await page.screenshot({ path: 'screenshots/cancel-1-appointments.png' });
+    // Either upcoming appointments or "Nincs" empty state should show
+    const appointments = page.getByRole('button', { name: 'Lemondás' }).first();
+    const noAppointments = page.getByText(/nincs/i);
+    await expect(appointments.or(noAppointments)).toBeVisible({ timeout: 10000 });
+    await page.screenshot({ path: 'screenshots/booking/cancel-01-appointments-tab.png' });
+  });
 
-    // Check if there are any upcoming appointments
+  // ─── Modal dismiss ───────────────────────────────────────────────────────────
+
+  test('dismiss cancel modal without cancelling', async ({ page }) => {
+    await page.goto('/dashboard?tab=appointments');
+    await page.waitForTimeout(2000);
+
     const cancelButton = page.getByRole('button', { name: 'Lemondás' }).first();
     const hasAppointments = await cancelButton.isVisible().catch(() => false);
-
     if (!hasAppointments) {
-      await page.screenshot({ path: 'screenshots/cancel-2-no-appointments.png' });
+      test.skip(true, 'No upcoming appointments to test modal dismiss');
+      return;
+    }
+
+    await page.screenshot({ path: 'screenshots/booking/cancel-02-appointments-list.png' });
+
+    await cancelButton.click();
+    await expect(page.getByText('Biztosan le szeretnéd mondani ezt a foglalást?')).toBeVisible();
+    await page.screenshot({ path: 'screenshots/booking/cancel-03-modal-open.png' });
+
+    // Dismiss by clicking "Nem" / "Mégse"
+    const dismissBtn = page.getByRole('button', { name: /Nem|Mégse/i });
+    await dismissBtn.click();
+    // Modal should close, appointment still there
+    await expect(page.getByText('Biztosan le szeretnéd mondani ezt a foglalást?')).not.toBeVisible();
+    await page.waitForTimeout(1000);
+    await page.screenshot({ path: 'screenshots/booking/cancel-04-modal-dismissed.png' });
+  });
+
+  // ─── Cancel confirmation ─────────────────────────────────────────────────────
+
+  test('confirm cancel removes appointment', async ({ page }) => {
+    await page.goto('/dashboard?tab=appointments');
+    await page.waitForTimeout(2000);
+
+    const cancelButton = page.getByRole('button', { name: 'Lemondás' }).first();
+    const hasAppointments = await cancelButton.isVisible().catch(() => false);
+    if (!hasAppointments) {
       test.skip(true, 'No upcoming appointments to cancel');
       return;
     }
 
-    // Click the cancel button on the first upcoming appointment
+    await page.screenshot({ path: 'screenshots/booking/cancel-05-appointments-list.png' });
+
     await cancelButton.click();
-    await page.screenshot({ path: 'screenshots/cancel-2-confirm-modal.png' });
-
-    // Confirm the cancellation
     await expect(page.getByText('Biztosan le szeretnéd mondani ezt a foglalást?')).toBeVisible();
-    await page.getByRole('button', { name: 'Igen' }).click();
+    await page.screenshot({ path: 'screenshots/booking/cancel-06-confirm-modal.png' });
 
-    // Wait for the success toast
+    await page.getByRole('button', { name: 'Igen' }).click();
     await expect(page.getByText('Foglalás sikeresen lemondva')).toBeVisible({ timeout: 10000 });
-    await page.screenshot({ path: 'screenshots/cancel-3-cancelled.png' });
+    await page.waitForTimeout(1000);
+    await page.screenshot({ path: 'screenshots/booking/cancel-07-cancelled.png' });
   });
 
 });
