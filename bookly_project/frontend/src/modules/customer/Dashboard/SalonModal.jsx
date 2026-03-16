@@ -768,6 +768,10 @@ export default function SalonModal() {
                                     <div className="flex justify-center">
                                         <DatePicker
                                             selected={selectedDate}
+                                            filterDate={(date) => {
+                                                if (!Array.isArray(salon?.open_days) || salon.open_days.length === 0) return true;
+                                                return salon.open_days.includes(date.getDay());
+                                            }}
                                             onChange={(date) => {
                                                 setSelectedDate(date);
                                                 setShowWaitlistForm(false);
