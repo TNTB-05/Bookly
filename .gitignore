@@ -11,4 +11,4 @@ bookly_project/CLAUDE.md
 /bookly_project/.claude
 
 # Playwright screenshot output
-bookly_project/tests/screenshots/
+bookly_project/tests/screenshots/*
