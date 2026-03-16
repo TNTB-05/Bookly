@@ -19,6 +19,7 @@ const {
     getSalonBannerUrl,
     removeSalonBanner
 } = require('../../sql/salonQueries');
+const { logEvent } = require('../../services/logService');
 
 // GET /my-salon - Get salon details for current provider
 router.get('/my-salon', AuthMiddleware, async (request, response) => {
@@ -69,6 +70,8 @@ router.put('/update', AuthMiddleware, isManagerMiddleware, async (request, respo
 
         const updatedSalon = await getFullSalonById(salonId);
 
+        logEvent('INFO', 'SALON_UPDATED', 'provider', request.user.userId, 'salon', salonId, `Provider #${request.user.userId} updated salon #${salonId} settings`).catch(() => {});
+
         response.status(200).json({ success: true, message: 'Szalon sikeresen frissítve', salon: updatedSalon });
     } catch (error) {
         console.error('Update salon error:', error);
@@ -87,6 +90,8 @@ router.put('/status', AuthMiddleware, isManagerMiddleware, async (request, respo
         }
 
         await updateSalonStatus(salonId, status);
+
+        logEvent('INFO', 'SALON_STATUS_UPDATED', 'provider', request.user.userId, 'salon', salonId, `Provider #${request.user.userId} set salon #${salonId} status to '${status}'`).catch(() => {});
 
         response.status(200).json({ success: true, message: 'Szalon státusz sikeresen frissítve' });
     } catch (error) {
@@ -142,6 +147,8 @@ router.post('/branding', AuthMiddleware, isManagerMiddleware, upload.fields([
         await updateSalonBranding(salonId, updates, values);
 
         const updatedSalon = await getFullSalonById(salonId);
+
+        logEvent('INFO', 'SALON_BRANDING_UPDATED', 'provider', request.user.userId, 'salon', salonId, `Provider #${request.user.userId} updated branding for salon #${salonId}`).catch(() => {});
 
         response.status(200).json({ success: true, message: 'Szalon arculat sikeresen frissítve', salon: updatedSalon });
     } catch (error) {

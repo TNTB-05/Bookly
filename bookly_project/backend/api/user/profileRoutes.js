@@ -11,6 +11,7 @@ const { getUserById, updateUserProfile, updateUserPassword, getUserPasswordHash,
 const { cancelUserScheduledAppointments } = require('../../sql/appointmentQueries');
 const { upload, processAndSaveImage, deleteOldImage } = require('../../middleware/uploadMiddleware');
 const { sendPasswordChangeConfirmation } = require('../../services/emailService');
+const { logEvent } = require('../../services/logService');
 
 // Get current user's profile
 router.get('/profile', AuthMiddleware, async (request, response) => {
@@ -125,6 +126,8 @@ router.put('/profile', AuthMiddleware, async (request, response) => {
 
         const user = await getUserById(userId);
 
+        logEvent('INFO', 'USER_PROFILE_UPDATED', 'user', userId, 'user', userId, `User #${userId} updated their profile`).catch(() => {});
+
         response.status(200).json({
             success: true,
             message: 'Profil sikeresen frissítve',
@@ -215,6 +218,8 @@ router.put('/password', AuthMiddleware, async (request, response) => {
                 console.error('Failed to send password change email:', err);
             });
         }
+
+        logEvent('INFO', 'USER_PASSWORD_CHANGED', 'user', userId, 'user', userId, `User #${userId} changed their password`).catch(() => {});
 
         response.status(200).json({
             success: true,
@@ -349,6 +354,8 @@ router.delete('/account', AuthMiddleware, async (request, response) => {
                 message: 'Nem sikerült a fiók törlése'
             });
         }
+
+        logEvent('WARN', 'USER_SELF_DELETE', 'user', userId, 'user', userId, `User #${userId} deleted their own account`).catch(() => {});
 
         response.status(200).json({
             success: true,

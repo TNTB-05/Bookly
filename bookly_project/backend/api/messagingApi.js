@@ -12,6 +12,7 @@ const {
     checkBookingExists,
     deleteConversation
 } = require('../sql/messagingQueries.js');
+const { logEvent } = require('../services/logService.js');
 
 module.exports = function (io) {
     const router = express.Router();
@@ -122,6 +123,8 @@ module.exports = function (io) {
 
             const senderRole = role === 'provider' ? 'provider' : 'user';
             const newMessage = await insertMessage(conversationId, senderRole, userId, content.trim(), appointment_id);
+
+            logEvent('INFO', 'MESSAGE_SENT', senderRole, userId, 'conversation', conversationId, `${senderRole === 'provider' ? 'Provider' : 'User'} #${userId} sent a message in conversation #${conversationId}`).catch(() => {});
 
             // Emit real-time event to recipient
             const recipientRole = senderRole === 'provider' ? 'user' : 'provider';

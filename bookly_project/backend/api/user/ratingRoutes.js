@@ -8,6 +8,7 @@ const router = express.Router();
 const AuthMiddleware = require('../auth/AuthMiddleware');
 const { createRating, getRatingByAppointment } = require('../../sql/ratingQueries');
 const { getAppointmentById } = require('../../sql/appointmentQueries');
+const { logEvent } = require('../../services/logService');
 
 // Submit or update a rating
 router.post('/ratings', AuthMiddleware, async (request, response) => {
@@ -31,7 +32,11 @@ router.post('/ratings', AuthMiddleware, async (request, response) => {
             return response.status(400).json({ success: false, message: 'Csak befejezett foglalásokat lehet értékelni' });
         }
 
+        const existingRating = await getRatingByAppointment(appointmentId);
         await createRating(userId, appointmentId, salonId, providerId, salonRating, providerRating, salonComment, providerComment);
+
+        const action = existingRating ? 'RATING_UPDATED' : 'RATING_CREATED';
+        logEvent('INFO', action, 'user', userId, 'appointment', appointmentId, `User #${userId} ${existingRating ? 'updated' : 'submitted'} rating for appointment #${appointmentId}`).catch(() => {});
 
         response.status(200).json({ success: true, message: 'Értékelés mentve!' });
     } catch (error) {

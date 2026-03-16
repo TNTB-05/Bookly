@@ -13,6 +13,7 @@ const { checkAppointmentConflicts } = require('../sql/appointmentQueries.js');
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
 const { requireRole } = require('./auth/RoleMiddleware.js');
 const { verifyProvider } = require('../middleware/providerMiddleware.js');
+const { logEvent } = require('../services/logService.js');
 
 // Apply middleware to all routes
 router.use(AuthMiddleware, requireRole(['provider']), verifyProvider);
@@ -151,6 +152,8 @@ router.post('/', async (request, response) => {
             recurrence_end_date: is_recurring ? recurrence_end_date : null,
             notes
         });
+
+        logEvent('INFO', 'TIME_BLOCK_CREATED', 'provider', providerId, 'provider', providerId, `Provider #${providerId} created a ${is_recurring ? 'recurring ' : ''}time block`).catch(() => {});
 
         response.status(201).json({
             success: true,

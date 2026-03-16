@@ -18,6 +18,7 @@ const { calculateDistance } = require('../../services/locationService');
 const { sendAppointmentConfirmation, sendAppointmentCancellation } = require('../../services/emailService');
 const { notifyWaitlistForCancelledSlot } = require('../../services/waitlistService');
 const { formatLocalDatetime } = require('../../utils/dateUtils');
+const { logEvent } = require('../../services/logService');
 
 // Travel time multiplier (minutes per km) — single config point
 const TRAVEL_TIME_MULTIPLIER_MIN_PER_KM = 2;
@@ -182,6 +183,8 @@ router.post('/appointments', AuthMiddleware, async (request, response) => {
 
             sendAppointmentConfirmation(newAppointment).catch(console.error);
 
+            logEvent('INFO', 'APPOINTMENT_CREATED', 'user', userId, 'appointment', appointmentId, `User #${userId} booked appointment #${appointmentId} with provider #${provider_id}`).catch(() => {});
+
             response.status(201).json({
                 success: true,
                 message: 'Foglalás sikeresen létrehozva',
@@ -262,6 +265,8 @@ router.delete('/appointments/:id', AuthMiddleware, async (request, response) => 
         const cancelDetails = await getAppointmentDetailsForUserCancel(appointmentId);
 
         await updateAppointmentStatus(appointmentId, 'canceled');
+
+        logEvent('INFO', 'APPOINTMENT_CANCELED', 'user', userId, 'appointment', appointmentId, `User #${userId} canceled appointment #${appointmentId}`).catch(() => {});
 
         if (cancelDetails) {
             sendAppointmentCancellation(cancelDetails).catch(err => {

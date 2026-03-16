@@ -59,6 +59,9 @@ router.post('/register', async (request, response) => {
             console.error('Failed to send welcome email:', err);
         });
 
+        // Log registration event (fire-and-forget, actor ID unknown at this point)
+        logEvent('INFO', 'USER_SIGNUP', 'user', null, 'user', null, `New user registered: ${email}`).catch(() => {});
+
         response.status(201).json({
             success: true,
             message: 'Sikeres regisztráció'
@@ -318,11 +321,23 @@ router.post('/refresh', async (request, response) => {
 // POST /api/auth/logout — clear refresh token cookie and delete from DB
 router.post('/logout', async (request, response) => {
     const refreshToken = request.cookies.refreshToken;
-    
+
     // Remove token from database
     if (refreshToken) {
         try {
+            // Look up token before deleting to identify the actor for logging
+            const tokenRecord = await findRefreshToken(refreshToken);
             await deleteRefreshToken(refreshToken);
+
+            if (tokenRecord) {
+                if (tokenRecord.user_id) {
+                    logEvent('INFO', 'USER_LOGOUT', 'user', tokenRecord.user_id, 'user', tokenRecord.user_id, `User #${tokenRecord.user_id} logged out`).catch(() => {});
+                } else if (tokenRecord.provider_id) {
+                    logEvent('INFO', 'PROVIDER_LOGOUT', 'provider', tokenRecord.provider_id, 'provider', tokenRecord.provider_id, `Provider #${tokenRecord.provider_id} logged out`).catch(() => {});
+                } else if (tokenRecord.admin_id) {
+                    logEvent('INFO', 'ADMIN_LOGOUT', 'admin', tokenRecord.admin_id, 'admin', tokenRecord.admin_id, `Admin #${tokenRecord.admin_id} logged out`).catch(() => {});
+                }
+            }
         } catch (error) {
             console.error('Error deleting refresh token:', error);
         }
