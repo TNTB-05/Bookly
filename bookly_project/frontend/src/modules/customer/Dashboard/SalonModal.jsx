@@ -14,6 +14,9 @@ import { API_URL } from '../../../config';
 // Register Hungarian locale for date picker
 registerLocale('hu', hu);
 
+const DAY_LABELS = ['H', 'K', 'Sze', 'Cs', 'P', 'Szo', 'V'];
+const DAY_INDICES = [1, 2, 3, 4, 5, 6, 0]; // Mon=1...Sun=0
+
 // Booking steps
 const STEPS = {
     SALON_INFO: 'salon_info',
@@ -547,6 +550,29 @@ export default function SalonModal() {
                                             <a href={`mailto:${salon.email}`} className="text-indigo-600 hover:underline">{salon.email}</a>
                                         </div>
                                     )}
+                                    {(Array.isArray(salon.open_days) && salon.open_days.length > 0) || (salon.opening_hours != null && salon.closing_hours != null) ? (
+                                        <div className="flex flex-wrap items-center gap-1">
+                                            <span>🕐</span>
+                                            {DAY_LABELS.map((label, i) => {
+                                                const dayIdx = DAY_INDICES[i];
+                                                const isOpen = Array.isArray(salon.open_days) && salon.open_days.includes(dayIdx);
+                                                return (
+                                                    <span
+                                                        key={dayIdx}
+                                                        className={`text-xs font-medium px-1.5 py-0.5 rounded-full
+                                                            ${isOpen ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'}`}
+                                                    >
+                                                        {label}
+                                                    </span>
+                                                );
+                                            })}
+                                            {salon.opening_hours != null && salon.closing_hours != null && (
+                                                <span className="text-gray-600 text-sm ml-1">
+                                                    {String(salon.opening_hours).padStart(2, '0')}:00 – {String(salon.closing_hours).padStart(2, '0')}:00
+                                                </span>
+                                            )}
+                                        </div>
+                                    ) : null}
                                 </div>
                             </div>
 

@@ -41,7 +41,7 @@ router.get('/my-salon', AuthMiddleware, async (request, response) => {
 // PUT /update - Update salon details (managers only)
 router.put('/update', AuthMiddleware, isManagerMiddleware, async (request, response) => {
     try {
-        const { name, address, phone, email, type, opening_hours, closing_hours, description, latitude, longitude } = request.body;
+        const { name, address, phone, email, type, opening_hours, closing_hours, open_days, description, latitude, longitude } = request.body;
         const salonId = request.salonId;
 
         if (!name || !address) {
@@ -56,6 +56,7 @@ router.put('/update', AuthMiddleware, isManagerMiddleware, async (request, respo
         if (type !== undefined) updateData.type = type ? type.trim() : null;
         if (opening_hours !== undefined) updateData.opening_hours = opening_hours;
         if (closing_hours !== undefined) updateData.closing_hours = closing_hours;
+        if (open_days !== undefined) updateData.open_days = JSON.stringify(open_days);
         if (description !== undefined) updateData.description = description ? description.trim() : null;
         if (latitude !== undefined) updateData.latitude = latitude;
         if (longitude !== undefined) updateData.longitude = longitude;

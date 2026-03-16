@@ -21,7 +21,7 @@ async function getAllSalons() {
 // Get a salon by ID with basic public info
 async function getSalonById(salonId) {
     const query = `
-        SELECT id, name, address, phone, email, type, description, latitude, longitude, status, banner_color, logo_url, banner_image_url, created_at
+        SELECT id, name, address, phone, email, type, opening_hours, closing_hours, open_days, description, latitude, longitude, status, banner_color, logo_url, banner_image_url, created_at
         FROM salons
         WHERE id = ?
     `;
@@ -88,7 +88,7 @@ async function getServicesBySalonId(salonId) {
 
 // Dynamically update allowed salon fields
 async function updateSalon(salonId, updateData) {
-    const allowedFields = ['name', 'address', 'phone', 'email', 'type', 'opening_hours', 'closing_hours', 'description', 'latitude', 'longitude', 'status', 'banner_color', 'logo_url', 'banner_image_url'];
+    const allowedFields = ['name', 'address', 'phone', 'email', 'type', 'opening_hours', 'closing_hours', 'open_days', 'description', 'latitude', 'longitude', 'status', 'banner_color', 'logo_url', 'banner_image_url'];
     const fields = Object.keys(updateData).filter(f => allowedFields.includes(f));
     const values = fields.map(f => updateData[f]);
 
@@ -112,7 +112,7 @@ async function getMySalon(providerId) {
     const isManager = providers[0].isManager;
 
     const selectSalonQuery = `
-        SELECT id, name, address, phone, email, type, opening_hours, closing_hours, 
+        SELECT id, name, address, phone, email, type, opening_hours, closing_hours, open_days,
                 description, latitude, longitude, sharecode, status, banner_color, logo_url, banner_image_url, created_at
         FROM salons WHERE id = ?
     `;
@@ -147,7 +147,7 @@ async function updateSalonBranding(salonId, updates, values) {
 // Get full salon details including sharecode and hours (manager view)
 async function getFullSalonById(salonId) {
     const query = `
-        SELECT id, name, address, phone, email, type, opening_hours, closing_hours,
+        SELECT id, name, address, phone, email, type, opening_hours, closing_hours, open_days,
                 description, latitude, longitude, sharecode, status, banner_color, logo_url, banner_image_url, created_at
         FROM salons WHERE id = ?
     `;
