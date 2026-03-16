@@ -19,6 +19,9 @@ const redUserIcon = new L.Icon({
     shadowSize: [41, 41],
 });
 
+const DAY_LABELS = ['H', 'K', 'Sze', 'Cs', 'P', 'Szo', 'V'];
+const DAY_INDICES = [1, 2, 3, 4, 5, 6, 0]; // Mon=1...Sun=0
+
 // Hungary center
 const DEFAULT_CENTER = [47.1625, 19.5033];
 const DEFAULT_ZOOM = 7;
@@ -192,11 +195,28 @@ function SalonMap({ salons, userLocation, height = '500px', selectedSalonId = nu
                                 )}
 
                                 {/* Opening hours */}
-                                {salon.opening_hours && salon.closing_hours && (
-                                    <p className="text-gray-600 text-xs">
-                                        🕐 {salon.opening_hours} – {salon.closing_hours}
-                                    </p>
-                                )}
+                                {(Array.isArray(salon.open_days) && salon.open_days.length > 0) || (salon.opening_hours != null && salon.closing_hours != null) ? (
+                                    <div className="flex flex-wrap items-center gap-1 mt-1">
+                                        {DAY_LABELS.map((label, i) => {
+                                            const dayIdx = DAY_INDICES[i];
+                                            const isOpen = Array.isArray(salon.open_days) && salon.open_days.includes(dayIdx);
+                                            return (
+                                                <span
+                                                    key={dayIdx}
+                                                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full
+                                                        ${isOpen ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'}`}
+                                                >
+                                                    {label}
+                                                </span>
+                                            );
+                                        })}
+                                        {salon.opening_hours != null && salon.closing_hours != null && (
+                                            <span className="text-gray-500 text-xs ml-1">
+                                                {String(salon.opening_hours).padStart(2, '0')}:00–{String(salon.closing_hours).padStart(2, '0')}:00
+                                            </span>
+                                        )}
+                                    </div>
+                                ) : null}
 
                                 {/* Contact */}
                                 {salon.phone && (
