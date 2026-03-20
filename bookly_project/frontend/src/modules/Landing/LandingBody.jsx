@@ -7,6 +7,7 @@ import allinone from "../../pics/allinone.png";
 import calendar from "../../pics/calendar.png";
 import connectionservices from "../../pics/connectionservice.png";
 import collision from "../../pics/collision.png";
+import landinghero from "../../pics/slider1.png";
 
 export default function LandingBody(){
     const navigate = useNavigate();
