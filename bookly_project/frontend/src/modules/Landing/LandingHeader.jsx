@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
+import{ createPortal} from 'react-dom';
 import Logo from '../Logo';
 import ContactModal from './ContactModal';
 import { useNavigate } from 'react-router-dom';

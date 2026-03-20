@@ -1,17 +1,14 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom"
 
-import Card from './Card';
+import Card from "./Card";
+import appointment from "../../pics/appointment.png";
+import services from "../../pics/services.png";
+import allinone from "../../pics/allinone.png";
+import calendar from "../../pics/calendar.png";
+import connectionservices from "../../pics/connectionservice.png";
+import collision from "../../pics/collision.png";
 
-//képek importálása
-import appointment from '../../pics/appointment.png';
-import services from '../../pics/services.png';
-import allinone from '../../pics/allinone.png';
-import calendar from '../../pics/calendar.png';
-import connectionservices from '../../pics/connectionservice.png';
-import collision from '../../pics/collision.png';
-import landinghero from '../../pics/landinghero.png';
-
-export default function LandingBody() {
+export default function LandingBody(){
     const navigate = useNavigate();
 
     return (
@@ -213,5 +210,7 @@ export default function LandingBody() {
                 </div>
             </footer>
         </div>
-    );
+    )
 }
+
+    

@@ -21,5 +21,5 @@ export default function Card({ title, description, imageUrl }) {
                 </div>
             </div>
         </div>
-    );
+    )
 }
