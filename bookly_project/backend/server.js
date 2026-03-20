@@ -19,7 +19,7 @@ const port = process.env.PORT || 3000;
 const { Server } = require('socket.io');
 const io = new Server(server, {
     cors: {
-        origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'],
+        origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174','https://booklytest.online','http://booklytest.online'],
         credentials: true
     }
 });
@@ -29,7 +29,7 @@ app.use(cookieParser()); //?Cookie parser middleware
 
 // CORS configuration - Allow all for development
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'],
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174','https://booklytest.online','http://booklytest.online'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization']
