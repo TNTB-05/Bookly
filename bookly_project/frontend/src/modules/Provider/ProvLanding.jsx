@@ -4,7 +4,7 @@ import logo from '../../pics/logo.png';
 import calendar from '../../pics/calendar.png';
 import connectionservices from '../../pics/connectionservice.png';
 import collision from '../../pics/collision.png';
-import landinghero from '../../pics/landinghero.png';
+import landinghero from '../../pics/slider1.png';
 import Card from '../Landing/Card';
 import Slideshow from './Slideshow';
 

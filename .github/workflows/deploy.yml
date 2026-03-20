@@ -20,10 +20,15 @@ jobs:
             git clone https://${{ secrets.DEPLOY_TOKEN }}@github.com/TNTB-05/Bookly.git
             cd Bookly/bookly_project
             
-            # Copy Secret.env and .env files
-            cp /home/azureuser/Secret.env backend/Secret.env
+            # Create .env file with secrets
             echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" > .env
             echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+            
+            # Copy Secret.env to backend
+            cp /home/azureuser/Secret.env backend/Secret.env
+            
+            # Remove old containers to avoid metadata errors
+            docker-compose down -v || true
             
             # Start database first (takes time to initialize)
             docker-compose up -d db
