@@ -1,77 +1,65 @@
 const express = require('express');
 const router = express.Router();
-const database = require('../../sql/database.js');
-const fs = require('fs/promises');
-const bcrypt = require('bcryptjs'); //?npm install bcrypt
-const jwt = require('jsonwebtoken'); //?npm install jsonwebtoken
+const pool = require('../../sql/pool.js');
+const { validateSalonCode, insertProviderRefreshToken, updateProviderLastLogin, getProviderForLogin,
+    checkProviderExistsByEmailOrPhone, checkSalonExistsByNameAndAddress, checkSharecodeUnique,
+    createSalon, checkSalonExistsById, createProvider } = require('../../sql/authQueries.js');
+const { generateProviderTokens, setAuthCookies } = require('../../utils/authUtils.js');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const locationService = require('../../services/locationService.js');
+const { sendWelcomeEmail } = require('../../services/emailService.js');
+const { logEvent } = require('../../services/logService.js');
 
-
-
-//!Multer
-const multer = require('multer'); //?npm install multer
-const path = require('path');
-
-const storage = multer.diskStorage({
-    destination: (request, file, callback) => {
-        callback(null, path.join(__dirname, '../uploads'));
-    },
-    filename: (request, file, callback) => {
-        callback(null, Date.now() + '-' + file.originalname); //?egyedi név: dátum - file eredeti neve
-    }
-});
-
-const upload = multer({ storage });
-
-//!Refresh token store (in production, use database)
-const refreshTokenStore = new Map();
-
-// Clean up expired refresh tokens every hour
-setInterval(() => {
-    const now = Date.now();
-    const sevenDays = 7 * 24 * 60 * 60 * 1000;
-    
-    for (const [token, data] of refreshTokenStore.entries()) {
-        if (now - data.createdAt > sevenDays) {
-            refreshTokenStore.delete(token);
-        }
-    }
-}, 60 * 60 * 1000); // Run every hour
 
 //!Endpoints:
 
-const Users = [];
+// Generate a random 6-character hex code for salon sharing
+function generateShareCode() {
+    return crypto.randomBytes(3).toString('hex').toUpperCase();
+}
 
-// Helper function to generate tokens  
-const generateTokens = (email, userId) => {
-    if (!process.env.JWT_SECRET) {
-        console.error('JWT_SECRET is not configured');
-        throw new Error('Server configuration error: JWT_SECRET missing');
+// POST /api/provider/auth/validate-salon-code — validate a salon sharecode
+router.post('/validate-salon-code', async (request, response) => {
+    const { code } = request.body;
+
+    if (!code || code.trim().length < 6) {
+        return response.status(400).json({
+            success: false,
+            message: 'Érvénytelen szalon kód'
+        });
     }
-    
-    if (!process.env.JWT_REFRESH_SECRET) {
-        console.error('JWT_REFRESH_SECRET is not configured');
-        throw new Error('Server configuration error: JWT_REFRESH_SECRET missing');
+
+    try {
+        const salon = await validateSalonCode(code.trim().toUpperCase());
+
+        if (!salon) {
+            return response.status(404).json({
+                success: false,
+                message: 'Nem található szalon ezzel a kóddal'
+            });
+        }
+
+        response.status(200).json({
+            success: true,
+            salonId: salon.id,
+            salonName: salon.name
+        });
+    } catch (error) {
+        console.error('Validate salon code error:', error);
+        response.status(500).json({
+            success: false,
+            message: error.message || 'Szerver hiba történt'
+        });
     }
+});
 
-    const accessToken = jwt.sign(
-        { email, userId , role: 'provider'},
-        process.env.JWT_SECRET,
-        { expiresIn: '15m' } // Short-lived access token
-    );
-
-    const refreshToken = jwt.sign(
-        { email, userId , role: 'provider'},
-        process.env.JWT_REFRESH_SECRET,
-        { expiresIn: '7d' } // Long-lived refresh token
-    );
-
-    return { accessToken, refreshToken };
-};        
-
+// POST /api/provider/auth/register — register provider (create or join salon, transactional)
 router.post('/register', async (request, response) => {
-    const { companyName, email, password, phone } = request.body;
+    const { name, email, password, phone, registrationType, salonId, salon } = request.body;
 
-    if (!companyName || !email || !password || !phone) {
+    // Validate required user fields
+    if (!name || !email || !password || !phone) {
         return response.status(400).json({
             success: false,
             message: 'Minden mező kitöltése kötelező'
@@ -85,41 +73,169 @@ router.post('/register', async (request, response) => {
         });
     }
 
+    // Validate registration type
+    if (!registrationType || !['join', 'create'].includes(registrationType)) {
+        return response.status(400).json({
+            success: false,
+            message: 'Érvénytelen regisztrációs típus'
+        });
+    }
+
+    // Validate based on registration type
+    if (registrationType === 'join' && !salonId) {
+        return response.status(400).json({
+            success: false,
+            message: 'Szalon azonosító szükséges a csatlakozáshoz'
+        });
+    }
+
+    if (registrationType === 'create') {
+        if (!salon || !salon.companyName || !salon.address || !salon.description || !salon.salonType) {
+            return response.status(400).json({
+                success: false,
+                message: 'Minden szalon adat kitöltése kötelező'
+            });
+        }
+    }
+
+    const connection = await pool.getConnection();
+
     try {
-        const hashedPassword = await bcrypt.hash(password, 10);
+        await connection.beginTransaction();
 
         // Check if provider already exists
-        const existingProvider = Users.find(u => u.email === email);
-        if (existingProvider) {
+        const providerExists = await checkProviderExistsByEmailOrPhone(connection, email, phone);
+
+        if (providerExists) {
+            await connection.rollback();
             return response.status(409).json({
                 success: false,
-                message: 'Ez az email cím már használatban van'
+                message: 'Ez az email cím vagy telefonszám már használatban van'
             });
         }
 
-        const userId = Users.length + 1;
-        Users.push({ 
-            userId, 
-            companyName, 
-            email, 
-            hashedPassword, 
-            phone,
-            role: 'provider'
+        let finalSalonId;
+        let isManager = false;
+
+        if (registrationType === 'create') {
+            // Verify salon doesn't already exist with same name at same address
+            const salonExists = await checkSalonExistsByNameAndAddress(connection, salon.companyName.trim(), salon.address.trim());
+
+            if (salonExists) {
+                await connection.rollback();
+                return response.status(409).json({
+                    success: false,
+                    message: 'Már létezik szalon ezzel a névvel ezen a címen'
+                });
+            }
+
+            // Generate unique share code
+            let shareCode;
+            let isUnique = false;
+            while (!isUnique) {
+                shareCode = generateShareCode();
+                isUnique = await checkSharecodeUnique(connection, shareCode);
+            }
+
+            // Geocode the address to get coordinates
+            // Use coordinates from frontend if provided, otherwise try server-side geocoding
+            let latitude = salon.latitude || null;
+            let longitude = salon.longitude || null;
+            
+            if (!latitude || !longitude) {
+                try {
+                    const coords = await locationService.placeToCoordinate(salon.address.trim());
+                    latitude = coords.latitude;
+                    longitude = coords.longitude;
+                } catch (geocodeError) {
+                    console.warn('Geocoding failed for address:', salon.address, geocodeError.message);
+                    // Continue without coordinates - they can be added later
+                }
+            }
+
+            // Create new salon with coordinates
+            finalSalonId = await createSalon(connection, {
+                name: salon.companyName.trim(),
+                address: salon.address.trim(),
+                description: salon.description.trim(),
+                sharecode: shareCode,
+                salonType: salon.salonType.trim(),
+                latitude,
+                longitude
+            });
+            isManager = true; // Creator becomes manager
+        } else {
+            // Join existing salon - verify it exists
+            const salonFound = await checkSalonExistsById(connection, salonId);
+
+            if (!salonFound) {
+                await connection.rollback();
+                return response.status(404).json({
+                    success: false,
+                    message: 'A megadott szalon nem található'
+                });
+            }
+
+            finalSalonId = salonId;
+            isManager = false; // Joining members are regular providers
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create provider
+        const providerId = await createProvider(connection, {
+            salonId: finalSalonId,
+            name: name.trim(),
+            email: email.trim().toLowerCase(),
+            phone: phone.trim(),
+            role: isManager ? 'manager' : 'provider',
+            isManager,
+            passwordHash: hashedPassword
         });
+
+        await connection.commit();
+
+        // Send welcome email (don't block response if it fails)
+        sendWelcomeEmail({ email: email.trim().toLowerCase(), name: name.trim(), role: 'provider' }).catch(err => {
+            console.error('Failed to send welcome email:', err);
+        });
+
+        // Log registration events (fire-and-forget)
+        if (registrationType === 'create') {
+            logEvent('INFO', 'SALON_CREATED', 'provider', providerId, 'salon', finalSalonId, `New salon created by provider #${providerId}: ${salon.companyName}`).catch(() => {});
+        } else {
+            logEvent('INFO', 'PROVIDER_SALON_JOIN', 'provider', providerId, 'salon', finalSalonId, `Provider #${providerId} joined salon #${finalSalonId}`).catch(() => {});
+        }
+        logEvent('INFO', 'PROVIDER_SIGNUP', 'provider', providerId, 'provider', providerId, `New provider registered: ${email.trim().toLowerCase()}`).catch(() => {});
 
         response.status(201).json({
             success: true,
-            message: 'Sikeres regisztráció'
+            message: 'Sikeres regisztráció',
+            providerId: providerId,
+            isManager
         });
     } catch (error) {
+        if (connection) {
+            try {
+                await connection.rollback();
+            } catch (rollbackError) {
+                console.error('Rollback error:', rollbackError);
+            }
+        }
         console.error('Registration error:', error);
         response.status(500).json({
             success: false,
-            message: 'Szerver hiba történt'
+            message: error.message || 'Szerver hiba történt'
         });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 });
 
+// POST /api/provider/auth/login — authenticate provider and return JWT tokens
 router.post('/login', async (request, response) => {
     const { email, password } = request.body;
 
@@ -131,16 +247,35 @@ router.post('/login', async (request, response) => {
     }
 
     try {
-        const user = Users.find(u => u.email === email && u.role === 'provider');
+        // Query provider from database
+        const provider = await getProviderForLogin(email.trim().toLowerCase());
 
-        if (!user) {
+        if (!provider) {
             return response.status(422).json({
                 success: false,
                 message: 'Hibás email vagy jelszó'
             });
         }
 
-        const passwordMatch = await bcrypt.compare(password, user.hashedPassword);
+        if (provider.status === 'banned') {
+            return response.status(403).json({
+                success: false,
+                message: 'A fiókod le lett tiltva.',
+                banned: true,
+                reason: 'banned'
+            });
+        }
+
+        if (provider.status === 'deleted') {
+            return response.status(403).json({
+                success: false,
+                message: 'A fiók GDPR törlés miatt megszűnt.',
+                banned: true,
+                reason: 'gdpr'
+            });
+        }
+
+        const passwordMatch = await bcrypt.compare(password, provider.password_hash);
         if (!passwordMatch) {
             return response.status(422).json({
                 success: false,
@@ -149,24 +284,32 @@ router.post('/login', async (request, response) => {
         }
 
         // Generate both access and refresh tokens
-        const { accessToken, refreshToken } = generateTokens(email, user.userId);
+        const { accessToken, refreshToken } = generateProviderTokens({ email, userId: provider.id, name: provider.name });
 
-        // Store refresh token
-        refreshTokenStore.set(refreshToken, { email, userId: user.userId, createdAt: Date.now() });
+        // Store refresh token in database (provider_id for providers)
+        await insertProviderRefreshToken(provider.id, refreshToken);
+
+        // Update last login
+        await updateProviderLastLogin(provider.id);
+
+        // Log login event
+        await logEvent('INFO', 'PROVIDER_LOGIN', 'provider', provider.id, 'provider', provider.id, `Provider ${email} logged in`);
 
         // Send refresh token as HTTP-only cookie
-        response.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-        });
+        setAuthCookies(response, refreshToken);
 
         response.status(200).json({
             success: true,
             message: 'Sikeres bejelentkezés',
             accessToken,
-            companyName: user.companyName
+            provider: {
+                id: provider.id,
+                name: provider.name,
+                email: provider.email,
+                salonId: provider.salon_id,
+                salonName: provider.salon_name,
+                isManager: provider.isManager
+            }
         });
     } catch (error) {
         console.error('Login error:', error);
@@ -176,8 +319,6 @@ router.post('/login', async (request, response) => {
         });
     }
 });
-
-
 
 
 module.exports=router;

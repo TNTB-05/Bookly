@@ -1,0 +1,53 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Azure VM
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /root/Bookly/bookly_project
+            git pull origin main
+            
+            # Start database first (takes time to initialize)
+            docker-compose up -d db
+            echo "Waiting for database to start..."
+            sleep 45
+            
+            # Install global packages
+            npm install -g pm2
+            
+            # Backend setup
+            cd backend
+            npm install
+            cd ..
+            
+            # Frontend build and deploy to nginx
+            cd frontend
+            npm install
+            npm run build
+            
+            # Deploy to nginx
+            sudo rm -rf /var/www/react-app/*
+            sudo cp -r dist/* /var/www/react-app/
+            
+            # Reload nginx
+            sudo systemctl reload nginx
+            
+            # Start/restart backend with pm2
+            cd ../backend
+            pm2 delete bookly-backend || true
+            pm2 start "npm start" --name bookly-backend
+            pm2 save
+            pm2 startup
+            
+            echo "✓ Deploy complete!"

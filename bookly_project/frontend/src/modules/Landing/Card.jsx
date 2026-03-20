@@ -1,10 +1,24 @@
-export default function Card({title,description,imageUrl}){
-    return(
-        <div className="card bg-base-blue rounded-lg shadow-md overflow-hidden w-full hover:shadow-xl hover:scale-105 transition-all duration-300">
-            <img src={imageUrl} alt={`${title}-image`} className="w-full h-56 sm:h-64 md:h-72 lg:h-60 xl:h-72 2xl:h-80 object-cover" />
-            <div className="p-3 sm:p-4 lg:p-3 xl:p-5 2xl:p-6 bg-base-blue">
-                <h2 className="text-lg sm:text-xl lg:text-base xl:text-xl 2xl:text-2xl font-semibold mb-2">{title}</h2>
-                <p className="text-gray-700 text-sm sm:text-base lg:text-xs xl:text-sm 2xl:text-base">{description}</p>
+export default function Card({ title, description, imageUrl }) {
+    return (
+        <div className="bg-white border border-gray-100 rounded-xl overflow-hidden hover:ring-2 hover:ring-dark-blue/20 transition-all duration-300 group shadow-sm hover:shadow-md">
+            <div className="flex">
+                <div className="w-1 bg-dark-blue shrink-0" />
+                <div className="flex-1">
+                    <div className="h-40 overflow-hidden bg-gray-50">
+                        <img src={imageUrl} alt={`${title}-image`} className="w-full h-full object-cover transition-transform duration-500" />
+                    </div>
+                    <div className="p-5">
+                        <div className="flex justify-between items-start">
+                            <h3 className="text-base font-bold text-dark-gray leading-snug">{title}</h3>
+                            <span className="ml-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-dark-blue">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </span>
+                        </div>
+                        <p className="text-gray-500 text-sm leading-relaxed mt-2">{description}</p>
+                    </div>
+                </div>
             </div>
         </div>
     )

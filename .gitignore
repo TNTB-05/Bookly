@@ -1,2 +1,14 @@
-bookly_project/.DS_Store
+# macOS system files
+**/.DS_Store
 .DS_Store
+
+# Uploads folder - ignore all uploaded files
+bookly_project/backend/uploads/profiles/*
+bookly_project/backend/uploads/salons/*
+!bookly_project/backend/uploads/profiles/.gitkeep
+!bookly_project/backend/uploads/salons/.gitkeep
+bookly_project/CLAUDE.md
+/bookly_project/.claude
+
+# Playwright screenshot output
+bookly_project/tests/screenshots/*

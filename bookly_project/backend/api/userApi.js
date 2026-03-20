@@ -1,31 +1,24 @@
+/**
+ * User API – thin router that mounts feature sub-routers.
+ * All routes are prefixed with /api/user in server.js.
+ *
+ * No shared middleware here — each sub-router applies AuthMiddleware per-route
+ * because some endpoints (e.g. availability) are public.
+ */
+
 const express = require('express');
 const router = express.Router();
-const { getAllUsers, getUserById } = require('../sql/database.js');
 
-//?Összes felhasználó lekérése
-router.get('/users', async (req, res) => {
-    try {
-        const users = await getAllUsers();
-        res.json({ success: true, data: users });
-    } catch (error) {
-        console.error('Error fetching users:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
+// Sub-routers
+const profileRoutes = require('./user/profileRoutes');
+const salonRoutes = require('./user/salonRoutes');
+const ratingRoutes = require('./user/ratingRoutes');
+const appointmentRoutes = require('./user/appointmentRoutes');
 
-//?Felhasználó lekérése ID alapján
-router.get('/users/:id', async (req, res) => {
-    const userId = req.params.id;
-    try {
-        const user = await getUserById(userId);
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });  
-        } 
-        res.json({ success: true, data: user });
-    } catch (error) {
-        console.error('Error fetching user by ID:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
+// Mount sub-routers
+router.use('/', profileRoutes);       // /profile, /password, /profile/picture, /restore-account, /account
+router.use('/', salonRoutes);         // /saved-salons, /saved-salon-ids, /visited-salons
+router.use('/', ratingRoutes);        // /ratings, /ratings/appointment/:id
+router.use('/', appointmentRoutes);   // /appointments, /provider/:id/availability
 
 module.exports = router;
