@@ -4,6 +4,7 @@ import DashboardNavbar from './DashboardNavbar';
 import './Dashboard.css';
 import { getUserFromToken } from '../../auth/auth';
 import { authApi } from '../../auth/auth';
+import { API_URL } from '../../../config';
 import WarningIcon from '../../../icons/WarningIcon';
 import { useNotification } from '../../../components/NotificationContext';
 
@@ -194,7 +195,7 @@ export default function Dashboard() {
     // Szolgáltatás típusok lekérése a szűrőhöz
     async function loadServiceTypes() {
         try {
-            const response = await fetch('http://localhost:3000/api/search/types');
+            const response = await fetch(`${API_URL}/api/search/types`);
             const data = await response.json();
             if (data.success) {
                 setServiceTypes(data.types);
@@ -207,7 +208,7 @@ export default function Dashboard() {
     // Legjobban értékelt szalonok lekérése
     async function loadTopRatedSalons(limit = 12) {
         try {
-            const response = await fetch(`http://localhost:3000/api/search/top-rated?limit=${limit}`);
+            const response = await fetch(`${API_URL}/api/search/top-rated?limit=${limit}`);
             const data = await response.json();
             if (data.success) {
                 setTopRatedSalons(data.salons);

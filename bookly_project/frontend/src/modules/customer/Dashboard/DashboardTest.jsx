@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { API_URL } from '../../../config';
 
 export default function Dashboard() {
     const [searchResults, setSearchResults] = useState(null);
@@ -11,7 +12,7 @@ export default function Dashboard() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('http://localhost:3000/api/search/nearby', {
+            const response = await fetch(`${API_URL}/api/search/nearby`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -36,7 +37,7 @@ export default function Dashboard() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('http://localhost:3000/api/search/nearby', {
+            const response = await fetch(`${API_URL}/api/search/nearby`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -60,7 +61,7 @@ export default function Dashboard() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('http://localhost:3000/api/search/geocode', {
+            const response = await fetch(`${API_URL}/api/search/geocode`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -83,7 +84,7 @@ export default function Dashboard() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('http://localhost:3000/api/search/nearby', {
+            const response = await fetch(`${API_URL}/api/search/nearby`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -108,7 +109,7 @@ export default function Dashboard() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('http://localhost:3000/api/search/nearby', {
+            const response = await fetch(`${API_URL}/api/search/nearby`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
