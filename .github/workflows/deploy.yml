@@ -12,11 +12,13 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
-          username: root
+          username: azureuser
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /root/Bookly/bookly_project
-            git pull origin main
+            cd /home/azureuser
+            rm -rf Bookly || true
+            git clone https://github.com/tokaji-nagybence/Bookly.git
+            cd Bookly/bookly_project
             
             # Start database first (takes time to initialize)
             docker-compose up -d db
