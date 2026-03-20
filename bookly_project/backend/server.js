@@ -79,7 +79,7 @@ const loginApi = require('./api/auth/LoginApi.js');
 app.use('/auth', loginApi);
 const searchApi = require('./api/searchApi.js');
 app.use('/api/search', searchApi);
-const provLoginApi = require('./api/auth/provLoginApi.js');
+const provLoginApi = require('./api/auth/ProvLoginApi.js');
 app.use('/auth/provider', provLoginApi);
 const userApi = require('./api/userApi.js');
 app.use('/api/user', userApi);
