@@ -20,6 +20,13 @@ jobs:
             git clone https://${{ secrets.DEPLOY_TOKEN }}@github.com/TNTB-05/Bookly.git
             cd Bookly/bookly_project
             
+            # Copy Secret.env and .env files
+            cp /home/azureuser/Secret.env backend/Secret.env
+            cat > .env << ENVEOF
+DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+DB_NAME=${{ secrets.DB_NAME }}
+ENVEOF
+            
             # Start database first (takes time to initialize)
             docker-compose up -d db
             echo "Waiting for database to start..."
