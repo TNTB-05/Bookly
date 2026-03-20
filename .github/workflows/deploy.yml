@@ -36,7 +36,7 @@ jobs:
             sleep 45
             
             # Install global packages
-            npm install -g pm2
+            npm install -g pm2 || npm install pm2
             
             # Backend setup
             cd backend
@@ -57,9 +57,9 @@ jobs:
             
             # Start/restart backend with pm2
             cd ../backend
-            pm2 delete bookly-backend || true
-            pm2 start "npm start" --name bookly-backend
-            pm2 save
-            pm2 startup
+            npx pm2 delete bookly-backend || true
+            npx pm2 start "npm start" --name bookly-backend
+            npx pm2 save
+            npx pm2 startup || true
             
             echo "✓ Deploy complete!"
