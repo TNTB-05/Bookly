@@ -282,7 +282,7 @@ export default function OverviewTab({
         <div>
             {/* Hero Section */}
             <div>
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16 lg:py-24">
                     <div className="text-center">
                         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 text-dark-blue">
                             Találd meg a tökéletes szolgáltatót
@@ -441,7 +441,7 @@ export default function OverviewTab({
 
             {/* Search results + Map — side-by-side when search active */}
             {searchActive ? (
-                <div className="w-[92%] mx-auto pt-4 pb-0 flex flex-col" style={{ height: 'calc(100vh - 80px)' }}>
+                <div className="w-[92%] mx-auto pt-4 pb-0 flex flex-col lg:h-[calc(100vh-80px)]">
                     {/* Header — compact */}
                     <div className="flex items-center justify-between mb-3 px-1">
                         <div>
@@ -523,7 +523,7 @@ export default function OverviewTab({
                         {/* Left Arrow */}
                         <button
                             onClick={() => scrollRecommendedCarousel('left')}
-                            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
+                            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:scale-110"
                             aria-label="Scroll left"
                         >
                             <LeftArrowIcon />
@@ -532,7 +532,7 @@ export default function OverviewTab({
                         {/* Right Arrow */}
                         <button
                             onClick={() => scrollRecommendedCarousel('right')}
-                            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
+                            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:scale-110"
                             aria-label="Scroll right"
                         >
                             <RightArrowIcon />
