@@ -39,13 +39,13 @@ function getMinPrice(salon) {
     return prices.length > 0 ? Math.min(...prices) : null;
 }
 
-function AvatarFallback({ name, size = 40 }) {
+function AvatarFallback({ name, size = 40, className = 'rounded-full flex-shrink-0' }) {
     const initials = name
         ? name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
         : '?';
     return (
         <div
-            className="flex items-center justify-center rounded-full font-semibold text-white flex-shrink-0"
+            className={`flex items-center justify-center font-semibold text-white ${className}`}
             style={{ width: size, height: size, background: '#0A8CBA', fontSize: size * 0.38 }}
         >
             {initials}
@@ -218,7 +218,7 @@ export default function SalonPage() {
                             <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 flex-shrink-0 shadow" style={{ borderColor: '#cceaf4' }}>
                                 {salon.logo_url
                                     ? <img src={`${API_URL}${salon.logo_url}`} alt={salon.name} className="w-full h-full object-cover" />
-                                    : <AvatarFallback name={salon.name} size={64} />
+                                    : <AvatarFallback name={salon.name} size={60} className="rounded-none" />
                                 }
                             </div>
                             <div className="flex-1 min-w-0">
