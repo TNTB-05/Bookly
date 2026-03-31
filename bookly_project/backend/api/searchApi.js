@@ -430,7 +430,20 @@ router.get('/recommendations', AuthMiddleware, async (request, response) => {
             return response.status(400).json({ success: false, message: 'Location required' });
         }
         const salons = await getRecommendedSalons(userId, parseFloat(lat), parseFloat(lng), parseInt(limit));
-        return response.status(200).json({ success: true, data: { salons } });
+
+        const salonsWithProviders = await Promise.all(
+            salons.map(async (salon) => {
+                const providers = await getProvidersBySalonId(salon.id);
+                return {
+                    ...salon,
+                    providers,
+                    average_rating: salon.avg_rating,
+                    distance: salon.distance_km !== undefined ? Math.round(salon.distance_km * 10) / 10 : null,
+                };
+            })
+        );
+
+        return response.status(200).json({ success: true, data: { salons: salonsWithProviders } });
     } catch (error) {
         console.error('Get recommendations error:', error);
         return response.status(500).json({ success: false, message: 'Error fetching recommendations', error: error.message });
