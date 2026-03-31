@@ -7,7 +7,7 @@ import CloseIcon from '../../../icons/CloseIcon';
 import LeftArrowIcon from '../../../icons/LeftArrowIcon';
 import RightArrowIcon from '../../../icons/RightArrowIcon';
 import TickIcon from '../../../icons/TickIcon';
-import { authApi } from '../../auth/auth';
+import { authApi, useAuth } from '../../auth/auth';
 import { useNotification } from '../../../components/NotificationContext';
 import { API_URL } from '../../../config';
 
@@ -31,9 +31,11 @@ const STEPS = {
 export default function SalonModal() {
     const { salonId } = useParams();
     const navigate = useNavigate();
-    const { state: routerState } = useLocation();
+    const location = useLocation();
+    const { state: routerState } = location;
     const fastBooking = routerState?.fastBooking ?? null;
     const { showToast } = useNotification();
+    const { isAuthenticated } = useAuth();
     const [salon, setSalon] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -94,6 +96,10 @@ export default function SalonModal() {
 
     // Load user profile
     async function loadUserProfile() {
+        if (!isAuthenticated) {
+            setLoadingUser(false);
+            return;
+        }
         try {
             setLoadingUser(true);
             const response = await authApi.get('/api/user/profile');
@@ -242,6 +248,10 @@ export default function SalonModal() {
 
     // Start booking flow
     function startBooking() {
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: location } });
+            return;
+        }
         setCurrentStep(STEPS.SELECT_PROVIDER);
     }
 
@@ -1055,8 +1065,14 @@ export default function SalonModal() {
                 <div className="shrink-0 bg-white border-t border-gray-200 px-6 py-4">
                     {currentStep === STEPS.SALON_INFO && (
                         <div className="space-y-2">
-                            {!isUserActive() && (
-                                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+                            {/* Show login prompt OR profile incomplete warning */}
+                            {!isAuthenticated ? (
+                                <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-700">
+                                    <p className="font-semibold mb-0.5">Bejelentkezés szükséges</p>
+                                    <p>Az időpontfoglaláshoz jelentkezz be vagy regisztrálj — ingyenes!</p>
+                                </div>
+                            ) : (!loadingUser && !isUserActive() && (
+                                <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
                                     <p className="font-semibold mb-1">Profil kitöltése szükséges</p>
                                     <p>Az időpontfoglaláshoz add meg a neved, email címed és telefonszámod a profilodban.</p>
                                     <button
@@ -1066,13 +1082,13 @@ export default function SalonModal() {
                                         Profil szerkesztése →
                                     </button>
                                 </div>
-                            )}
+                            ))}
                             <button
                                 onClick={startBooking}
-                                disabled={!salon.providers || salon.providers.length === 0 || !isUserActive()}
+                                disabled={!salon.providers || salon.providers.length === 0 || (isAuthenticated && !isUserActive())}
                                 className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Időpontfoglalás
+                                {isAuthenticated ? 'Időpontfoglalás' : 'Bejelentkezés a foglaláshoz'}
                             </button>
                         </div>
                     )}
@@ -1108,7 +1124,7 @@ export default function SalonModal() {
         </div>
         {lightboxImage && (
             <div
-                className="fixed inset-0 z-[99999] bg-black/90 flex items-center justify-center p-4"
+                className="fixed inset-0 z-99999 bg-black/90 flex items-center justify-center p-4"
                 onClick={() => setLightboxImage(null)}
             >
                 <button

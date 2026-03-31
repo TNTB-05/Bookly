@@ -12,7 +12,7 @@ export default function SalonCard({ salon, savedSalonIds, toggleSaveSalon, showD
 
     // Szalon részletek megnyitása
     function handleViewDetails() {
-        navigate(`/dashboard/salon/${salon.id}`);
+        navigate(`/salon/${salon.id}`);
     }
 
     return (

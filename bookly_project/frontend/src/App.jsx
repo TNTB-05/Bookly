@@ -137,23 +137,19 @@ function App() {
         <Route path="/provider/login" element={<ProvLogin />} />
         <Route path='/admin/login' element={<AdminLogin />} />
         
+        {/* Public Salon Page - shareable URL */}
+        <Route path="/salon/:salonId" element={<SalonModal />} />
+
         {/* Protected Customer Routes */}
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
             <ProtectedRoute allowedRoles={['customer']}>
               <Dashboard />
             </ProtectedRoute>
           } 
         />
-        <Route 
-          path="/dashboard/salon/:salonId" 
-          element={
-            <ProtectedRoute allowedRoles={['customer']}>
-              <SalonModal />
-            </ProtectedRoute>
-          } 
-        />
+
         
         {/* Protected Provider Routes */}
         <Route 
