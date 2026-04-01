@@ -460,7 +460,11 @@ export default function SalonPage() {
                                                         className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
                                                         style={{ background: '#0A8CBA' }}
                                                     >
-                                                        {review.user_name ? review.user_name[0].toUpperCase() : '?'}
+                                                        {review.profile_picture_url ? (
+                                                            <img src={`${API_URL}${review.profile_picture_url}`} alt={review.user_name} className="w-full h-full object-cover rounded-full" />
+                                                        ) : (
+                                                            review.user_name[0].toUpperCase()
+                                                        )}
                                                     </div>
                                                     <span className="text-sm font-semibold" style={{ color: '#0d2d3a' }}>{review.user_name}</span>
                                                 </div>

@@ -44,7 +44,7 @@ async function getRatingById(ratingId) {
 async function getSalonReviews(salonId, limit = 20) {
     const query = `
         SELECT r.id, r.salon_rating, r.salon_comment, r.created_at,
-               u.name as user_name
+               u.name as user_name, u.profile_picture_url
         FROM ratings r
         JOIN users u ON r.user_id = u.id
         WHERE r.salon_id = ? AND r.active = TRUE
