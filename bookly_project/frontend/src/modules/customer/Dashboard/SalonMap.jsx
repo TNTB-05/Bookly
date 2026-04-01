@@ -119,7 +119,7 @@ function SalonMap({ salons, userLocation, height = '500px', selectedSalonId = nu
 
     // Stable callback for navigating to salon detail
     const handleNavigateToSalon = useCallback(
-        (salonId) => navigate(`/dashboard/salon/${salonId}`),
+        (salonId) => navigate(`/salon/${salonId}`),
         [navigate]
     );
 

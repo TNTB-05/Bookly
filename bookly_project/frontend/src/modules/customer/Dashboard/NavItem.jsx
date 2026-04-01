@@ -18,7 +18,7 @@ export default function NavItem({ tab, label, icon, activeTab, setActiveTab, set
                       } border-b-2 pb-1 transition-colors duration-200`
             }`}
         >
-            {isMobile && <span className="text-lg">{icon}</span>}
+            {isMobile && icon && <div className="w-5 h-5 flex items-center justify-center">{icon}</div>}
             <span className={isMobile ? 'text-[10px] font-medium' : ''}>{label}</span>
         </button>
     );

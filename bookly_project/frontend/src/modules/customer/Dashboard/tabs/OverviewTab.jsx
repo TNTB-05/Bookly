@@ -13,6 +13,7 @@ import ClipboardCheckIcon from '../../../../icons/ClipboardCheckIcon';
 import StarSmallIcon from '../../../../icons/StarSmallIcon';
 import LeftArrowIcon from '../../../../icons/LeftArrowIcon';
 import RightArrowIcon from '../../../../icons/RightArrowIcon';
+import CloseIcon from '../../../../icons/CloseIcon';
 
 // Komponensek
 import SalonCard from '../SalonCard';
@@ -284,10 +285,10 @@ export default function OverviewTab({
             <div>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16 lg:py-24">
                     <div className="text-center">
-                        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 text-dark-blue">
+                        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight mb-4 text-dark-blue">
                             Találd meg a tökéletes szolgáltatót
                         </h1>
-                        <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
+                        <p className="text-base sm:text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
                             Foglalj időpontot a legjobb szakemberekhez egyszerűen és gyorsan
                         </p>
 
@@ -347,7 +348,7 @@ export default function OverviewTab({
                             </div>
 
                             {/* Second Line: Location + Jelenlegi helyzetem + Keresés */}
-                            <div className="flex flex-col sm:flex-row gap-3">
+                            <div className="flex flex-col sm:flex-row flex-wrap gap-3">
                                 {/* Location Input with Address Autocomplete */}
                                 <div ref={locationContainerRef} className="flex-1 relative">
                                     <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 overflow-hidden">
@@ -408,7 +409,7 @@ export default function OverviewTab({
                                     className="px-4 py-3 bg-white/80 backdrop-blur-sm text-dark-blue rounded-xl font-medium hover:bg-white transition-colors whitespace-nowrap shadow-md border border-white/50"
                                     title="Jelenlegi helyzetem használata"
                                 >
-                                    📍 Jelenlegi helyzetem
+                                    <span>📍 <span className="hidden sm:inline">Jelenlegi </span>Helyzetem</span>
                                 </button>
 
                                 {/* Keresés Button */}
@@ -426,7 +427,7 @@ export default function OverviewTab({
                                     onClick={resetSearch}
                                     className="text-dark-blue font-medium hover:text-blue-800 transition-colors"
                                 >
-                                    ✕ Keresés törlése
+                                    <CloseIcon className="w-4 h-4 inline mr-1" /> Keresés törlése
                                 </button>
                             )}
 

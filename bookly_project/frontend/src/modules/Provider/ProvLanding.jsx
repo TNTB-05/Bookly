@@ -29,35 +29,7 @@ export default function ProvLanding() {
     const priceUnit = isAnnual ? 'Ft/hó*' : 'Ft/hó';
 
     return (
-        <div className="min-h-screen bg-base-blue font-sans text-gray-900 flex flex-col">
-            {/* Header */}
-            <header className="sticky top-0 z-50 bg-white/60 backdrop-blur-sm border-b border-gray-200/60">
-                <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-3 sm:px-10">
-                    <div className="pl-4 border-l-2 border-dark-blue/40">
-                        <img
-                            src={logo}
-                            alt="Bookly Logo"
-                            className="h-12 w-auto object-contain cursor-pointer"
-                            onClick={() => navigate('/')}
-                        />
-                    </div>
-                    <nav className="flex items-center gap-4">
-                        <button
-                            onClick={() => navigate('/provider/login')}
-                            className="text-dark-blue font-medium hover:underline underline-offset-4 transition-all"
-                        >
-                            Bejelentkezés
-                        </button>
-                        <button
-                            onClick={() => navigate('/provider/register')}
-                            className="bg-dark-blue text-white rounded-lg px-5 py-2.5 font-semibold hover:opacity-90 transition-opacity shadow-sm"
-                        >
-                            Regisztráció
-                        </button>
-                    </nav>
-                </div>
-            </header>
-
+        <div className="min-h-screen bg-base-blue font-sans text-gray-900 flex flex-col pt-16 sm:pt-20 pb-20 sm:pb-0">
             {/* Hero Section */}
             <section className="relative overflow-hidden py-24 sm:py-32 px-6 sm:px-12 lg:px-16 animate-fade-in">
                 {/* Decorative blob */}

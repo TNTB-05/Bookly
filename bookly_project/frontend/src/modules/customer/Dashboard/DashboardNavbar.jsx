@@ -7,6 +7,11 @@ import Logo from '../../Logo';
 // Ikonok
 import ProfileIcon from '../../../icons/ProfileIcon';
 import ExitIcon from '../../../icons/ExitIcon';
+import OverviewIcon from '../../../icons/OverviewIcon';
+import StarFilledIcon from '../../../icons/StarFilledIcon';
+import CalendarSimpleIcon from '../../../icons/CalendarSimpleIcon';
+import MapPinIcon from '../../../icons/MapPinIcon';
+import ChatBubbleIcon from '../../../icons/ChatBubbleIcon';
 import { API_URL } from '../../../config';
 
 
@@ -226,7 +231,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                 <NavItem
                     tab="overview"
                     label="Áttekintés"
-                    icon="🏠"
+                    icon={<OverviewIcon className="w-5 h-5" />}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                     setIsMobileMenuOpen={setIsMobileMenuOpen}
@@ -235,7 +240,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                 <NavItem
                     tab="featured"
                     label="Kiemelt"
-                    icon="⭐"
+                    icon={<StarFilledIcon className="w-5 h-5" />}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                     setIsMobileMenuOpen={setIsMobileMenuOpen}
@@ -244,7 +249,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                 <NavItem
                     tab="appointments"
                     label="Foglalásaim"
-                    icon="📅"
+                    icon={<CalendarSimpleIcon className="w-5 h-5" />}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                     setIsMobileMenuOpen={setIsMobileMenuOpen}
@@ -253,7 +258,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                 <NavItem
                     tab="book"
                     label="Helyeim"
-                    icon="➕"
+                    icon={<MapPinIcon className="w-5 h-5" />}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                     setIsMobileMenuOpen={setIsMobileMenuOpen}
@@ -263,7 +268,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                     <NavItem
                         tab="messages"
                         label="Üzenetek"
-                        icon="💬"
+                        icon={<ChatBubbleIcon className="w-5 h-5" />}
                         activeTab={activeTab}
                         setActiveTab={setActiveTab}
                         setIsMobileMenuOpen={setIsMobileMenuOpen}
