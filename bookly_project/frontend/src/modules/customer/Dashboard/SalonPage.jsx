@@ -78,9 +78,11 @@ export default function SalonPage() {
     const [savingToggle, setSavingToggle] = useState(false);
     const [bookingOpen, setBookingOpen] = useState(false);
     const [preselectedProviderId, setPreselectedProviderId] = useState(null);
+    const [reviews, setReviews] = useState([]);
 
     useEffect(() => {
         loadSalon();
+        loadReviews();
         if (isAuthenticated) loadSavedStatus();
     }, [salonId]);
 
@@ -103,6 +105,14 @@ export default function SalonPage() {
             const res = await authApi.get('/api/user/saved-salon-ids');
             const data = await res.json();
             if (data.success) setSaved((data.savedIds || []).includes(parseInt(salonId)));
+        } catch { /* ignore */ }
+    }
+
+    async function loadReviews() {
+        try {
+            const res = await fetch(`${API_URL}/api/search/salon/${salonId}/reviews`);
+            const data = await res.json();
+            if (data.success) setReviews(data.reviews || []);
         } catch { /* ignore */ }
     }
 
@@ -339,7 +349,8 @@ export default function SalonPage() {
                                 {salon.providers.map(provider => (
                                     <div
                                         key={provider.id}
-                                        className="flex-shrink-0 flex flex-col items-center gap-2 p-4 rounded-2xl w-36"
+                                        onClick={() => openBooking(provider.id)}
+                                        className="flex-shrink-0 flex flex-col items-center gap-2 p-4 rounded-2xl w-36 cursor-pointer active:scale-95 transition-transform"
                                         style={{ background: '#f0f9fc' }}
                                     >
                                         {provider.profile_picture_url
@@ -361,33 +372,6 @@ export default function SalonPage() {
                                         )}
                                     </div>
                                 ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Reviews summary */}
-                    {salon.average_rating != null && (
-                        <div className="bg-white rounded-3xl shadow-sm px-5 py-5 mx-4 lg:mx-0">
-                            <h2 className="text-base font-bold mb-4" style={{ color: '#0d2d3a' }}>Értékelések</h2>
-                            <div className="flex items-center gap-5">
-                                <div className="text-center">
-                                    <p className="text-5xl font-bold" style={{ color: '#0A8CBA' }}>{Number(salon.average_rating).toFixed(1)}</p>
-                                    <StarRow rating={salon.average_rating} />
-                                    <p className="text-xs text-gray-400 mt-1">{salon.rating_count || 0} értékelés</p>
-                                </div>
-                                <div className="flex-1">
-                                    {[5,4,3,2,1].map(star => {
-                                        const fill = Math.max(0, Math.min(100, (salon.average_rating / 5) * 100 - (5 - star) * 10));
-                                        return (
-                                            <div key={star} className="flex items-center gap-2 mb-1">
-                                                <span className="text-xs w-3 text-gray-400">{star}</span>
-                                                <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: '#f0f9fc' }}>
-                                                    <div className="h-full rounded-full" style={{ width: `${fill}%`, background: '#0A8CBA' }} />
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
                             </div>
                         </div>
                     )}
@@ -432,6 +416,73 @@ export default function SalonPage() {
                                     <span style={{ color: '#0A8CBA' }}>✉</span>
                                     <a href={`mailto:${salon.email}`} className="hover:underline">{salon.email}</a>
                                 </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Reviews section */}
+                    {(salon.average_rating != null || reviews.length > 0) && (
+                        <div className="bg-white rounded-3xl shadow-sm px-5 py-5 mx-4 lg:mx-0">
+                            <h2 className="text-base font-bold mb-4" style={{ color: '#0d2d3a' }}>Értékelések</h2>
+
+                            {/* Summary row */}
+                            {salon.average_rating != null && (
+                                <div className="flex items-center gap-5 mb-5">
+                                    <div className="text-center">
+                                        <p className="text-5xl font-bold" style={{ color: '#0A8CBA' }}>{Number(salon.average_rating).toFixed(1)}</p>
+                                        <StarRow rating={salon.average_rating} />
+                                        <p className="text-xs text-gray-400 mt-1">{salon.rating_count || 0} értékelés</p>
+                                    </div>
+                                    <div className="flex-1">
+                                        {[5,4,3,2,1].map(star => {
+                                            const fill = Math.max(0, Math.min(100, (salon.average_rating / 5) * 100 - (5 - star) * 10));
+                                            return (
+                                                <div key={star} className="flex items-center gap-2 mb-1">
+                                                    <span className="text-xs w-3 text-gray-400">{star}</span>
+                                                    <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: '#f0f9fc' }}>
+                                                        <div className="h-full rounded-full" style={{ width: `${fill}%`, background: '#0A8CBA' }} />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Individual reviews */}
+                            {reviews.length > 0 && (
+                                <div className="flex flex-col gap-3">
+                                    {reviews.map(review => (
+                                        <div key={review.id} className="rounded-2xl p-4" style={{ background: '#f0f9fc' }}>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <div
+                                                        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                                                        style={{ background: '#0A8CBA' }}
+                                                    >
+                                                        {review.user_name ? review.user_name[0].toUpperCase() : '?'}
+                                                    </div>
+                                                    <span className="text-sm font-semibold" style={{ color: '#0d2d3a' }}>{review.user_name}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    {[1,2,3,4,5].map(i => (
+                                                        <StarFilledIcon key={i} className={`w-3.5 h-3.5 ${i <= review.salon_rating ? 'text-amber-400' : 'text-gray-200'}`} />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            {review.salon_comment && (
+                                                <p className="text-sm text-gray-600 leading-relaxed">{review.salon_comment}</p>
+                                            )}
+                                            <p className="text-xs text-gray-400 mt-2">
+                                                {new Date(review.created_at).toLocaleDateString('hu-HU', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {reviews.length === 0 && salon.rating_count > 0 && (
+                                <p className="text-sm text-gray-400 text-center py-2">Még nincsenek szöveges értékelések.</p>
                             )}
                         </div>
                     )}

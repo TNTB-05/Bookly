@@ -40,6 +40,21 @@ async function getRatingById(ratingId) {
     return rows.length > 0 ? rows[0] : null;
 }
 
+// Get active reviews for a specific salon (with commenter name)
+async function getSalonReviews(salonId, limit = 20) {
+    const query = `
+        SELECT r.id, r.salon_rating, r.salon_comment, r.created_at,
+               u.name as user_name
+        FROM ratings r
+        JOIN users u ON r.user_id = u.id
+        WHERE r.salon_id = ? AND r.active = TRUE
+        ORDER BY r.created_at DESC
+        LIMIT ?
+    `;
+    const [rows] = await pool.execute(query, [salonId, String(limit)]);
+    return rows;
+}
+
 // ==================== CREATE ====================
 
 // Create or update a rating (upsert on duplicate appointment)
@@ -70,6 +85,7 @@ module.exports = {
     getRatingByAppointment,
     getAdminRatings,
     getRatingById,
+    getSalonReviews,
     createRating,
     deactivateRating
 };

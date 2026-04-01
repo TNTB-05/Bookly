@@ -4,6 +4,7 @@ const { getAllSalons, getSalonById, getDistinctSalonTypes, getTopRatedSalons, ge
 const { getProvidersBySalonId } = require('../sql/providerQueries.js');
 const { getServicesByProviderId } = require('../sql/serviceQueries.js');
 const { getSalonSuggestions, getTypeSuggestions, searchSalonsByName, getRecentReviews, getRecommendedSalons } = require('../sql/searchQueries.js');
+const { getSalonReviews } = require('../sql/ratingQueries.js');
 const locationService = require('../services/locationService.js');
 const AuthMiddleware = require('./auth/AuthMiddleware.js');
 
@@ -282,6 +283,19 @@ router.get('/salon/:id', async (request, response) => {
             message: 'problema merult fel a salon reszleteinek lekerese soran',
             error: error.message
         });
+    }
+});
+
+// GET /api/search/salon/:id/reviews — get recent reviews for a salon
+router.get('/salon/:id/reviews', async (request, response) => {
+    try {
+        const salonId = parseInt(request.params.id);
+        if (!salonId) return response.status(400).json({ success: false, message: 'Salon ID szükséges' });
+        const reviews = await getSalonReviews(salonId, 20);
+        return response.status(200).json({ success: true, reviews });
+    } catch (error) {
+        console.error('Get salon reviews error:', error);
+        return response.status(500).json({ success: false, message: 'Hiba az értékelések lekérésekor' });
     }
 });
 
