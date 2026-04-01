@@ -12,6 +12,7 @@ import UsersIcon from '../../icons/UsersIcon';
 import HourIcon from '../../icons/HourIcon';
 import TeamIcon from '../../icons/TeamIcon';
 import ChatBubbleIcon from '../../icons/ChatBubbleIcon';
+import SettingsIcon from '../../icons/SettingsIcon';
 import { startConversation } from '../../services/messagingService';
 import SalonManagement from './SalonManagement';
 import MessagesSection from './provdashcomponents/MessagesSection';
@@ -29,6 +30,7 @@ import { API_URL } from '../../config';
 
 export default function ProvDash() {
     const [activeTab, setActiveTab] = useState('overview');
+    const [moreSheetOpen, setMoreSheetOpen] = useState(false);
     const [messagesUnread, setMessagesUnread] = useState(0);
     const [pendingConversation, setPendingConversation] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -374,38 +376,6 @@ export default function ProvDash() {
                         onClick={setActiveTab}
                         isMobile={true}
                     />
-                    <NavButton
-                        activeTab={activeTab}
-                        tabId="availability"
-                        label="Elérhetőség"
-                        icon={<HourIcon />}
-                        onClick={setActiveTab}
-                        isMobile={true}
-                    />
-                    <NavButton
-                        activeTab={activeTab}
-                        tabId="salon"
-                        label="Szalon"
-                        icon={<SalonIcon />}
-                        onClick={setActiveTab}
-                        isMobile={true}
-                    />
-                    <NavButton
-                        activeTab={activeTab}
-                        tabId="customers"
-                        label="Ügyfelek"
-                        icon={<UsersIcon />}
-                        onClick={setActiveTab}
-                        isMobile={true}
-                    />
-                    <NavButton
-                        activeTab={activeTab}
-                        tabId="staff"
-                        label="Csapat"
-                        icon={<TeamIcon />}
-                        onClick={handleStaffTabClick}
-                        isMobile={true}
-                    />
                     <div className="relative">
                         <NavButton
                             activeTab={activeTab}
@@ -421,10 +391,100 @@ export default function ProvDash() {
                             </span>
                         )}
                     </div>
+                    {/* "Több" button */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setMoreSheetOpen(true)}
+                            className={`flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-xl transition-all min-w-[52px] ${
+                                ['availability', 'salon', 'customers', 'staff'].includes(activeTab)
+                                    ? 'text-dark-blue'
+                                    : 'text-gray-500'
+                            }`}
+                        >
+                            <span className={`w-6 h-6 flex items-center justify-center transition-all ${
+                                ['availability', 'salon', 'customers', 'staff'].includes(activeTab)
+                                    ? 'scale-110'
+                                    : ''
+                            }`}>
+                                <SettingsIcon />
+                            </span>
+                            <span className="text-[10px] font-medium leading-tight">Több</span>
+                        </button>
+                        {['availability', 'salon', 'customers', 'staff'].includes(activeTab) && (
+                            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-dark-blue pointer-events-none" />
+                        )}
+                    </div>
                 </nav>
             </div>
 
-            <ProfileModal 
+            {/* "Több" Bottom Sheet */}
+            {moreSheetOpen && (
+                <>
+                    {/* Dark overlay */}
+                    <div
+                        className="fixed inset-0 bg-black/40 z-[60]"
+                        onClick={() => setMoreSheetOpen(false)}
+                    />
+                    {/* Sheet panel */}
+                    <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl rounded-t-2xl z-[70] pb-safe shadow-2xl">
+                        {/* Drag handle */}
+                        <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mt-3 mb-4" />
+                        {/* Title */}
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-6 mb-2">Navigáció</p>
+                        {/* Items */}
+                        <button
+                            onClick={() => { setActiveTab('availability'); setMoreSheetOpen(false); }}
+                            className={`flex items-center gap-4 py-4 px-6 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer border-b border-gray-100 w-full text-left ${activeTab === 'availability' ? 'text-dark-blue font-semibold' : 'text-gray-800'}`}
+                        >
+                            <span className="w-6 h-6 flex items-center justify-center shrink-0"><HourIcon /></span>
+                            <span className="flex-1 text-sm">Elérhetőség</span>
+                            {activeTab === 'availability' && (
+                                <svg className="w-5 h-5 text-dark-blue shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                            )}
+                        </button>
+                        <button
+                            onClick={() => { setActiveTab('salon'); setMoreSheetOpen(false); }}
+                            className={`flex items-center gap-4 py-4 px-6 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer border-b border-gray-100 w-full text-left ${activeTab === 'salon' ? 'text-dark-blue font-semibold' : 'text-gray-800'}`}
+                        >
+                            <span className="w-6 h-6 flex items-center justify-center shrink-0"><SalonIcon /></span>
+                            <span className="flex-1 text-sm">Szalon kezelés</span>
+                            {activeTab === 'salon' && (
+                                <svg className="w-5 h-5 text-dark-blue shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                            )}
+                        </button>
+                        <button
+                            onClick={() => { setActiveTab('customers'); setMoreSheetOpen(false); }}
+                            className={`flex items-center gap-4 py-4 px-6 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer border-b border-gray-100 w-full text-left ${activeTab === 'customers' ? 'text-dark-blue font-semibold' : 'text-gray-800'}`}
+                        >
+                            <span className="w-6 h-6 flex items-center justify-center shrink-0"><UsersIcon /></span>
+                            <span className="flex-1 text-sm">Ügyfelek</span>
+                            {activeTab === 'customers' && (
+                                <svg className="w-5 h-5 text-dark-blue shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                            )}
+                        </button>
+                        <button
+                            onClick={() => { handleStaffTabClick(); setMoreSheetOpen(false); }}
+                            className={`flex items-center gap-4 py-4 px-6 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer w-full text-left last:border-0 ${activeTab === 'staff' ? 'text-dark-blue font-semibold' : 'text-gray-800'}`}
+                        >
+                            <span className="w-6 h-6 flex items-center justify-center shrink-0"><TeamIcon /></span>
+                            <span className="flex-1 text-sm">Csapat</span>
+                            {activeTab === 'staff' && (
+                                <svg className="w-5 h-5 text-dark-blue shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                            )}
+                        </button>
+                    </div>
+                </>
+            )}
+
+            <ProfileModal
                 isOpen={showProfileModal}
                 onClose={() => setShowProfileModal(false)}
                 providerProfile={providerProfile}

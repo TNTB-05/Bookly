@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
-import Landing from './modules/Landing/Landing'
+import LandingLayout from './modules/Landing/LandingLayout'
+import LandingBody from './modules/Landing/LandingBody'
 import Login from './modules/Landing/Login'
 import Register from './modules/Landing/Register'
 import ProvRegister from './modules/Provider/ProvRegister'
@@ -10,7 +11,7 @@ import './App.css'
 import { useState, useEffect } from 'react'
 import { AuthContext, getUserFromToken, startAuthHeartbeat, stopAuthHeartbeat, registerNotifier, registerNavigator } from './modules/auth/auth'
 import Dashboard from './modules/customer/Dashboard/Dashboard'
-import SalonModal from './modules/customer/Dashboard/SalonModal';
+import SalonPage from './modules/customer/Dashboard/SalonPage';
 import ProtectedRoute from './modules/auth/ProtectedRoute'
 import AdminLogin from './modules/Admin/AdminLogin'
 import AdminDashboard from './modules/Admin/AdminDashboard'
@@ -125,32 +126,30 @@ function App() {
       <PendingToastReader />
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<Landing />} />
+        <Route element={<LandingLayout />}>
+          <Route index element={<LandingBody />} />
+          <Route path="/provider/landing" element={<Provlanding />} />
+        </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/reactivate" element={<ProfileReactivation />} />
         <Route path="/provider/register" element={<ProvRegister />} />
         <Route path="/provider/login" element={<ProvLogin />} />
-        <Route path='/provider/landing' element={<Provlanding />} />
         <Route path='/admin/login' element={<AdminLogin />} />
         
+        {/* Public Salon Page - shareable URL */}
+        <Route path="/salon/:salonId" element={<SalonPage />} />
+
         {/* Protected Customer Routes */}
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
             <ProtectedRoute allowedRoles={['customer']}>
               <Dashboard />
             </ProtectedRoute>
           } 
         />
-        <Route 
-          path="/dashboard/salon/:salonId" 
-          element={
-            <ProtectedRoute allowedRoles={['customer']}>
-              <SalonModal />
-            </ProtectedRoute>
-          } 
-        />
+
         
         {/* Protected Provider Routes */}
         <Route 

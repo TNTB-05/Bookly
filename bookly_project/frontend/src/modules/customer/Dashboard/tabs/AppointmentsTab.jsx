@@ -692,7 +692,7 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    navigate(`/dashboard/salon/${apt.salon_id}`, {
+                                                                    navigate(`/salon/${apt.salon_id}`, {
                                                                         state: {
                                                                             fastBooking: {
                                                                                 providerId: apt.provider_id,
@@ -766,7 +766,7 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
 
             {/* Waitlist Slots Modal */}
             {selectedWaitlistEntry && (
-                <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-20 px-4 pb-4 bg-black/40" onClick={() => setSelectedWaitlistEntry(null)}>
+                <div className="fixed inset-0 z-9999 flex items-start justify-center pt-20 px-4 pb-4 bg-black/40" onClick={() => setSelectedWaitlistEntry(null)}>
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
                         <div className="px-5 pt-5 pb-4 border-b border-gray-100">
                             <div className="flex items-start justify-between gap-3">
@@ -804,7 +804,7 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                                                 key={slot}
                                                 onClick={() => {
                                                     setSelectedWaitlistEntry(null);
-                                                    navigate(`/dashboard/salon/${selectedWaitlistEntry.salon_id}`, {
+                                                    navigate(`/salon/${selectedWaitlistEntry.salon_id}`, {
                                                         state: {
                                                             fastBooking: {
                                                                 providerId: selectedWaitlistEntry.provider_id,
