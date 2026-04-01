@@ -11,7 +11,7 @@ import './App.css'
 import { useState, useEffect } from 'react'
 import { AuthContext, getUserFromToken, startAuthHeartbeat, stopAuthHeartbeat, registerNotifier, registerNavigator } from './modules/auth/auth'
 import Dashboard from './modules/customer/Dashboard/Dashboard'
-import SalonModal from './modules/customer/Dashboard/SalonModal';
+import SalonPage from './modules/customer/Dashboard/SalonPage';
 import ProtectedRoute from './modules/auth/ProtectedRoute'
 import AdminLogin from './modules/Admin/AdminLogin'
 import AdminDashboard from './modules/Admin/AdminDashboard'
@@ -138,7 +138,7 @@ function App() {
         <Route path='/admin/login' element={<AdminLogin />} />
         
         {/* Public Salon Page - shareable URL */}
-        <Route path="/salon/:salonId" element={<SalonModal />} />
+        <Route path="/salon/:salonId" element={<SalonPage />} />
 
         {/* Protected Customer Routes */}
         <Route
