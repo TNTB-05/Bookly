@@ -147,11 +147,12 @@ router.post('/', async (request, response) => {
 
             if (existingUser) {
                 userId = existingUser.id;
-                await updateUserNameAndPhone(userId, user_name.trim(), user_phone?.trim() || null);
+                
             } else {
-                // Create new user with default password
-                const defaultPasswordHash = await bcrypt.hash('ChangeMe123!', 10);
-                userId = await createUserFromProviderBooking(user_name.trim(), user_email.trim(), user_phone?.trim() || null, defaultPasswordHash);
+                return response.status(404).json({
+                    success: false,
+                    message: 'Nincs ilyen email címhez regisztrált felhasználó'
+                });
             }
         }
 
