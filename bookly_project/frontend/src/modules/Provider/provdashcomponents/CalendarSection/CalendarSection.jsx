@@ -54,11 +54,13 @@ const CalendarSection = ({ onOpenChat }) => {
 
     // Get start and end of current month for fetching appointments
     const getMonthRange = (date) => {
-        const start = new Date(date.getFullYear(), date.getMonth(), 1);
-        const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+        const pad = n => String(n).padStart(2, '0');
+        const y = date.getFullYear();
+        const m = date.getMonth();
+        const lastDay = new Date(y, m + 1, 0).getDate();
         return {
-            startDate: start.toISOString().split('T')[0],
-            endDate: end.toISOString().split('T')[0]
+            startDate: `${y}-${pad(m + 1)}-01`,
+            endDate: `${y}-${pad(m + 1)}-${pad(lastDay)}`
         };
     };
 
