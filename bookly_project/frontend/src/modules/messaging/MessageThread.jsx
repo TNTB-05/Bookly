@@ -1,33 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
+import SendIcon from '../../icons/SendIcon';
+import BackArrowIcon from '../../icons/BackArrowIcon';
+import TrashIcon from '../../icons/TrashIcon';
 
 function formatTime(dateString) {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
-}
-
-function SendIcon() {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-            <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-        </svg>
-    );
-}
-
-function BackIcon() {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-            <path fillRule="evenodd" d="M11.03 3.97a.75.75 0 010 1.06l-6.22 6.22H21a.75.75 0 010 1.5H4.81l6.22 6.22a.75.75 0 11-1.06 1.06l-7.5-7.5a.75.75 0 010-1.06l7.5-7.5a.75.75 0 011.06 0z" clipRule="evenodd" />
-        </svg>
-    );
-}
-
-function TrashIcon() {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-            <path fillRule="evenodd" d="M16.5 4.478v.227a48.816 48.816 0 013.878.512.75.75 0 11-.256 1.478l-.209-.035-1.005 13.07a3 3 0 01-2.991 2.77H8.084a3 3 0 01-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 01-.256-1.478A48.567 48.567 0 017.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 013.369 0c1.603.051 2.815 1.387 2.815 2.951zm-6.136-1.452a51.196 51.196 0 013.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 00-6 0v-.113c0-.794.609-1.428 1.364-1.452zm-.355 5.945a.75.75 0 10-1.5.058l.347 9a.75.75 0 101.499-.058l-.346-9zm5.48.058a.75.75 0 10-1.498-.058l-.347 9a.75.75 0 001.5.058l.345-9z" clipRule="evenodd" />
-        </svg>
-    );
 }
 
 export default function MessageThread({ messages = [], otherParty, currentUserId, currentUserRole, onSend, onBack, onDelete, sending }) {
@@ -79,7 +58,7 @@ export default function MessageThread({ messages = [], otherParty, currentUserId
                         className="text-stone-500 hover:text-stone-800 transition-colors duration-150 p-1 rounded-lg hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-amber-400"
                         aria-label="Vissza"
                     >
-                        <BackIcon />
+                        <BackArrowIcon className="w-5 h-5" />
                     </button>
                 )}
                 <h2 className="flex-1 min-w-0 text-stone-800 font-semibold text-base truncate !mb-0">
@@ -92,7 +71,7 @@ export default function MessageThread({ messages = [], otherParty, currentUserId
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-red-500 bg-red-50 hover:bg-red-100 transition-colors duration-150 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-300"
                         aria-label="Beszélgetés törlése"
                     >
-                        <TrashIcon />
+                        <TrashIcon className="w-4 h-4" />
                         Törlés
                     </button>
                 )}
@@ -155,7 +134,7 @@ export default function MessageThread({ messages = [], otherParty, currentUserId
                         className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-amber-500 text-white hover:bg-amber-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-amber-400 disabled:opacity-40 disabled:cursor-not-allowed"
                         aria-label="Küldés"
                     >
-                        <SendIcon />
+                        <SendIcon className="w-5 h-5" />
                     </button>
                 </div>
             </div>

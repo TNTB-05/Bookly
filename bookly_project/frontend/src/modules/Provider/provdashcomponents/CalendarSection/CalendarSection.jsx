@@ -6,6 +6,8 @@ import { timeBlocksService } from '../../../../services/timeBlocksService';
 import AppointmentDetailModal from './AppointmentDetailModal';
 import CreateAppointmentModal from './CreateAppointmentModal';
 import { useNotification } from '../../../../components/NotificationContext';
+import ChevronLeftIcon from '../../../../icons/ChevronLeftIcon';
+import ChevronRightIcon from '../../../../icons/ChevronRightIcon';
 
 const CalendarSection = ({ onOpenChat }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -386,9 +388,7 @@ const CalendarSection = ({ onOpenChat }) => {
                                 onClick={prevMonth}
                                 className="p-1.5 sm:p-2 hover:bg-white/50 rounded-lg transition-colors"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-dark-blue">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                                </svg>
+                                <ChevronLeftIcon className="w-4 h-4 sm:w-5 sm:h-5 text-dark-blue" />
                             </button>
                             <h3 className="text-base sm:text-lg font-bold text-dark-blue">
                                 {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
@@ -397,9 +397,7 @@ const CalendarSection = ({ onOpenChat }) => {
                                 onClick={nextMonth}
                                 className="p-1.5 sm:p-2 hover:bg-white/50 rounded-lg transition-colors"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-dark-blue">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                                </svg>
+                                <ChevronRightIcon className="w-4 h-4 sm:w-5 sm:h-5 text-dark-blue" />
                             </button>
                         </div>
                         <div className="grid grid-cols-7 gap-1 mb-2">

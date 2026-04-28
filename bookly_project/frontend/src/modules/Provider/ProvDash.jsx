@@ -13,6 +13,7 @@ import HourIcon from '../../icons/HourIcon';
 import TeamIcon from '../../icons/TeamIcon';
 import ChatBubbleIcon from '../../icons/ChatBubbleIcon';
 import SettingsIcon from '../../icons/SettingsIcon';
+import TickIcon from '../../icons/TickIcon';
 import { startConversation } from '../../services/messagingService';
 import SalonManagement from './SalonManagement';
 import MessagesSection from './provdashcomponents/MessagesSection';
@@ -160,7 +161,7 @@ export default function ProvDash() {
 
     const handleProviderPasswordChange = async () => {
         if (!passwordFormData.currentPassword || !passwordFormData.newPassword || !passwordFormData.confirmPassword) { setPasswordError('Minden mező kitöltése kötelező'); return; }
-        if (passwordFormData.newPassword.length < 6) { setPasswordError('Az új jelszónak legalább 6 karakter hosszúnak kell lennie'); return; }
+        if (passwordFormData.newPassword.length < 8) { setPasswordError('Az új jelszónak legalább 8 karakter hosszúnak kell lennie'); return; }
         if (passwordFormData.newPassword !== passwordFormData.confirmPassword) { setPasswordError('Az új jelszavak nem egyeznek'); return; }
 
         setPasswordSaving(true);
@@ -439,9 +440,7 @@ export default function ProvDash() {
                             <span className="w-6 h-6 flex items-center justify-center shrink-0"><HourIcon /></span>
                             <span className="flex-1 text-sm">Elérhetőség</span>
                             {activeTab === 'availability' && (
-                                <svg className="w-5 h-5 text-dark-blue shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
+                                <TickIcon className="w-5 h-5 text-dark-blue shrink-0" />
                             )}
                         </button>
                         <button
@@ -451,9 +450,7 @@ export default function ProvDash() {
                             <span className="w-6 h-6 flex items-center justify-center shrink-0"><SalonIcon /></span>
                             <span className="flex-1 text-sm">Szalon kezelés</span>
                             {activeTab === 'salon' && (
-                                <svg className="w-5 h-5 text-dark-blue shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
+                                <TickIcon className="w-5 h-5 text-dark-blue shrink-0" />
                             )}
                         </button>
                         <button
@@ -463,9 +460,7 @@ export default function ProvDash() {
                             <span className="w-6 h-6 flex items-center justify-center shrink-0"><UsersIcon /></span>
                             <span className="flex-1 text-sm">Ügyfelek</span>
                             {activeTab === 'customers' && (
-                                <svg className="w-5 h-5 text-dark-blue shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
+                                <TickIcon className="w-5 h-5 text-dark-blue shrink-0" />
                             )}
                         </button>
                         <button
@@ -475,9 +470,7 @@ export default function ProvDash() {
                             <span className="w-6 h-6 flex items-center justify-center shrink-0"><TeamIcon /></span>
                             <span className="flex-1 text-sm">Csapat</span>
                             {activeTab === 'staff' && (
-                                <svg className="w-5 h-5 text-dark-blue shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
+                                <TickIcon className="w-5 h-5 text-dark-blue shrink-0" />
                             )}
                         </button>
                     </div>

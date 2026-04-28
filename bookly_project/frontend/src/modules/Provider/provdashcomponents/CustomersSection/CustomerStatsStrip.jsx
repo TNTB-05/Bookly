@@ -1,4 +1,6 @@
 import UsersIcon from '../../../../icons/UsersIcon';
+import RefreshIcon from '../../../../icons/RefreshIcon';
+import PresentationChartIcon from '../../../../icons/PresentationChartIcon';
 
 const CustomerStatsStrip = ({ totalCustomers, returningRate, topServices }) => {
     return (
@@ -26,9 +28,7 @@ const CustomerStatsStrip = ({ totalCustomers, returningRate, topServices }) => {
                         </p>
                     </div>
                     <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-green-600">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                        </svg>
+                        <RefreshIcon className="w-6 h-6 text-green-600" />
                     </div>
                 </div>
             </div>
@@ -52,9 +52,7 @@ const CustomerStatsStrip = ({ totalCustomers, returningRate, topServices }) => {
                         )}
                     </div>
                     <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center ml-3 shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-purple-600">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5" />
-                        </svg>
+                        <PresentationChartIcon className="w-6 h-6 text-purple-600" />
                     </div>
                 </div>
             </div>
