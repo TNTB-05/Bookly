@@ -1,0 +1,492 @@
+﻿
+Running 70 tests using 2 workers
+
+[1A[2K[1/70] [chromium] ÔÇ║ Booking.spec.js:8:3 ÔÇ║ Booking flow ÔÇ║ successful booking
+[1A[2K[2/70] [chromium] ÔÇ║ CancelAppointment.spec.js:11:3 ÔÇ║ Cancel appointment ÔÇ║ appointments tab loads correctly
+[1A[2K  1) [chromium] ÔÇ║ CancelAppointment.spec.js:11:3 ÔÇ║ Cancel appointment ÔÇ║ appointments tab loads correctly 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('Nincs foglal├ís erre a napra')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for getByText('Nincs foglal├ís erre a napra')[22m
+
+
+      19 |       await expect(appointments).toBeVisible();
+      20 |     } else {
+    > 21 |       await expect(page.getByText('Nincs foglal├ís erre a napra')).toBeVisible({ timeout: 10000 });
+         |                                                                   ^
+      22 |     }
+      23 |     await page.screenshot({ path: 'screenshots/booking/cancel-01-appointments-tab.png' });
+      24 |   });
+        at C:\Users\varga\Desktop\Bookly Projekt\Bookly\bookly_project\tests\CancelAppointment.spec.js:21:67
+
+    attachment #1: screenshot (image/png) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\CancelAppointment-Cancel-a-19110-ntments-tab-loads-correctly-chromium\test-failed-1.png
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    attachment #2: video (video/webm) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\CancelAppointment-Cancel-a-19110-ntments-tab-loads-correctly-chromium\video.webm
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    Error Context: test-results\CancelAppointment-Cancel-a-19110-ntments-tab-loads-correctly-chromium\error-context.md
+
+
+[1A[2K[3/70] [chromium] ÔÇ║ CancelAppointment.spec.js:28:3 ÔÇ║ Cancel appointment ÔÇ║ dismiss cancel modal without cancelling
+[1A[2K[4/70] [chromium] ÔÇ║ CancelAppointment.spec.js:56:3 ÔÇ║ Cancel appointment ÔÇ║ confirm cancel removes appointment
+[1A[2K[5/70] [chromium] ÔÇ║ CustomerAccountDeletion.spec.js:9:3 ÔÇ║ Customer account deletion ÔÇ║ delete modal opens and can be dismissed
+[1A[2K[6/70] [chromium] ÔÇ║ CustomerAccountDeletion.spec.js:29:3 ÔÇ║ Customer account deletion ÔÇ║ delete validates empty password
+[1A[2K[7/70] [chromium] ÔÇ║ CustomerAccountDeletion.spec.js:45:3 ÔÇ║ Customer account deletion ÔÇ║ delete validates missing confirmation text
+[1A[2K[8/70] [chromium] ÔÇ║ CustomerAccountDeletion.spec.js:64:3 ÔÇ║ Profile reactivation ÔÇ║ reactivation page redirects to login without token
+[1A[2K[9/70] [chromium] ÔÇ║ CustomerAccountDeletion.spec.js:73:3 ÔÇ║ Profile reactivation ÔÇ║ reactivation page loads with token in session storage
+[1A[2K[10/70] [chromium] ÔÇ║ CustomerProfile.spec.js:8:3 ÔÇ║ Customer profile ÔÇ║ profile tab loads with user info
+[1A[2K[11/70] [chromium] ÔÇ║ CustomerProfile.spec.js:18:3 ÔÇ║ Customer profile ÔÇ║ opens profile edit modal with form fields
+[1A[2K[12/70] [chromium] ÔÇ║ CustomerProfile.spec.js:32:3 ÔÇ║ Customer profile ÔÇ║ profile edit validates empty name
+[1A[2K[13/70] [chromium] ÔÇ║ CustomerProfile.spec.js:51:3 ÔÇ║ Customer profile ÔÇ║ profile edit saves successfully
+[1A[2K[14/70] [chromium] ÔÇ║ CustomerProfile.spec.js:68:3 ÔÇ║ Customer profile ÔÇ║ opens password change modal
+[1A[2K[15/70] [chromium] ÔÇ║ CustomerProfile.spec.js:82:3 ÔÇ║ Customer profile ÔÇ║ password change validates empty fields
+[1A[2K[16/70] [chromium] ÔÇ║ CustomerProfile.spec.js:97:3 ÔÇ║ Customer profile ÔÇ║ password change validates short new password
+[1A[2K[17/70] [chromium] ÔÇ║ CustomerProfile.spec.js:116:3 ÔÇ║ Customer profile ÔÇ║ password change validates mismatched passwords
+[1A[2K[18/70] [chromium] ÔÇ║ Login.spec.js:9:3 ÔÇ║ Customer login ÔÇ║ login page loads correctly
+[1A[2K[19/70] [chromium] ÔÇ║ Login.spec.js:17:3 ÔÇ║ Customer login ÔÇ║ login fails with both fields empty
+[1A[2K[20/70] [chromium] ÔÇ║ Login.spec.js:26:3 ÔÇ║ Customer login ÔÇ║ login fails with empty email
+[1A[2K[21/70] [chromium] ÔÇ║ Login.spec.js:35:3 ÔÇ║ Customer login ÔÇ║ login fails with empty password
+[1A[2K[22/70] [chromium] ÔÇ║ Login.spec.js:44:3 ÔÇ║ Customer login ÔÇ║ login fails with wrong password
+[1A[2K[23/70] [chromium] ÔÇ║ Login.spec.js:53:3 ÔÇ║ Customer login ÔÇ║ login fails with invalid email format
+[1A[2K[24/70] [chromium] ÔÇ║ Login.spec.js:64:3 ÔÇ║ Customer login ÔÇ║ login fails with non-existent email
+[1A[2K[25/70] [chromium] ÔÇ║ Login.spec.js:73:3 ÔÇ║ Customer login ÔÇ║ login succeeds with correct credentials
+[1A[2K[26/70] [chromium] ÔÇ║ ProviderAppointmentCancel.spec.js:8:3 ÔÇ║ Provider appointment cancel ÔÇ║ calendar section loads with heading
+[1A[2K  2) [chromium] ÔÇ║ ProviderAppointmentCancel.spec.js:8:3 ÔÇ║ Provider appointment cancel ÔÇ║ calendar section loads with heading 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('Napt├ír')
+    Expected: visible
+    Error: strict mode violation: getByText('Napt├ír') resolved to 3 elements:
+        1) <span class="font-semibold">Napt├ír</span> aka getByRole('button', { name: 'Napt├ír' })
+        2) <h2 class="text-xl sm:text-2xl font-bold text-dark-blue">Napt├ír</h2> aka getByRole('heading', { name: 'Napt├ír' })
+        3) <span class="font-medium">Napt├ír</span> aka locator('nav').getByText('Napt├ír')
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for getByText('Napt├ír')[22m
+
+
+      11 |     await page.waitForTimeout(1000);
+      12 |
+    > 13 |     await expect(page.getByText('Napt├ír')).toBeVisible({ timeout: 10000 });
+         |                                            ^
+      14 |
+      15 |     await page.screenshot({ path: 'screenshots/provider-calendar/01-section-loaded.png' });
+      16 |   });
+        at C:\Users\varga\Desktop\Bookly Projekt\Bookly\bookly_project\tests\ProviderAppointmentCancel.spec.js:13:44
+
+    attachment #1: screenshot (image/png) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\ProviderAppointmentCancel--23d7a--section-loads-with-heading-chromium\test-failed-1.png
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    attachment #2: video (video/webm) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\ProviderAppointmentCancel--23d7a--section-loads-with-heading-chromium\video.webm
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    Error Context: test-results\ProviderAppointmentCancel--23d7a--section-loads-with-heading-chromium\error-context.md
+
+
+[1A[2K[27/70] [chromium] ÔÇ║ ProviderAppointmentCancel.spec.js:18:3 ÔÇ║ Provider appointment cancel ÔÇ║ calendar navigation between months works
+[1A[2K  3) [chromium] ÔÇ║ Booking.spec.js:8:3 ÔÇ║ Booking flow ÔÇ║ successful booking ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    [31mTest timeout of 120000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 120000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: 'Id┼Ĺpontfoglal├ís' })[22m
+    [2m    - locator resolved to <button disabled class="w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Id┼Ĺpontfoglal├ís</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    214 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m        - element is not enabled[22m
+    [2m      - retrying click action[22m
+    [2m        - waiting 500ms[22m
+
+
+       at helpers\booking.js:19
+
+      17 |
+      18 |   // Start booking
+    > 19 |   await page.getByRole('button', { name: 'Id┼Ĺpontfoglal├ís' }).click();
+         |                                                               ^
+      20 |   await expect(page.getByText('V├ílasszon szolg├íltat├│t')).toBeVisible({ timeout: 5000 });
+      21 |   await page.waitForTimeout(1000);
+      22 |
+        at navigateToBookingConfirmation (C:\Users\varga\Desktop\Bookly Projekt\Bookly\bookly_project\tests\helpers\booking.js:19:63)
+        at C:\Users\varga\Desktop\Bookly Projekt\Bookly\bookly_project\tests\Booking.spec.js:11:19
+
+    attachment #1: screenshot (image/png) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\Booking-Booking-flow-successful-booking-chromium\test-failed-1.png
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    attachment #2: video (video/webm) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\Booking-Booking-flow-successful-booking-chromium\video.webm
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    Error Context: test-results\Booking-Booking-flow-successful-booking-chromium\error-context.md
+
+
+[1A[2K[28/70] [chromium] ÔÇ║ Booking.spec.js:34:3 ÔÇ║ Booking flow ÔÇ║ user cannot book an already reserved appointment slot
+[1A[2K  4) [chromium] ÔÇ║ ProviderAppointmentCancel.spec.js:18:3 ÔÇ║ Provider appointment cancel ÔÇ║ calendar navigation between months works 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has(svg)').filter({ has: locator('path') }).last()[22m
+    [2m    - locator resolved to <button class="flex items-center gap-3 p-3 rounded-xl transition-all duration-300 relative overflow-hiddenÔćÁ            hover:bg-white/40 text-gray-700 hover:text-dark-blueÔćÁ            flex-col text-[10px] gap-1 p-2 w-full justify-centerÔćÁ        ">ÔÇŽ</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    51 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m       - element is not visible[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+
+
+      34 |     // Click next month
+      35 |     const nextButton = page.locator('button:has(svg)').filter({ has: page.locator('path') }).last();
+    > 36 |     await nextButton.click();
+         |                      ^
+      37 |     await page.waitForTimeout(1000);
+      38 |
+      39 |     await page.screenshot({ path: 'screenshots/provider-calendar/02-month-navigation.png' });
+        at C:\Users\varga\Desktop\Bookly Projekt\Bookly\bookly_project\tests\ProviderAppointmentCancel.spec.js:36:22
+
+    attachment #1: screenshot (image/png) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\ProviderAppointmentCancel--929e3-gation-between-months-works-chromium\test-failed-1.png
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    attachment #2: video (video/webm) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\ProviderAppointmentCancel--929e3-gation-between-months-works-chromium\video.webm
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    Error Context: test-results\ProviderAppointmentCancel--929e3-gation-between-months-works-chromium\error-context.md
+
+
+[1A[2K[29/70] [chromium] ÔÇ║ ProviderAppointmentCancel.spec.js:42:3 ÔÇ║ Provider appointment cancel ÔÇ║ clicking a day shows day view panel
+[1A[2K[30/70] [chromium] ÔÇ║ ProviderAppointmentCancel.spec.js:69:3 ÔÇ║ Provider appointment cancel ÔÇ║ clicking an appointment opens detail modal
+[1A[2K[31/70] [chromium] ÔÇ║ ProviderAppointmentCancel.spec.js:104:3 ÔÇ║ Provider appointment cancel ÔÇ║ delete button available for scheduled appointments
+[1A[2K[32/70] [chromium] ÔÇ║ ProviderLogin.spec.js:8:3 ÔÇ║ Provider login ÔÇ║ provider login page loads correctly
+[1A[2K[33/70] [chromium] ÔÇ║ ProviderLogin.spec.js:17:3 ÔÇ║ Provider login ÔÇ║ login fails with both fields empty
+[1A[2K[34/70] [chromium] ÔÇ║ ProviderLogin.spec.js:28:3 ÔÇ║ Provider login ÔÇ║ login fails with empty password
+[1A[2K[35/70] [chromium] ÔÇ║ ProviderLogin.spec.js:39:3 ÔÇ║ Provider login ÔÇ║ login fails with invalid credentials
+[1A[2K[36/70] [chromium] ÔÇ║ ProviderLogin.spec.js:49:3 ÔÇ║ Provider login ÔÇ║ login succeeds with valid credentials
+[1A[2K  5) [chromium] ÔÇ║ ProviderLogin.spec.js:49:3 ÔÇ║ Provider login ÔÇ║ login succeeds with valid credentials 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('Sikeres bejelentkez├ęs!')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Sikeres bejelentkez├ęs!')[22m
+
+
+      57 |     await page.getByRole('button', { name: 'Bejelentkez├ęs' }).click();
+      58 |
+    > 59 |     await expect(page.getByText('Sikeres bejelentkez├ęs!')).toBeVisible({ timeout: 5000 });
+         |                                                            ^
+      60 |     await page.waitForURL('**/ProvDash', { timeout: 15000 });
+      61 |     await expect(page).toHaveURL(/\/ProvDash/);
+      62 |
+        at C:\Users\varga\Desktop\Bookly Projekt\Bookly\bookly_project\tests\ProviderLogin.spec.js:59:60
+
+    attachment #1: screenshot (image/png) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\ProviderLogin-Provider-log-56ee1-eeds-with-valid-credentials-chromium\test-failed-1.png
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    attachment #2: video (video/webm) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\ProviderLogin-Provider-log-56ee1-eeds-with-valid-credentials-chromium\video.webm
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    Error Context: test-results\ProviderLogin-Provider-log-56ee1-eeds-with-valid-credentials-chromium\error-context.md
+
+
+[1A[2K[37/70] [chromium] ÔÇ║ ProviderLogin.spec.js:66:3 ÔÇ║ Provider login ÔÇ║ back button navigates to provider landing
+[1A[2K[38/70] [chromium] ÔÇ║ ProviderLogin.spec.js:75:3 ÔÇ║ Provider login ÔÇ║ register link navigates to provider register
+[1A[2K[39/70] [chromium] ÔÇ║ ProviderRegister.spec.js:8:3 ÔÇ║ Provider registration - Step 1 (Choice) ÔÇ║ registration page loads with choice step
+[1A[2K[40/70] [chromium] ÔÇ║ ProviderRegister.spec.js:17:3 ÔÇ║ Provider registration - Step 1 (Choice) ÔÇ║ create salon button advances to salon data step
+[1A[2K[41/70] [chromium] ÔÇ║ ProviderRegister.spec.js:26:3 ÔÇ║ Provider registration - Step 1 (Choice) ÔÇ║ join salon button advances to join step
+[1A[2K[42/70] [chromium] ÔÇ║ ProviderRegister.spec.js:42:3 ÔÇ║ Provider registration - Join salon validation ÔÇ║ validates empty salon code
+[1A[2K[43/70] [chromium] ÔÇ║ ProviderRegister.spec.js:50:3 ÔÇ║ Provider registration - Join salon validation ÔÇ║ validates short salon code
+[1A[2K[44/70] [chromium] ÔÇ║ ProviderRegister.spec.js:66:3 ÔÇ║ Provider registration - Create salon validation ÔÇ║ validates empty required fields
+[1A[2K[45/70] [chromium] ÔÇ║ ProviderRegister.spec.js:74:3 ÔÇ║ Provider registration - Create salon validation ÔÇ║ validates short company name
+[1A[2K[46/70] [chromium] ÔÇ║ ProviderRegister.spec.js:111:3 ÔÇ║ Provider registration - Create salon validation ÔÇ║ validates short description
+[1A[2K[47/70] [chromium] ÔÇ║ ProviderRegister.spec.js:171:3 ÔÇ║ Provider registration - User data validation ÔÇ║ validates empty user fields
+[1A[2K[48/70] [chromium] ÔÇ║ ProviderRegister.spec.js:180:3 ÔÇ║ Provider registration - User data validation ÔÇ║ validates short name
+[1A[2K[49/70] [chromium] ÔÇ║ ProviderRegister.spec.js:194:3 ÔÇ║ Provider registration - User data validation ÔÇ║ validates invalid email
+[1A[2K[50/70] [chromium] ÔÇ║ ProviderRegister.spec.js:208:3 ÔÇ║ Provider registration - User data validation ÔÇ║ validates short password
+[1A[2K[51/70] [chromium] ÔÇ║ ProviderRegister.spec.js:222:3 ÔÇ║ Provider registration - User data validation ÔÇ║ validates mismatched passwords
+[1A[2K[52/70] [chromium] ÔÇ║ ProviderServiceCRUD.spec.js:8:3 ÔÇ║ Provider service CRUD ÔÇ║ services section loads with heading
+[1A[2K[53/70] [chromium] ÔÇ║ ProviderServiceCRUD.spec.js:18:3 ÔÇ║ Provider service CRUD ÔÇ║ empty state or service list is displayed
+[1A[2K[54/70] [chromium] ÔÇ║ ProviderServiceCRUD.spec.js:34:3 ÔÇ║ Provider service CRUD ÔÇ║ new service button opens create modal
+[1A[2K[55/70] [chromium] ÔÇ║ ProviderServiceCRUD.spec.js:48:3 ÔÇ║ Provider service CRUD ÔÇ║ create validates empty service name
+[1A[2K[56/70] [chromium] ÔÇ║ ProviderServiceCRUD.spec.js:69:3 ÔÇ║ Provider service CRUD ÔÇ║ create validates minimum duration
+[1A[2K[57/70] [chromium] ÔÇ║ ProviderServiceCRUD.spec.js:92:3 ÔÇ║ Provider service CRUD ÔÇ║ successfully creates a new service
+[1A[2K[58/70] [chromium] ÔÇ║ ProviderServiceCRUD.spec.js:129:3 ÔÇ║ Provider service CRUD ÔÇ║ service card shows duration and price
+[1A[2K[59/70] [chromium] ÔÇ║ ProviderServiceCRUD.spec.js:151:3 ÔÇ║ Provider service CRUD ÔÇ║ delete service with confirmation
+[1A[2K  6) [chromium] ÔÇ║ ProviderServiceCRUD.spec.js:151:3 ÔÇ║ Provider service CRUD ÔÇ║ delete service with confirmation 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.group').first().locator('button.text-red-500, button:has(svg)').last()[22m
+
+
+      172 |     // Click the delete button (trash icon)
+      173 |     const deleteButton = card.locator('button.text-red-500, button:has(svg)').last();
+    > 174 |     await deleteButton.click();
+          |                        ^
+      175 |     await page.waitForTimeout(500);
+      176 |
+      177 |     // Confirmation modal should appear
+        at C:\Users\varga\Desktop\Bookly Projekt\Bookly\bookly_project\tests\ProviderServiceCRUD.spec.js:174:24
+
+    attachment #1: screenshot (image/png) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\ProviderServiceCRUD-Provid-09389-e-service-with-confirmation-chromium\test-failed-1.png
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    attachment #2: video (video/webm) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\ProviderServiceCRUD-Provid-09389-e-service-with-confirmation-chromium\video.webm
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    Error Context: test-results\ProviderServiceCRUD-Provid-09389-e-service-with-confirmation-chromium\error-context.md
+
+
+[1A[2K[60/70] [chromium] ÔÇ║ Register.spec.js:6:3 ÔÇ║ Registration and login ÔÇ║ register page loads correctly
+[1A[2K[61/70] [chromium] ÔÇ║ Register.spec.js:15:3 ÔÇ║ Registration and login ÔÇ║ register fails with all fields empty
+[1A[2K[62/70] [chromium] ÔÇ║ Register.spec.js:25:3 ÔÇ║ Registration and login ÔÇ║ register fails with name too short
+[1A[2K[63/70] [chromium] ÔÇ║ Register.spec.js:37:3 ÔÇ║ Registration and login ÔÇ║ register fails with invalid email format
+[1A[2K[64/70] [chromium] ÔÇ║ Register.spec.js:51:3 ÔÇ║ Registration and login ÔÇ║ register fails with password too short
+[1A[2K[65/70] [chromium] ÔÇ║ Register.spec.js:63:3 ÔÇ║ Registration and login ÔÇ║ register fails with mismatched passwords
+[1A[2K[66/70] [chromium] ÔÇ║ Register.spec.js:75:3 ÔÇ║ Registration and login ÔÇ║ register fails with already existing email
+[1A[2K[67/70] [chromium] ÔÇ║ Register.spec.js:103:3 ÔÇ║ Registration and login ÔÇ║ user can register and then login
+[1A[2K  7) [chromium] ÔÇ║ Booking.spec.js:34:3 ÔÇ║ Booking flow ÔÇ║ user cannot book an already reserved appointment slot 
+
+    [31mTest timeout of 120000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 120000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: 'Id┼Ĺpontfoglal├ís' })[22m
+    [2m    - locator resolved to <button disabled class="w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Id┼Ĺpontfoglal├ís</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    215 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m        - element is not enabled[22m
+    [2m      - retrying click action[22m
+    [2m        - waiting 500ms[22m
+
+
+       at helpers\booking.js:19
+
+      17 |
+      18 |   // Start booking
+    > 19 |   await page.getByRole('button', { name: 'Id┼Ĺpontfoglal├ís' }).click();
+         |                                                               ^
+      20 |   await expect(page.getByText('V├ílasszon szolg├íltat├│t')).toBeVisible({ timeout: 5000 });
+      21 |   await page.waitForTimeout(1000);
+      22 |
+        at navigateToBookingConfirmation (C:\Users\varga\Desktop\Bookly Projekt\Bookly\bookly_project\tests\helpers\booking.js:19:63)
+        at C:\Users\varga\Desktop\Bookly Projekt\Bookly\bookly_project\tests\Booking.spec.js:37:19
+
+    attachment #1: screenshot (image/png) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\Booking-Booking-flow-user--2bcfa-y-reserved-appointment-slot-chromium\test-failed-1.png
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    attachment #2: video (video/webm) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\Booking-Booking-flow-user--2bcfa-y-reserved-appointment-slot-chromium\video.webm
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    Error Context: test-results\Booking-Booking-flow-user--2bcfa-y-reserved-appointment-slot-chromium\error-context.md
+
+
+[1A[2K[68/70] [chromium] ÔÇ║ Booking.spec.js:75:3 ÔÇ║ Booking flow ÔÇ║ user cannot create overlapping appointments
+[1A[2K  8) [chromium] ÔÇ║ Booking.spec.js:75:3 ÔÇ║ Booking flow ÔÇ║ user cannot create overlapping appointments 
+
+    [31mTest timeout of 120000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 120000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: 'Id┼Ĺpontfoglal├ís' })[22m
+    [2m    - locator resolved to <button disabled class="w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Id┼Ĺpontfoglal├ís</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    215 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m        - element is not enabled[22m
+    [2m      - retrying click action[22m
+    [2m        - waiting 500ms[22m
+
+
+       at helpers\booking.js:19
+
+      17 |
+      18 |   // Start booking
+    > 19 |   await page.getByRole('button', { name: 'Id┼Ĺpontfoglal├ís' }).click();
+         |                                                               ^
+      20 |   await expect(page.getByText('V├ílasszon szolg├íltat├│t')).toBeVisible({ timeout: 5000 });
+      21 |   await page.waitForTimeout(1000);
+      22 |
+        at navigateToBookingConfirmation (C:\Users\varga\Desktop\Bookly Projekt\Bookly\bookly_project\tests\helpers\booking.js:19:63)
+        at C:\Users\varga\Desktop\Bookly Projekt\Bookly\bookly_project\tests\Booking.spec.js:78:19
+
+    attachment #1: screenshot (image/png) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\Booking-Booking-flow-user--1576d-te-overlapping-appointments-chromium\test-failed-1.png
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    attachment #2: video (video/webm) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\Booking-Booking-flow-user--1576d-te-overlapping-appointments-chromium\video.webm
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    Error Context: test-results\Booking-Booking-flow-user--1576d-te-overlapping-appointments-chromium\error-context.md
+
+
+[1A[2K[69/70] [chromium] ÔÇ║ Booking.spec.js:116:3 ÔÇ║ Booking flow ÔÇ║ past dates are disabled in the booking calendar
+[1A[2K  9) [chromium] ÔÇ║ Booking.spec.js:116:3 ÔÇ║ Booking flow ÔÇ║ past dates are disabled in the booking calendar 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: 'Id┼Ĺpontfoglal├ís' })[22m
+    [2m    - locator resolved to <button disabled class="w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Id┼Ĺpontfoglal├ís</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    99 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m       - element is not enabled[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+
+
+       at helpers\booking.js:101
+
+       99 |   await page.waitForTimeout(2000);
+      100 |
+    > 101 |   await page.getByRole('button', { name: 'Id┼Ĺpontfoglal├ís' }).click();
+          |                                                               ^
+      102 |   await expect(page.getByText('V├ílasszon szolg├íltat├│t')).toBeVisible({ timeout: 5000 });
+      103 |   await page.waitForTimeout(1000);
+      104 |
+        at navigateToBookingDateStep (C:\Users\varga\Desktop\Bookly Projekt\Bookly\bookly_project\tests\helpers\booking.js:101:63)
+        at C:\Users\varga\Desktop\Bookly Projekt\Bookly\bookly_project\tests\Booking.spec.js:119:5
+
+    attachment #1: screenshot (image/png) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\Booking-Booking-flow-past--9e8e9-led-in-the-booking-calendar-chromium\test-failed-1.png
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    attachment #2: video (video/webm) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\Booking-Booking-flow-past--9e8e9-led-in-the-booking-calendar-chromium\video.webm
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    Error Context: test-results\Booking-Booking-flow-past--9e8e9-led-in-the-booking-calendar-chromium\error-context.md
+
+
+[1A[2K[70/70] [chromium] ÔÇ║ Booking.spec.js:144:3 ÔÇ║ Booking flow ÔÇ║ rapid double-click on finalize does not create duplicate bookings
+[1A[2K  10) [chromium] ÔÇ║ Booking.spec.js:144:3 ÔÇ║ Booking flow ÔÇ║ rapid double-click on finalize does not create duplicate bookings 
+
+    [31mTest timeout of 120000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 120000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: 'Id┼Ĺpontfoglal├ís' })[22m
+    [2m    - locator resolved to <button disabled class="w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Id┼Ĺpontfoglal├ís</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    215 ├Ś waiting for element to be visible, enabled and stable[22m
+    [2m        - element is not enabled[22m
+    [2m      - retrying click action[22m
+    [2m        - waiting 500ms[22m
+
+
+       at helpers\booking.js:19
+
+      17 |
+      18 |   // Start booking
+    > 19 |   await page.getByRole('button', { name: 'Id┼Ĺpontfoglal├ís' }).click();
+         |                                                               ^
+      20 |   await expect(page.getByText('V├ílasszon szolg├íltat├│t')).toBeVisible({ timeout: 5000 });
+      21 |   await page.waitForTimeout(1000);
+      22 |
+        at navigateToBookingConfirmation (C:\Users\varga\Desktop\Bookly Projekt\Bookly\bookly_project\tests\helpers\booking.js:19:63)
+        at C:\Users\varga\Desktop\Bookly Projekt\Bookly\bookly_project\tests\Booking.spec.js:147:19
+
+    attachment #1: screenshot (image/png) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\Booking-Booking-flow-rapid-a06f9-t-create-duplicate-bookings-chromium\test-failed-1.png
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    attachment #2: video (video/webm) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    test-results\Booking-Booking-flow-rapid-a06f9-t-create-duplicate-bookings-chromium\video.webm
+    ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+    Error Context: test-results\Booking-Booking-flow-rapid-a06f9-t-create-duplicate-bookings-chromium\error-context.md
+
+
+[1A[2K  10 failed
+    [chromium] ÔÇ║ Booking.spec.js:8:3 ÔÇ║ Booking flow ÔÇ║ successful booking ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+    [chromium] ÔÇ║ Booking.spec.js:34:3 ÔÇ║ Booking flow ÔÇ║ user cannot book an already reserved appointment slot 
+    [chromium] ÔÇ║ Booking.spec.js:75:3 ÔÇ║ Booking flow ÔÇ║ user cannot create overlapping appointments ÔöÇ
+    [chromium] ÔÇ║ Booking.spec.js:116:3 ÔÇ║ Booking flow ÔÇ║ past dates are disabled in the booking calendar 
+    [chromium] ÔÇ║ Booking.spec.js:144:3 ÔÇ║ Booking flow ÔÇ║ rapid double-click on finalize does not create duplicate bookings 
+    [chromium] ÔÇ║ CancelAppointment.spec.js:11:3 ÔÇ║ Cancel appointment ÔÇ║ appointments tab loads correctly 
+    [chromium] ÔÇ║ ProviderAppointmentCancel.spec.js:8:3 ÔÇ║ Provider appointment cancel ÔÇ║ calendar section loads with heading 
+    [chromium] ÔÇ║ ProviderAppointmentCancel.spec.js:18:3 ÔÇ║ Provider appointment cancel ÔÇ║ calendar navigation between months works 
+    [chromium] ÔÇ║ ProviderLogin.spec.js:49:3 ÔÇ║ Provider login ÔÇ║ login succeeds with valid credentials 
+    [chromium] ÔÇ║ ProviderServiceCRUD.spec.js:151:3 ÔÇ║ Provider service CRUD ÔÇ║ delete service with confirmation 
+  4 skipped
+  56 passed (9.5m)
