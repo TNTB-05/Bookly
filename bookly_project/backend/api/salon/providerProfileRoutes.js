@@ -115,8 +115,8 @@ router.put('/me/password', AuthMiddleware, async (request, response) => {
         if (!currentPassword || !newPassword || !confirmPassword) {
             return response.status(400).json({ success: false, message: 'Minden jelszó mező kitöltése kötelező' });
         }
-        if (newPassword.length < 6) {
-            return response.status(400).json({ success: false, message: 'Az új jelszónak legalább 6 karakter hosszúnak kell lennie' });
+        if (newPassword.length < 8) {
+            return response.status(400).json({ success: false, message: 'Az új jelszónak legalább 8 karakter hosszúnak kell lennie' });
         }
         if (newPassword !== confirmPassword) {
             return response.status(400).json({ success: false, message: 'Az új jelszavak nem egyeznek' });
