@@ -35,8 +35,22 @@ test.describe('Customer profile', () => {
     await page.getByRole('button', { name: 'Szerkesztés' }).first().click();
     await page.waitForTimeout(500);
 
+    // Make an actual change so the save produces a meaningful success toast
+    // (otherwise the backend returns "Nem történt módosítás.")
+    // Toggle the phone between two values so each run actually changes something.
+    const phoneInput = page.getByPlaceholder('+36 20 123 4567');
+    const currentValue = (await phoneInput.inputValue()) || '';
+    const newValue = currentValue.endsWith('7') ? '+36301234568' : '+36301234567';
+    await phoneInput.clear();
+    await phoneInput.fill(newValue);
+
     await page.getByRole('button', { name: 'Mentés' }).click();
-    await page.waitForTimeout(1000);
+
+    // Wait for the SUCCESS toast specifically (avoid matching "Nem történt módosítás")
+    await expect(
+      page.getByText(/Sikeres|sikeresen friss|sikeresen ment/i).first()
+    ).toBeVisible({ timeout: 5000 });
+    await page.waitForTimeout(500);
 
     await page.screenshot({ path: 'screenshots/customer-profile/03-save-profile.png' });
   });

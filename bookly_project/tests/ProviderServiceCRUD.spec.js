@@ -39,10 +39,18 @@ test.describe('Provider service CRUD', () => {
       await dialog.accept();
     });
 
+    // Fill the description but leave the name empty so the screenshot clearly
+    // shows WHAT the user did before triggering the validation alert.
+    await page.getByPlaceholder('Rövid leírás a szolgáltatásról...').fill('Hiányzó név teszt');
     await page.getByPlaceholder('pl. Férfi Hajvágás').clear();
-    await page.getByRole('button', { name: 'Létrehozás' }).click();
+    await page.waitForTimeout(300);
 
+    // Snapshot the form state BEFORE submitting — the native alert dialog
+    // gets auto-dismissed by the handler above before we could capture it.
     await page.screenshot({ path: 'screenshots/provider-services/03-validate-empty-name.png' });
+
+    await page.getByRole('button', { name: 'Létrehozás' }).click();
+    await page.waitForTimeout(500);
   });
 
   test('successfully creates a new service', async ({ providerPage: page }) => {

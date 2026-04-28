@@ -10,6 +10,11 @@ export default defineConfig({
   // Retry failed tests once on CI
   retries: process.env.CI ? 1 : 0,
 
+  // Limit parallel workers to keep `--headed` mode stable on Windows
+  // (without this Playwright spawns one worker per CPU core, which can
+  // overwhelm the desktop and cause "browser has been closed" errors).
+  workers: 2,
+
   // Reporter: HTML report + console output
   reporter: [['html', { open: 'never' }], ['list']],
 

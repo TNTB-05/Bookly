@@ -6,4 +6,4 @@
 # Playwright generated output
 tests/playwright-report/
 tests/test-results/
-tests/screenshots/
+# tests/screenshots/  -- committed for reviewers (teachers); see tests/README.md

@@ -41,6 +41,10 @@ test.describe('Provider registration', () => {
 
     await expect(page.getByText('Minden mező kitöltése kötelező')).toBeVisible({ timeout: 5000 });
 
+    // Scroll to top so the heading + error banner are visible in the screenshot
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(300);
+
     await page.screenshot({ path: 'screenshots/provider-register/04-empty-salon-fields.png' });
   });
 
