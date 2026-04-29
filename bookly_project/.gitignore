@@ -6,4 +6,6 @@
 # Playwright generated output
 tests/playwright-report/
 tests/test-results/
-# tests/screenshots/  -- committed for reviewers (teachers); see tests/README.md
+# Playwright screenshots: ignored content, but keep folder structure via .gitkeep files
+tests/screenshots/**/*.png
+!tests/screenshots/**/.gitkeep

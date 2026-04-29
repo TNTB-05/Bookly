@@ -75,6 +75,10 @@ test.describe('Provider service CRUD', () => {
     await priceInput.clear();
     await priceInput.fill('5000');
 
+    // Snapshot the fully filled form before submitting so it is clear what the
+    // test is creating (name, description, duration, price).
+    await page.screenshot({ path: 'screenshots/provider-services/04-form-filled.png' });
+
     await page.getByRole('button', { name: 'Létrehozás' }).click();
     await page.waitForTimeout(2000);
 
@@ -85,7 +89,7 @@ test.describe('Provider service CRUD', () => {
     }
 
     await expect(page.getByText(serviceName)).toBeVisible({ timeout: 10000 });
-
-    await page.screenshot({ path: 'screenshots/provider-services/04-service-created.png' });
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: 'screenshots/provider-services/05-service-created.png' });
   });
 });

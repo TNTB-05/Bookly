@@ -37,12 +37,22 @@ test.describe('Provider login', () => {
 
     await page.locator('#email').fill(email);
     await page.locator('#password').fill(password);
-    await page.getByRole('button', { name: 'Bejelentkezés' }).click();
+    await page.screenshot({ path: 'screenshots/provider-login/04-form-filled.png' });
 
-    // Wait for redirect to provider dashboard (toast may disappear quickly)
+    await page.getByRole('button', { name: 'Bejelentkezés' }).click();
+    // Capture "Sikeres bejelentkezés!" on the form before the redirect to /ProvDash
+    await expect(page.getByText(/Sikeres bejelentkezés/i)).toBeVisible({ timeout: 10000 });
+    await page.screenshot({ path: 'screenshots/provider-login/05-login-success.png' });
+
+    // Wait for redirect to provider dashboard
     await page.waitForURL('**/ProvDash', { timeout: 15000 });
     await expect(page).toHaveURL(/\/ProvDash/);
-
-    await page.screenshot({ path: 'screenshots/provider-login/04-success.png' });
+    // Wait for the loading placeholder to disappear and the dashboard layout
+    // (heading) to render before snapshotting.
+    await expect(page.getByText('Betöltés...')).toHaveCount(0, { timeout: 10000 });
+    await expect(page.locator('h1, h2').first()).toBeVisible({ timeout: 10000 });
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1500);
+    await page.screenshot({ path: 'screenshots/provider-login/06-provider-dashboard.png' });
   });
 });

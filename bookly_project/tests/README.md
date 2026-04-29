@@ -42,11 +42,16 @@ npm install            # csak első alkalommal
 npx playwright install # csak első alkalommal (Chromium letöltése)
 ```
 
-Az adatbázisnak elérhetőnek kell lennie (`docker-compose up -d` a projekt gyökérben),
-és tartalmaznia kell legalább a következő demo adatokat:
-- `test@test.com` / `asdasdasd` – customer (id 6, kitöltött profillal)
-- `provider@test.com` / `asdasdasd` – provider (Test Salon)
-- `Premium Hair Salon` (salon id 1) – aktív szolgáltatókkal és szolgáltatásokkal
+Az adatbázisnak elérhetőnek kell lennie (`docker-compose up -d` a projekt gyökérben).
+A demo adatokat **a tesztcsomag automatikusan létrehozza** futás előtt
+(`globalSetup.js`):
+
+- `test@test.com` / `asdasdasd` – customer (kitöltött telefonnal)
+- `provider@test.com` / `asdasdasd` – provider + saját "Test Salon" létrehozása
+- `Premium Hair Salon` (salon id 1) – az `init.sql` része, már a friss DB-ben van
+
+> A globális setup **idempotens**: ha a fiókok már léteznek, csak loggol és továbbmegy.
+> Ha frissen reseteltél (`reset-db.sh`), a következő tesztfutás újra létrehozza őket.
 
 ---
 
@@ -90,25 +95,27 @@ npx playwright show-report
 | `Login.spec.js` | 4 | Vendég bejelentkezés (üres mezők, rossz jelszó, siker) |
 | `CustomerProfile.spec.js` | 4 | Profil tab, szerkesztő modal, mentés, jelszó validáció |
 | `CustomerAccountDeletion.spec.js` | 2 | Fiók törlés modal megnyitása + üres jelszó validáció |
-| `Booking.spec.js` | 2 | Sikeres foglalás folyamat + múltbeli dátum nem foglalható |
-| `CancelAppointment.spec.js` | 2 | Foglalás lemondás modal + sikeres lemondás |
+| `Booking.spec.js` | 4 | Foglalás varázsló, múltbeli dátum, lemondás dialógus, sikeres lemondás (egy fájlban serial módban, mert ugyanazt a demo usert használják) |
 | `ProviderRegister.spec.js` | 5 | Provider regisztráció lépései (új szalon / csatlakozás) |
 | `ProviderLogin.spec.js` | 4 | Provider bejelentkezés (üres, rossz, jó adatok) |
 | `ProviderServiceCRUD.spec.js` | 4 | Szolgáltatás létrehozás, validáció, sikeres mentés |
 | `ProviderAppointmentCancel.spec.js` | 2 | Naptár betöltés + nap kattintás |
 
-**Összesen: 33 teszt, ~1.2 perc futási idő headless módban.**
+**Összesen: 33 teszt, ~1.6 perc futási idő headless módban (workers=2).**
 
 ---
 
 ## Screenshotok
 
 Minden teszt készít screenshot-okat a kulcs lépésekről, amelyek a `screenshots/`
-mappába kerülnek. Ezeket **commitba is beletettük**, hogy a tanárok / reviewerek a kódot
-megnyitva azonnal lássák, mit csinál egy-egy teszt anélkül, hogy le kéne futtatniuk.
+mappa megfelelő almappáiba kerülnek (`login/`, `booking/`, `provider-register/`, stb.).
+
+A **mappastruktúra commitolva** van (`.gitkeep` fájlokkal), de **maguk a PNG képek
+gitignore-olva** vannak — minden gépen a tesztek első futtatásakor regenerálódnak.
+Egy `npx playwright test` után a `screenshots/` mappa fel fog töltődni ~56 képpel.
 
 A failure-ökhöz Playwright automatikusan készít további screenshot-ot és videót a
-`test-results/` mappába (ez gitignore-olva van).
+`test-results/` mappába (szintén gitignore-olva).
 
 ---
 

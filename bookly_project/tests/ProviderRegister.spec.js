@@ -21,6 +21,11 @@ test.describe('Provider registration', () => {
     await expect(page.getByText('Szalon adatai')).toBeVisible({ timeout: 5000 });
     await expect(page.locator('#companyName')).toBeVisible();
 
+    // The salon form contains a Leaflet map; wait for tile images to load
+    // so the screenshot is not just a grey placeholder.
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2500);
+
     await page.screenshot({ path: 'screenshots/provider-register/02-create-salon-step.png' });
   });
 

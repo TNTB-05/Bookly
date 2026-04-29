@@ -50,9 +50,24 @@ test.describe('Customer login', () => {
     await page.goto('/login');
     await page.getByRole('textbox', { name: 'Email cím' }).fill(user.email);
     await page.getByRole('textbox', { name: 'Jelszó' }).fill(user.password);
+    await page.screenshot({ path: 'screenshots/login/04-form-filled.png' });
+
     await page.getByRole('button', { name: 'Bejelentkezés' }).click();
+    // Capture the "Sikeres bejelentkezés!" message on the form before the
+    // 2 second redirect to /dashboard kicks in
+    await expect(page.getByText(/Sikeres bejelentkezés/i)).toBeVisible({ timeout: 10000 });
+    await page.screenshot({ path: 'screenshots/login/05-login-success.png' });
+
     await page.waitForURL('**/dashboard', { timeout: 10000 });
     await expect(page).toHaveURL(/\/dashboard/);
-    await page.screenshot({ path: 'screenshots/login/04-login-success.png' });
+    // Wait for the "Betöltés..." placeholder to disappear and the dashboard
+    // navbar + overview content to render, otherwise the screenshot captures
+    // a half-rendered page.
+    await expect(page.getByText('Betöltés...')).toHaveCount(0, { timeout: 10000 });
+    await expect(page.getByRole('button', { name: /Foglalásaim/i }).first()).toBeVisible({ timeout: 10000 });
+    await page.waitForLoadState('networkidle');
+    // Allow fade-in animation + lazy images to settle
+    await page.waitForTimeout(1500);
+    await page.screenshot({ path: 'screenshots/login/06-dashboard.png' });
   });
 });
