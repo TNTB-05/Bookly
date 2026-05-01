@@ -3,3 +3,9 @@
 -env fájlok ignorálása
 .env
 .DS_Store
+# Playwright generated output
+tests/playwright-report/
+tests/test-results/
+# Playwright screenshots: ignored content, but keep folder structure via .gitkeep files
+tests/screenshots/**/*.png
+!tests/screenshots/**/.gitkeep
