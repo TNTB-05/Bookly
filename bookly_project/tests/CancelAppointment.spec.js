@@ -13,7 +13,7 @@ async function bookFreshAppointment(page) {
   if (!ready) return false;
 
   await page.getByRole('button', { name: 'Foglalás véglegesítése' }).click();
-  await expect(page.getByText('Sikeres foglalás!')).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('heading', { name: 'Foglalás sikeres!' }).first()).toBeVisible({ timeout: 10000 });
   await page.waitForTimeout(800);
   return true;
 }

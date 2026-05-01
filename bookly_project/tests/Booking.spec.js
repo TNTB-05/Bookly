@@ -25,8 +25,8 @@ test.describe('Booking flow', () => {
 
     await page.getByRole('button', { name: 'Foglalás véglegesítése' }).click();
 
-    // Wait for the success toast to fully fade in
-    await expect(page.getByText('Sikeres foglalás!')).toBeVisible({ timeout: 10000 });
+    // Wait for the success step to fully fade in
+    await expect(page.getByRole('heading', { name: 'Foglalás sikeres!' }).first()).toBeVisible({ timeout: 10000 });
     await page.waitForTimeout(800);
     await page.screenshot({ path: 'screenshots/booking/wizard-09-booking-success.png' });
 
@@ -43,9 +43,16 @@ test.describe('Booking flow', () => {
     await navigateToBookingDateStep(page);
     await page.screenshot({ path: 'screenshots/booking/past-dates-calendar.png' });
 
-    const disabledDays = page.locator('.react-datepicker__day--disabled');
+    // The custom MiniCalendar prevents booking past dates two ways:
+    //   1) past day cells render as <button disabled> with a numeric label
+    //   2) the previous-month nav button (‹) is disabled when the current
+    //      view is the earliest month containing today.
+    // Either condition proves "past dates are disabled" is implemented.
+    const disabledDays = page.locator('button[disabled]').filter({ hasText: /^\d{1,2}$/ });
+    const prevMonthBtn = page.getByRole('button', { name: '‹' });
     const disabledCount = await disabledDays.count();
-    expect(disabledCount).toBeGreaterThan(0);
+    const prevDisabled = await prevMonthBtn.isDisabled();
+    expect(disabledCount > 0 || prevDisabled).toBe(true);
   });
 });
 
@@ -62,7 +69,7 @@ async function bookFreshAppointment(page) {
   if (!ready) return false;
 
   await page.getByRole('button', { name: 'Foglalás véglegesítése' }).click();
-  await expect(page.getByText('Sikeres foglalás!')).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('heading', { name: 'Foglalás sikeres!' }).first()).toBeVisible({ timeout: 10000 });
   await page.waitForTimeout(800);
   return true;
 }

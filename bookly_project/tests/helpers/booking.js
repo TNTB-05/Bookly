@@ -22,30 +22,33 @@ export async function navigateToBookingConfirmation(page, { screenshotPrefix } =
   await shot('01-search-results');
 
   await page.getByRole('button', { name: 'Megnézem' }).first().click();
-  await page.waitForURL('**/dashboard/salon/**', { timeout: 10000 });
+  await page.waitForURL('**/salon/**', { timeout: 10000 });
   await page.waitForTimeout(2000);
   await shot('02-salon-detail');
 
   // Start booking
-  await page.getByRole('button', { name: 'Időpontfoglalás' }).click();
-  await expect(page.getByText('Válasszon szolgáltatót')).toBeVisible({ timeout: 5000 });
+  await page.getByRole('button', { name: 'Foglalás', exact: true }).first().click();
+  await expect(page.getByRole('heading', { name: 'Válassz munkatársat' })).toBeVisible({ timeout: 5000 });
   await page.waitForTimeout(1000);
   await shot('03-select-provider');
 
-  // Select provider
-  await page.locator('button:has(h4)').first().click();
-  await expect(page.getByText('Válasszon szolgáltatást')).toBeVisible({ timeout: 5000 });
+  // Select provider (pick "Bármelyik munkatárs" — deterministic, always first)
+  await page.getByRole('button', { name: /Bármelyik munkatárs/ }).click();
+  await expect(page.getByRole('heading', { name: 'Válassz szolgáltatást' })).toBeVisible({ timeout: 5000 });
   await page.waitForTimeout(1000);
   await shot('04-select-service');
 
   // Select service
   await page.locator('button').filter({ hasText: /perc/ }).first().click();
-  await expect(page.getByRole('heading', { name: 'Válasszon időpontot' })).toBeVisible({ timeout: 5000 });
+  await expect(page.getByRole('heading', { name: 'Válassz időpontot' })).toBeVisible({ timeout: 5000 });
   await page.waitForTimeout(1000);
   await shot('05-select-date');
 
-  // Find available date and time slot
-  const daySelector = '.react-datepicker__day:not(.react-datepicker__day--disabled):not(.react-datepicker__day--outside-month)';
+  // Find available date and time slot.
+  // The booking sheet uses a custom MiniCalendar: each day is a <button> whose
+  // text is just the day number; past/closed days have the `disabled`
+  // attribute set. Month navigation uses '‹' / '›' buttons.
+  const daySelector = page.locator('button:not([disabled])').filter({ hasText: /^\d{1,2}$/ });
   const slotSelector = 'button';
   const slotFilter = { hasText: /^\d{2}:\d{2}$/ };
   let timeSlotFound = false;
@@ -53,11 +56,11 @@ export async function navigateToBookingConfirmation(page, { screenshotPrefix } =
 
   for (let month = 0; month < maxMonthsToTry && !timeSlotFound; month++) {
     if (month > 0) {
-      await page.locator('.react-datepicker__navigation--next').click();
+      await page.getByRole('button', { name: '›' }).click();
       await page.waitForTimeout(500);
     }
 
-    const dayCount = await page.locator(daySelector).count();
+    const dayCount = await daySelector.count();
 
     for (let i = 0; i < dayCount; i++) {
       await Promise.all([
@@ -65,12 +68,12 @@ export async function navigateToBookingConfirmation(page, { screenshotPrefix } =
           resp => resp.url().includes('/availability'),
           { timeout: 10000 }
         ).catch(() => null),
-        page.locator(daySelector).nth(i).click(),
+        daySelector.nth(i).click(),
       ]);
 
       await Promise.race([
         page.locator(slotSelector).filter(slotFilter).first().waitFor({ state: 'visible', timeout: 10000 }),
-        page.getByText('Nincs elérhető időpont').waitFor({ state: 'visible', timeout: 10000 }),
+        page.getByText('Ezen a napon nincs szabad időpont').waitFor({ state: 'visible', timeout: 10000 }),
       ]).catch(() => {});
 
       const slots = page.locator(slotSelector).filter(slotFilter);
@@ -92,12 +95,12 @@ export async function navigateToBookingConfirmation(page, { screenshotPrefix } =
   await page.waitForTimeout(1000);
   await shot('07-time-slot-selected');
 
-  // Proceed to confirmation — wait until the "Tovább" button becomes enabled
+  // Proceed to confirmation — wait until the "Következő" button becomes enabled
   // after the slot click (sometimes there's a brief async re-render).
-  const nextBtn = page.getByRole('button', { name: 'Tovább a megerősítéshez' });
+  const nextBtn = page.getByRole('button', { name: /Következő/ });
   await expect(nextBtn).toBeEnabled({ timeout: 10000 });
   await nextBtn.click();
-  await expect(page.getByText('Foglalás összegzése')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Foglalás összefoglalása' })).toBeVisible();
   await page.waitForTimeout(1000);
 
   return true;
@@ -114,18 +117,18 @@ export async function navigateToBookingDateStep(page) {
   await page.waitForTimeout(2000);
 
   await page.getByRole('button', { name: 'Megnézem' }).first().click();
-  await page.waitForURL('**/dashboard/salon/**', { timeout: 10000 });
+  await page.waitForURL('**/salon/**', { timeout: 10000 });
   await page.waitForTimeout(2000);
 
-  await page.getByRole('button', { name: 'Időpontfoglalás' }).click();
-  await expect(page.getByText('Válasszon szolgáltatót')).toBeVisible({ timeout: 5000 });
+  await page.getByRole('button', { name: 'Foglalás', exact: true }).first().click();
+  await expect(page.getByRole('heading', { name: 'Válassz munkatársat' })).toBeVisible({ timeout: 5000 });
   await page.waitForTimeout(1000);
 
-  await page.locator('button:has(h4)').first().click();
-  await expect(page.getByText('Válasszon szolgáltatást')).toBeVisible({ timeout: 5000 });
+  await page.getByRole('button', { name: /Bármelyik munkatárs/ }).click();
+  await expect(page.getByRole('heading', { name: 'Válassz szolgáltatást' })).toBeVisible({ timeout: 5000 });
   await page.waitForTimeout(1000);
 
   await page.locator('button').filter({ hasText: /perc/ }).first().click();
-  await expect(page.getByRole('heading', { name: 'Válasszon időpontot' })).toBeVisible({ timeout: 5000 });
+  await expect(page.getByRole('heading', { name: 'Válassz időpontot' })).toBeVisible({ timeout: 5000 });
   await page.waitForTimeout(1000);
 }
