@@ -16,6 +16,7 @@ const {
     getProviderPasswordHash,
     updateProviderPassword
 } = require('../../sql/providerQueries');
+const { logEvent } = require('../../services/logService');
 
 // GET /me - Get current provider's own profile
 router.get('/me', AuthMiddleware, async (request, response) => {
@@ -55,6 +56,8 @@ router.put('/me', AuthMiddleware, async (request, response) => {
         });
 
         const updatedProvider = await getProviderProfile(providerId);
+
+        logEvent('INFO', 'PROVIDER_PROFILE_UPDATED', 'provider', providerId, 'provider', providerId, `Provider #${providerId} updated their own profile`).catch(() => {});
 
         response.status(200).json({ success: true, message: 'Profil sikeresen frissítve', provider: updatedProvider });
     } catch (error) {
@@ -112,8 +115,8 @@ router.put('/me/password', AuthMiddleware, async (request, response) => {
         if (!currentPassword || !newPassword || !confirmPassword) {
             return response.status(400).json({ success: false, message: 'Minden jelszó mező kitöltése kötelező' });
         }
-        if (newPassword.length < 6) {
-            return response.status(400).json({ success: false, message: 'Az új jelszónak legalább 6 karakter hosszúnak kell lennie' });
+        if (newPassword.length < 8) {
+            return response.status(400).json({ success: false, message: 'Az új jelszónak legalább 8 karakter hosszúnak kell lennie' });
         }
         if (newPassword !== confirmPassword) {
             return response.status(400).json({ success: false, message: 'Az új jelszavak nem egyeznek' });
@@ -131,6 +134,8 @@ router.put('/me/password', AuthMiddleware, async (request, response) => {
 
         const newHash = await bcrypt.hash(newPassword, 10);
         await updateProviderPassword(providerId, newHash);
+
+        logEvent('INFO', 'PROVIDER_PASSWORD_CHANGED', 'provider', providerId, 'provider', providerId, `Provider #${providerId} changed their password`).catch(() => {});
 
         response.status(200).json({ success: true, message: 'Jelszó sikeresen megváltoztatva' });
     } catch (error) {

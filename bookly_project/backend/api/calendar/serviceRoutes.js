@@ -20,6 +20,7 @@ const {
     getServiceImageById,
     deleteServiceImage
 } = require('../../sql/serviceQueries');
+const { logEvent } = require('../../services/logService');
 
 // Get services for provider
 router.get('/', async (request, response) => {
@@ -74,6 +75,8 @@ router.post('/', async (request, response) => {
             price,
             status: status || 'available'
         });
+
+        logEvent('INFO', 'SERVICE_CREATED', 'provider', providerId, 'service', serviceId, `Provider #${providerId} created service #${serviceId}: ${name.trim()}`).catch(() => {});
 
         response.status(201).json({
             success: true,
@@ -149,6 +152,8 @@ router.put('/:id', async (request, response) => {
             status: status || 'available'
         });
 
+        logEvent('INFO', 'SERVICE_UPDATED', 'provider', providerId, 'service', parseInt(serviceId), `Provider #${providerId} updated service #${serviceId}: ${name.trim()}`).catch(() => {});
+
         response.status(200).json({
             success: true,
             message: 'Szolgáltatás sikeresen frissítve'
@@ -203,6 +208,8 @@ router.delete('/:id', async (request, response) => {
         }
 
         await deleteService(serviceId);
+
+        logEvent('WARN', 'SERVICE_DELETED', 'provider', providerId, 'service', parseInt(serviceId), `Provider #${providerId} deleted service #${serviceId}`).catch(() => {});
 
         response.status(200).json({
             success: true,

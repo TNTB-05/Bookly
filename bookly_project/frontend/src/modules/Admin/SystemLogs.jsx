@@ -55,21 +55,66 @@ export default function SystemLogs() {
     };
 
     const actionLabels = {
+        // User actions
         'USER_LOGIN': 'Felhasználó belépés',
-        'ADMIN_LOGIN': 'Admin belépés',
-        'PROVIDER_LOGIN': 'Szolgáltató belépés',
+        'USER_LOGOUT': 'Felhasználó kilépés',
+        'USER_SIGNUP': 'Felhasználó regisztráció',
+        'USER_REACTIVATION': 'Fiók újraaktiválás',
+        'USER_PROFILE_UPDATED': 'Profil módosítás',
+        'USER_PASSWORD_CHANGED': 'Jelszó módosítás',
+        'USER_SELF_DELETE': 'Fiók törlés (saját)',
         'USER_BAN': 'Felhasználó tiltás',
         'USER_UNBAN': 'Tiltás feloldás',
         'USER_PIC_REMOVED': 'Profilkép törlés',
+        'USER_GDPR_DELETE': 'GDPR törlés',
+        // Appointment actions (user)
+        'APPOINTMENT_CREATED': 'Foglalás létrehozás',
+        'APPOINTMENT_CANCELED': 'Foglalás lemondás',
+        'APPOINTMENT_DELETE': 'Foglalás törlés (admin)',
+        'APPOINTMENTS_AUTO_COMPLETED': 'Automatikus befejezés',
+        // Rating actions
+        'RATING_CREATED': 'Értékelés beküldés',
+        'RATING_UPDATED': 'Értékelés módosítás',
+        'RATING_DEACTIVATE': 'Értékelés deaktiválás',
+        // Message actions
+        'MESSAGE_SENT': 'Üzenet küldés',
+        // Provider actions
+        'PROVIDER_LOGIN': 'Szolgáltató belépés',
+        'PROVIDER_LOGOUT': 'Szolgáltató kilépés',
+        'PROVIDER_SIGNUP': 'Szolgáltató regisztráció',
+        'PROVIDER_SALON_JOIN': 'Szalonhoz csatlakozás',
+        'PROVIDER_PROFILE_UPDATED': 'Szolgáltató profil módosítás',
+        'PROVIDER_PASSWORD_CHANGED': 'Szolgáltató jelszó módosítás',
         'PROVIDER_DEACTIVATE': 'Szolgáltató deaktiválás',
         'PROVIDER_ACTIVATE': 'Szolgáltató aktiválás',
+        'PROVIDER_BAN': 'Szolgáltató tiltás',
+        'PROVIDER_UNBAN': 'Szolgáltató tiltás feloldás',
         'PROVIDER_PIC_REMOVED': 'Szolgáltató kép törlés',
+        'PROVIDER_TEAM_UPDATED': 'Csapattag módosítás',
+        'PROVIDER_TEAM_REMOVED': 'Csapattag eltávolítás',
+        // Provider appointment actions
+        'PROVIDER_APPOINTMENT_CREATED': 'Foglalás létrehozás (szolgáltató)',
+        'PROVIDER_APPOINTMENT_CREATED_GUEST': 'Vendég foglalás létrehozás',
+        'PROVIDER_APPOINTMENT_CANCELED': 'Foglalás törlés (szolgáltató)',
+        // Service actions
+        'SERVICE_CREATED': 'Szolgáltatás létrehozás',
+        'SERVICE_UPDATED': 'Szolgáltatás módosítás',
+        'SERVICE_DELETED': 'Szolgáltatás törlés',
+        // Salon actions
+        'SALON_CREATED': 'Szalon létrehozás',
+        'SALON_UPDATED': 'Szalon módosítás',
+        'SALON_STATUS_UPDATED': 'Szalon státusz módosítás',
+        'SALON_BRANDING_UPDATED': 'Szalon arculat módosítás',
+        'SALON_STATUS_CHANGE': 'Szalon státusz változás (admin)',
         'SALON_BANNER_REMOVED': 'Szalon banner törlés',
         'SALON_LOGO_REMOVED': 'Szalon logó törlés',
         'SALON_DESC_REMOVED': 'Szalon leírás törlés',
-        'APPOINTMENT_DELETE': 'Foglalás törlés',
-        'APPOINTMENT_CREATED': 'Foglalás létrehozás',
-        'USER_SIGNUP': 'Felhasználó regisztráció',
+        // Time block actions
+        'TIME_BLOCK_CREATED': 'Időblokk létrehozás',
+        // Admin actions
+        'ADMIN_LOGIN': 'Admin belépés',
+        'ADMIN_LOGOUT': 'Admin kilépés',
+        'APPOINTMENT_SOFT_DELETE': 'Foglalás törlés (admin)',
     };
 
     const uniqueActions = allActions;

@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://localhost:3000';
+import { API_URL } from '../config';
+const API_BASE_URL = API_URL;
 
 /**
  * Search for salons based on various criteria
@@ -82,6 +83,7 @@ export async function searchSalons({ searchQuery, locationSearch, serviceFilter,
                         email: salon.email,
                         opening_hours: salon.opening_hours,
                         closing_hours: salon.closing_hours,
+                        open_days: salon.open_days,
                         average_rating: salon.average_rating,
                         rating_count: salon.rating_count,
                         banner_color: salon.banner_color,
@@ -135,6 +137,7 @@ export async function searchSalons({ searchQuery, locationSearch, serviceFilter,
                         email: salon.email,
                         opening_hours: salon.opening_hours,
                         closing_hours: salon.closing_hours,
+                        open_days: salon.open_days,
                         average_rating: salon.average_rating,
                         rating_count: salon.rating_count,
                         banner_color: salon.banner_color,

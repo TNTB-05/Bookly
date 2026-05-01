@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
 import TimeSpinner from '../../../../components/TimeSpinner';
+import CloseIcon from '../../../../icons/CloseIcon';
 
 const CreateAppointmentModal = ({ isOpen, onClose, formData, setFormData, services, workingHours, saving, onCreate }) => {
     if (!isOpen) return null;
@@ -18,9 +19,7 @@ const CreateAppointmentModal = ({ isOpen, onClose, formData, setFormData, servic
                             onClick={onClose}
                             className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <CloseIcon className="w-5 h-5" />
                         </button>
                     </div>
                 </div>

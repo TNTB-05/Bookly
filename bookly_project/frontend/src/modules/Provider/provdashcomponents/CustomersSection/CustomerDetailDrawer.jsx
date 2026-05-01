@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { authApi } from '../../../auth/auth';
 import { SkeletonCard, SkeletonAvatar, SkeletonText } from '../../../../components/skeletons';
+import { API_URL } from '../../../../config';
+import CloseIcon from '../../../../icons/CloseIcon';
+import EmailIcon from '../../../../icons/EmailIcon';
+import ChatBubbleDotsIcon from '../../../../icons/ChatBubbleDotsIcon';
+import StarFilledIcon from '../../../../icons/StarFilledIcon';
+import StarOutlineIcon from '../../../../icons/StarOutlineIcon';
 
 const getInitials = (name) => {
     if (!name) return '?';
@@ -42,7 +48,7 @@ const CustomerDetailDrawer = ({ customer, onClose, onRemind, onOpenChat }) => {
     const [detail, setDetail] = useState(null);
     const [loading, setLoading] = useState(false);
     const [reminding, setReminding] = useState(false);
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const apiUrl = API_URL;
 
     const formatDate = (d) => d ? new Date(d).toLocaleDateString('hu-HU', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Europe/Budapest' }) : '–';
     const formatDateShort = (d) => d ? new Date(d).toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Budapest' }) : '–';
@@ -94,9 +100,7 @@ const CustomerDetailDrawer = ({ customer, onClose, onRemind, onOpenChat }) => {
                 <div className="flex items-center justify-between p-5 border-b border-gray-100">
                     <h2 className="text-lg font-bold text-dark-blue">Ügyfél részletei</h2>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-gray-500">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <CloseIcon className="w-5 h-5 text-gray-500" />
                     </button>
                 </div>
 
@@ -150,9 +154,7 @@ const CustomerDetailDrawer = ({ customer, onClose, onRemind, onOpenChat }) => {
                                     {reminding ? (
                                         <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
                                     ) : (
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                                        </svg>
+                                        <EmailIcon className="w-4 h-4" />
                                     )}
                                     Emlékeztető küldése
                                 </button>
@@ -164,9 +166,7 @@ const CustomerDetailDrawer = ({ customer, onClose, onRemind, onOpenChat }) => {
                                     onClick={onOpenChat}
                                     className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium text-sm rounded-xl transition-colors"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
-                                    </svg>
+                                    <ChatBubbleDotsIcon className="w-4 h-4" />
                                     Üzenet küldése
                                 </button>
                             )}
@@ -193,9 +193,9 @@ const CustomerDetailDrawer = ({ customer, onClose, onRemind, onOpenChat }) => {
                                     <h4 className="text-sm font-semibold text-gray-700 mb-2">Értékelés</h4>
                                     <div className="flex items-center gap-1 mb-2">
                                         {Array.from({ length: 5 }).map((_, i) => (
-                                            <svg key={i} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={i < detail.rating.rating ? 'currentColor' : 'none'} stroke="currentColor" className={`w-5 h-5 ${i < detail.rating.rating ? 'text-yellow-400' : 'text-gray-300'}`}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                                            </svg>
+                                            i < detail.rating.rating
+                                                ? <StarFilledIcon key={i} className="w-5 h-5 text-yellow-400" />
+                                                : <StarOutlineIcon key={i} className="w-5 h-5 text-gray-300" />
                                         ))}
                                         <span className="text-sm text-gray-500 ml-1">{detail.rating.rating}/5</span>
                                     </div>

@@ -18,6 +18,7 @@ const { calculateDistance } = require('../../services/locationService');
 const { sendAppointmentConfirmation, sendAppointmentCancellation } = require('../../services/emailService');
 const { notifyWaitlistForCancelledSlot } = require('../../services/waitlistService');
 const { formatLocalDatetime } = require('../../utils/dateUtils');
+const { logEvent } = require('../../services/logService');
 
 // Travel time multiplier (minutes per km) — single config point
 const TRAVEL_TIME_MULTIPLIER_MIN_PER_KM = 2;
@@ -70,11 +71,20 @@ router.post('/appointments', AuthMiddleware, async (request, response) => {
             return response.status(404).json({ success: false, message: 'A szolgáltató nem található vagy nem elérhető' });
         }
 
+        const targetSalon = await getSalonById(provider.salon_id);
+
         const appointmentStart = new Date(`${appointment_date}T${appointment_time}`);
         const appointmentEnd = new Date(appointmentStart.getTime() + service.duration_minutes * 60000);
 
         if (appointmentStart <= new Date()) {
             return response.status(400).json({ success: false, message: 'A foglalás időpontja nem lehet a múltban' });
+        }
+
+        if (Array.isArray(targetSalon?.open_days) && targetSalon.open_days.length > 0) {
+            const dayOfWeek = appointmentStart.getDay();
+            if (!targetSalon.open_days.includes(dayOfWeek)) {
+                return response.status(400).json({ success: false, message: 'A szalon ezen a napon zárva van' });
+            }
         }
 
         const openingHour = service.opening_hours || 8;
@@ -91,7 +101,6 @@ router.post('/appointments', AuthMiddleware, async (request, response) => {
         await connection.beginTransaction();
 
         try {
-            const targetSalon = await getSalonById(provider.salon_id);
 
             // Check for user's own conflicting appointments with distance-based buffer
             const userAppointments = await getUserConflictingAppointments(connection, userId, appointment_date);
@@ -174,6 +183,8 @@ router.post('/appointments', AuthMiddleware, async (request, response) => {
 
             sendAppointmentConfirmation(newAppointment).catch(console.error);
 
+            logEvent('INFO', 'APPOINTMENT_CREATED', 'user', userId, 'appointment', appointmentId, `User #${userId} booked appointment #${appointmentId} with provider #${provider_id}`).catch(() => {});
+
             response.status(201).json({
                 success: true,
                 message: 'Foglalás sikeresen létrehozva',
@@ -254,6 +265,8 @@ router.delete('/appointments/:id', AuthMiddleware, async (request, response) => 
         const cancelDetails = await getAppointmentDetailsForUserCancel(appointmentId);
 
         await updateAppointmentStatus(appointmentId, 'canceled');
+
+        logEvent('INFO', 'APPOINTMENT_CANCELED', 'user', userId, 'appointment', appointmentId, `User #${userId} canceled appointment #${appointmentId}`).catch(() => {});
 
         if (cancelDetails) {
             sendAppointmentCancellation(cancelDetails).catch(err => {

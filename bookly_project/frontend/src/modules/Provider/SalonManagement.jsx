@@ -3,6 +3,10 @@ import { authApi } from '../auth/auth';
 import AddressInput from './AddressInput';
 import { useNotification } from '../../components/NotificationContext';
 import { SkeletonBlock } from '../../components/skeletons';
+import { API_URL } from '../../config';
+
+const DAYS = ['H', 'K', 'Sze', 'Cs', 'P', 'Szo', 'V'];
+const DAY_INDICES = [1, 2, 3, 4, 5, 6, 0]; // Mon=1, Tue=2, ..., Sun=0 (matching JS Date.getDay() convention)
 
 const PRESET_COLORS = [
     '#3B82F6', '#1E40AF', '#6366F1', '#8B5CF6', '#A855F7',
@@ -46,8 +50,9 @@ const SalonManagement = () => {
             const data = await response.json();
             
             if (data.success) {
-                setSalon(data.salon);
-                setFormData(data.salon);
+                const parsedSalon = { ...data.salon, open_days: data.salon.open_days ?? [] };
+                setSalon(parsedSalon);
+                setFormData(parsedSalon);
                 setBrandingColor(data.salon.banner_color || '#3B82F6');
                 // Set manager status from the API response
                 if (data.provider && data.provider.isManager !== undefined) {
@@ -290,6 +295,14 @@ const SalonManagement = () => {
         }
     };
 
+    const toggleDay = (dayIndex) => {
+        const current = Array.isArray(formData.open_days) ? formData.open_days : [];
+        const next = current.includes(dayIndex)
+            ? current.filter(d => d !== dayIndex)
+            : [...current, dayIndex].sort((a, b) => a - b);
+        setFormData(prev => ({ ...prev, open_days: next }));
+    };
+
     const handleSalonStatusChange = async (newStatus) => {
         try {
             const response = await authApi.put('/api/salon/status', {
@@ -415,31 +428,54 @@ const SalonManagement = () => {
                             />
                         </div>
 
+                        <div className="flex flex-col">
+                            <label className="mb-2 font-medium text-gray-700 block">Nyitvatartás napjai</label>
+                            <div className="flex flex-wrap gap-2">
+                                {DAYS.map((label, index) => {
+                                    const dayIdx = DAY_INDICES[index];
+                                    const isOpen = Array.isArray(formData.open_days) && formData.open_days.includes(dayIdx);
+                                    return (
+                                        <button
+                                            key={index}
+                                            type="button"
+                                            onClick={() => toggleDay(dayIdx)}
+                                            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors duration-200 cursor-pointer
+                                                ${isOpen ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                                        >
+                                            {label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-2 gap-5">
                             <div className="flex flex-col">
-                                <label className="mb-2 font-medium text-gray-700">Opening Hours</label>
-                                <input
-                                    type="number"
+                                <label className="mb-2 font-medium text-gray-700">Nyitás</label>
+                                <select
                                     name="opening_hours"
-                                    value={formData.opening_hours || ''}
+                                    value={formData.opening_hours ?? ''}
                                     onChange={handleInputChange}
-                                    min="0"
-                                    max="23"
                                     className="p-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-blue-500"
-                                />
+                                >
+                                    {Array.from({ length: 24 }, (_, h) => (
+                                        <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className="flex flex-col">
-                                <label className="mb-2 font-medium text-gray-700">Closing Hours</label>
-                                <input
-                                    type="number"
+                                <label className="mb-2 font-medium text-gray-700">Zárás</label>
+                                <select
                                     name="closing_hours"
-                                    value={formData.closing_hours || ''}
+                                    value={formData.closing_hours ?? ''}
                                     onChange={handleInputChange}
-                                    min="0"
-                                    max="23"
                                     className="p-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-blue-500"
-                                />
+                                >
+                                    {Array.from({ length: 24 }, (_, h) => (
+                                        <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
 
@@ -489,14 +525,31 @@ const SalonManagement = () => {
                                 <span className="text-gray-800">{salon.type}</span>
                             </div>
                         )}
-                        {salon.opening_hours !== null && salon.closing_hours !== null && (
+                        {(Array.isArray(salon.open_days) && salon.open_days.length > 0) || (salon.opening_hours !== null && salon.closing_hours !== null) ? (
                             <div className="flex gap-3">
-                                <span className="font-semibold text-gray-600 min-w-[140px]">Hours:</span>
-                                <span className="text-gray-800">
-                                    {salon.opening_hours}:00 - {salon.closing_hours}:00
-                                </span>
+                                <span className="font-semibold text-gray-600 min-w-[140px]">Nyitvatartás:</span>
+                                <div className="flex flex-wrap items-center gap-1">
+                                    {DAYS.map((label, index) => {
+                                        const dayIdx = DAY_INDICES[index];
+                                        const isOpen = Array.isArray(salon.open_days) && salon.open_days.includes(dayIdx);
+                                        return (
+                                            <span
+                                                key={index}
+                                                className={`text-xs font-medium px-2 py-0.5 rounded-full
+                                                    ${isOpen ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'}`}
+                                            >
+                                                {label}
+                                            </span>
+                                        );
+                                    })}
+                                    {salon.opening_hours !== null && salon.closing_hours !== null && (
+                                        <span className="text-gray-600 text-sm ml-1">
+                                            {String(salon.opening_hours).padStart(2, '0')}:00 – {String(salon.closing_hours).padStart(2, '0')}:00
+                                        </span>
+                                    )}
+                                </div>
                             </div>
-                        )}
+                        ) : null}
                         {salon.description && (
                             <div className="flex gap-3">
                                 <span className="font-semibold text-gray-600 min-w-[140px]">Description:</span>
@@ -578,7 +631,7 @@ const SalonManagement = () => {
                                 className="h-28 relative"
                                 style={
                                     bannerPreview || salon.banner_image_url
-                                        ? { backgroundImage: `url(${bannerPreview || (import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.banner_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                                        ? { backgroundImage: `url(${bannerPreview || API_URL + salon.banner_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
                                         : { background: `linear-gradient(135deg, ${brandingColor} 0%, ${brandingColor}dd 100%)` }
                                 }
                             >
@@ -586,7 +639,7 @@ const SalonManagement = () => {
                                     <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center shadow-md overflow-hidden">
                                         {logoPreview || salon.logo_url ? (
                                             <img
-                                                src={logoPreview || (import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.logo_url}
+                                                src={logoPreview || API_URL + salon.logo_url}
                                                 alt="Logo"
                                                 className="w-full h-full object-cover"
                                             />
@@ -642,7 +695,7 @@ const SalonManagement = () => {
                             <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50">
                                 {logoPreview || salon.logo_url ? (
                                     <img
-                                        src={logoPreview || (import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.logo_url}
+                                        src={logoPreview || API_URL + salon.logo_url}
                                         alt="Logo preview"
                                         className="w-full h-full object-cover"
                                     />
@@ -686,7 +739,7 @@ const SalonManagement = () => {
                             {(bannerPreview || salon.banner_image_url) && (
                                 <div className="w-full h-20 rounded-lg overflow-hidden border border-gray-200">
                                     <img
-                                        src={bannerPreview || (import.meta.env.VITE_API_URL || 'http://localhost:3000') + salon.banner_image_url}
+                                        src={bannerPreview || API_URL + salon.banner_image_url}
                                         alt="Banner preview"
                                         className="w-full h-full object-cover"
                                     />

@@ -8,10 +8,13 @@ import TickIcon from '../../../../icons/TickIcon';
 import PlusIcon from '../../../../icons/PlusIcon';
 import DiaryIcon from '../../../../icons/DiaryIcon';
 import LightningIcon from '../../../../icons/LightningIcon';
+import ChevronLeftIcon from '../../../../icons/ChevronLeftIcon';
+import ChevronRightIcon from '../../../../icons/ChevronRightIcon';
 import CustomerAppointmentModal from '../CustomerAppointmentModal';
 import RatingModal from '../RatingModal';
 import AddToCalendarButton from '../AddToCalendarButton';
 import { useNotification } from '../../../../components/NotificationContext';
+import { API_URL } from '../../../../config';
 
 // ========================
 // Constants
@@ -116,7 +119,7 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
         setSelectedWaitlistEntry(entry);
         setWaitlistSlots({});
         setWaitlistSlotsLoading(true);
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const apiUrl = API_URL;
         const msPerDay = 86400000;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -385,31 +388,13 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                                 {/* Month Navigation */}
                                 <div className="flex items-center justify-between mb-4">
                                     <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            strokeWidth={2}
-                                            stroke="currentColor"
-                                            className="w-5 h-5 text-gray-600"
-                                        >
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                                        </svg>
+                                        <ChevronLeftIcon className="w-5 h-5 text-gray-600" />
                                     </button>
                                     <h3 className="text-lg font-semibold text-gray-900">
                                         {currentDate.getFullYear()}. {monthNames[currentDate.getMonth()]}
                                     </h3>
                                     <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            strokeWidth={2}
-                                            stroke="currentColor"
-                                            className="w-5 h-5 text-gray-600"
-                                        >
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                                        </svg>
+                                        <ChevronRightIcon className="w-5 h-5 text-gray-600" />
                                     </button>
                                 </div>
 
@@ -691,7 +676,7 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    navigate(`/dashboard/salon/${apt.salon_id}`, {
+                                                                    navigate(`/salon/${apt.salon_id}`, {
                                                                         state: {
                                                                             fastBooking: {
                                                                                 providerId: apt.provider_id,
@@ -765,7 +750,7 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
 
             {/* Waitlist Slots Modal */}
             {selectedWaitlistEntry && (
-                <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-20 px-4 pb-4 bg-black/40" onClick={() => setSelectedWaitlistEntry(null)}>
+                <div className="fixed inset-0 z-9999 flex items-start justify-center pt-20 px-4 pb-4 bg-black/40" onClick={() => setSelectedWaitlistEntry(null)}>
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
                         <div className="px-5 pt-5 pb-4 border-b border-gray-100">
                             <div className="flex items-start justify-between gap-3">
@@ -803,7 +788,7 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                                                 key={slot}
                                                 onClick={() => {
                                                     setSelectedWaitlistEntry(null);
-                                                    navigate(`/dashboard/salon/${selectedWaitlistEntry.salon_id}`, {
+                                                    navigate(`/salon/${selectedWaitlistEntry.salon_id}`, {
                                                         state: {
                                                             fastBooking: {
                                                                 providerId: selectedWaitlistEntry.provider_id,

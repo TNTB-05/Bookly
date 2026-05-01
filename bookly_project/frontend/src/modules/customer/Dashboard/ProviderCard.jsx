@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from '../../../config';
 
 // Szolgáltató kártya komponens - szolgáltató adatainak megjelenítése
 export default function ProviderCard({ provider, salonId, onBookService }) {
@@ -24,7 +25,7 @@ export default function ProviderCard({ provider, salonId, onBookService }) {
                 <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
                     <div className="w-16 h-16 rounded-full border-4 border-white bg-white flex items-center justify-center text-2xl font-bold text-dark-blue shadow-md overflow-hidden">
                         {provider.profile_picture_url ? (
-                            <img src={(import.meta.env.VITE_API_URL || 'http://localhost:3000') + provider.profile_picture_url} alt={provider.name} className="w-full h-full object-cover" />
+                            <img src={API_URL + provider.profile_picture_url} alt={provider.name} className="w-full h-full object-cover" />
                         ) : (
                             provider.name.charAt(0).toUpperCase()
                         )}

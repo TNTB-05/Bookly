@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { authApi } from '../../../auth/auth';
+import { API_URL } from '../../../../config';
+import CloseIcon from '../../../../icons/CloseIcon';
+import PlusIcon from '../../../../icons/PlusIcon';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE = API_URL;
 
 const ServiceFormModal = ({ isOpen, onClose, editingService, formData, setFormData, saving, onSave }) => {
     const [images, setImages] = useState([]);
@@ -96,9 +99,7 @@ const ServiceFormModal = ({ isOpen, onClose, editingService, formData, setFormDa
                             onClick={onClose}
                             className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <CloseIcon className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
@@ -200,9 +201,7 @@ const ServiceFormModal = ({ isOpen, onClose, editingService, formData, setFormDa
                                         disabled={isUploading}
                                         className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:border-dark-blue hover:text-dark-blue transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                        </svg>
+                                        <PlusIcon className="w-6 h-6" />
                                     </button>
                                 )}
                             </div>

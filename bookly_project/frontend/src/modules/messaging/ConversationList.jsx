@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { API_URL } from '../../config';
 
 function getRelativeTime(dateString) {
     if (!dateString) return '';
@@ -15,7 +16,6 @@ function getRelativeTime(dateString) {
     return `${diffDay}n`;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 function Avatar({ name, pictureUrl }) {
     const initial = name ? name.charAt(0).toUpperCase() : '?';

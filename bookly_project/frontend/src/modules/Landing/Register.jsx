@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BackArrowIcon from '../../icons/BackArrowIcon';
+import { API_URL } from '../../config';
 
 export default function Register() {
     const nameRef = useRef(null);
@@ -58,7 +59,7 @@ export default function Register() {
         }
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const apiUrl = API_URL;
             const response = await fetch(`${apiUrl}/auth/register`, {
                 method: 'POST',
                 headers: {

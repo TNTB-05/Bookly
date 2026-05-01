@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth';
 import BackArrowIcon from '../../icons/BackArrowIcon';
+import { API_URL } from '../../config';
 
 export default function ProvLogin() {
     const emailRef = useRef(null);
@@ -39,7 +40,7 @@ export default function ProvLogin() {
         }
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const apiUrl = API_URL;
             const response = await fetch(`${apiUrl}/auth/provider/login`, {
                 method: 'POST',
                 headers: {

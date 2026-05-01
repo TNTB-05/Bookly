@@ -7,6 +7,12 @@ import Logo from '../../Logo';
 // Ikonok
 import ProfileIcon from '../../../icons/ProfileIcon';
 import ExitIcon from '../../../icons/ExitIcon';
+import OverviewIcon from '../../../icons/OverviewIcon';
+import StarFilledIcon from '../../../icons/StarFilledIcon';
+import CalendarSimpleIcon from '../../../icons/CalendarSimpleIcon';
+import MapPinIcon from '../../../icons/MapPinIcon';
+import ChatBubbleIcon from '../../../icons/ChatBubbleIcon';
+import { API_URL } from '../../../config';
 
 
 // Navigációs sáv komponens - desktop és mobil nézet
@@ -107,7 +113,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                                     {userProfile?.name || user?.name || 'Felhasználó'}
                                 </span>
                                 {userProfile?.profile_picture_url ? (
-                                    <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${userProfile.profile_picture_url}`} alt="Profil" className="w-10 h-10 rounded-full object-cover shadow-lg hover:shadow-xl transition-all" />
+                                    <img src={`${API_URL}${userProfile.profile_picture_url}`} alt="Profil" className="w-10 h-10 rounded-full object-cover shadow-lg hover:shadow-xl transition-all" />
                                 ) : (
                                     <div className="w-10 h-10 rounded-full bg-dark-blue text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all text-sm font-bold">
                                         {(userProfile?.name || user?.name)?.charAt(0)?.toUpperCase() || 'U'}
@@ -170,7 +176,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                                 className="w-10 h-10 rounded-full overflow-hidden shadow-lg hover:shadow-xl transition-all"
                             >
                                 {userProfile?.profile_picture_url ? (
-                                    <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${userProfile.profile_picture_url}`} alt="Profil" className="w-full h-full object-cover" />
+                                    <img src={`${API_URL}${userProfile.profile_picture_url}`} alt="Profil" className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full bg-dark-blue text-white flex items-center justify-center text-sm font-bold">
                                         {(userProfile?.name || user?.name)?.charAt(0)?.toUpperCase() || 'U'}
@@ -225,7 +231,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                 <NavItem
                     tab="overview"
                     label="Áttekintés"
-                    icon="🏠"
+                    icon={<OverviewIcon className="w-5 h-5" />}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                     setIsMobileMenuOpen={setIsMobileMenuOpen}
@@ -234,7 +240,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                 <NavItem
                     tab="featured"
                     label="Kiemelt"
-                    icon="⭐"
+                    icon={<StarFilledIcon className="w-5 h-5" />}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                     setIsMobileMenuOpen={setIsMobileMenuOpen}
@@ -243,7 +249,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                 <NavItem
                     tab="appointments"
                     label="Foglalásaim"
-                    icon="📅"
+                    icon={<CalendarSimpleIcon className="w-5 h-5" />}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                     setIsMobileMenuOpen={setIsMobileMenuOpen}
@@ -252,7 +258,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                 <NavItem
                     tab="book"
                     label="Helyeim"
-                    icon="➕"
+                    icon={<MapPinIcon className="w-5 h-5" />}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                     setIsMobileMenuOpen={setIsMobileMenuOpen}
@@ -262,7 +268,7 @@ export default function DashboardNavbar({ activeTab, setActiveTab, user, userPro
                     <NavItem
                         tab="messages"
                         label="Üzenetek"
-                        icon="💬"
+                        icon={<ChatBubbleIcon className="w-5 h-5" />}
                         activeTab={activeTab}
                         setActiveTab={setActiveTab}
                         setIsMobileMenuOpen={setIsMobileMenuOpen}

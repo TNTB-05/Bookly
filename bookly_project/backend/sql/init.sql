@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS salons (
   `type` VARCHAR(100),
   `opening_hours` INT,
   `closing_hours` INT,
+  `open_days` JSON DEFAULT NULL,
   `description` TEXT,
   `latitude` DECIMAL(9, 6),
   `longitude` DECIMAL(9, 6),

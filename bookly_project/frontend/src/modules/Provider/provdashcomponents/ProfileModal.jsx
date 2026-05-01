@@ -1,4 +1,9 @@
 import { createPortal } from 'react-dom';
+import { API_URL } from '../../../config';
+import CloseIcon from '../../../icons/CloseIcon';
+import CheckCircleIcon from '../../../icons/CheckCircleIcon';
+import LockIcon from '../../../icons/LockIcon';
+import ChevronRightIcon from '../../../icons/ChevronRightIcon';
 
 const ProfileModal = ({ 
     isOpen, 
@@ -15,7 +20,7 @@ const ProfileModal = ({
     onPictureUpload,
     onPasswordModalOpen
 }) => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const apiUrl = API_URL;
 
     const getProviderInitials = (name) => {
         if (!name) return '?';
@@ -34,18 +39,14 @@ const ProfileModal = ({
                     <div className="flex items-center justify-between">
                         <h3 className="text-xl font-bold text-dark-blue">Profil szerkesztése</h3>
                         <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <CloseIcon className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
                 <div className="p-6 space-y-5 overflow-y-auto flex-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full">
                     {profileSuccess && (
                         <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 shrink-0">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <CheckCircleIcon className="w-5 h-5 shrink-0" />
                             {profileSuccess}
                         </div>
                     )}
@@ -136,14 +137,10 @@ const ProfileModal = ({
                             className="w-full text-left px-3 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-between"
                         >
                             <span className="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                                </svg>
+                                <LockIcon className="w-4 h-4" />
                                 Jelszó módosítása
                             </span>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                            </svg>
+                            <ChevronRightIcon className="w-4 h-4" />
                         </button>
                     </div>
                 </div>

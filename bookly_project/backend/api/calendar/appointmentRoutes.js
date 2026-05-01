@@ -21,6 +21,7 @@ const { findUserByEmail, updateUserNameAndPhone, createUserFromProviderBooking }
 const { sendAppointmentCancellation } = require('../../services/emailService');
 const { notifyWaitlistForCancelledSlot } = require('../../services/waitlistService');
 const { formatLocalDatetime } = require('../../utils/dateUtils');
+const { logEvent } = require('../../services/logService');
 const bcrypt = require('bcryptjs');
 
 // Get appointments for a provider
@@ -146,11 +147,12 @@ router.post('/', async (request, response) => {
 
             if (existingUser) {
                 userId = existingUser.id;
-                await updateUserNameAndPhone(userId, user_name.trim(), user_phone?.trim() || null);
+                
             } else {
-                // Create new user with default password
-                const defaultPasswordHash = await bcrypt.hash('ChangeMe123!', 10);
-                userId = await createUserFromProviderBooking(user_name.trim(), user_email.trim(), user_phone?.trim() || null, defaultPasswordHash);
+                return response.status(404).json({
+                    success: false,
+                    message: 'Nincs ilyen email címhez regisztrált felhasználó'
+                });
             }
         }
 
@@ -197,6 +199,12 @@ router.post('/', async (request, response) => {
             guestEmail: is_guest ? (user_email?.trim() || null) : null,
             guestPhone: is_guest ? (user_phone?.trim() || null) : null
         });
+
+        const provApptAction = is_guest ? 'PROVIDER_APPOINTMENT_CREATED_GUEST' : 'PROVIDER_APPOINTMENT_CREATED';
+        const provApptDetails = is_guest
+            ? `Provider #${providerId} created guest appointment #${appointmentId} for ${user_name}`
+            : `Provider #${providerId} created appointment #${appointmentId} for user #${userId}`;
+        logEvent('INFO', provApptAction, 'provider', providerId, 'appointment', appointmentId, provApptDetails).catch(() => {});
 
         response.status(201).json({
             success: true,
@@ -251,6 +259,8 @@ router.delete('/:id', async (request, response) => {
         }
 
         await deleteAppointment(appointmentId);
+
+        logEvent('INFO', 'PROVIDER_APPOINTMENT_CANCELED', 'provider', providerId, 'appointment', parseInt(appointmentId), `Provider #${providerId} canceled appointment #${appointmentId}`).catch(() => {});
 
         // Send cancellation email (fire-and-forget)
         if (appointment.user_id && appointment.customer_email) {

@@ -9,6 +9,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const locationService = require('../../services/locationService.js');
 const { sendWelcomeEmail } = require('../../services/emailService.js');
+const { logEvent } = require('../../services/logService.js');
 
 
 //!Endpoints:
@@ -18,7 +19,7 @@ function generateShareCode() {
     return crypto.randomBytes(3).toString('hex').toUpperCase();
 }
 
-// POST /api/provider/auth/validate-salon-code — validate a salon sharecode
+// POST /api/auth/provider/validate-salon-code — validate a salon sharecode
 router.post('/validate-salon-code', async (request, response) => {
     const { code } = request.body;
 
@@ -53,7 +54,7 @@ router.post('/validate-salon-code', async (request, response) => {
     }
 });
 
-// POST /api/provider/auth/register — register provider (create or join salon, transactional)
+// POST /api/auth/provider/register — register provider (create or join salon, transactional)
 router.post('/register', async (request, response) => {
     const { name, email, password, phone, registrationType, salonId, salon } = request.body;
 
@@ -200,6 +201,14 @@ router.post('/register', async (request, response) => {
             console.error('Failed to send welcome email:', err);
         });
 
+        // Log registration events (fire-and-forget)
+        if (registrationType === 'create') {
+            logEvent('INFO', 'SALON_CREATED', 'provider', providerId, 'salon', finalSalonId, `New salon created by provider #${providerId}: ${salon.companyName}`).catch(() => {});
+        } else {
+            logEvent('INFO', 'PROVIDER_SALON_JOIN', 'provider', providerId, 'salon', finalSalonId, `Provider #${providerId} joined salon #${finalSalonId}`).catch(() => {});
+        }
+        logEvent('INFO', 'PROVIDER_SIGNUP', 'provider', providerId, 'provider', providerId, `New provider registered: ${email.trim().toLowerCase()}`).catch(() => {});
+
         response.status(201).json({
             success: true,
             message: 'Sikeres regisztráció',
@@ -226,7 +235,7 @@ router.post('/register', async (request, response) => {
     }
 });
 
-// POST /api/provider/auth/login — authenticate provider and return JWT tokens
+// POST /api/auth/provider/login — authenticate provider and return JWT tokens
 router.post('/login', async (request, response) => {
     const { email, password } = request.body;
 
@@ -282,6 +291,9 @@ router.post('/login', async (request, response) => {
 
         // Update last login
         await updateProviderLastLogin(provider.id);
+
+        // Log login event
+        await logEvent('INFO', 'PROVIDER_LOGIN', 'provider', provider.id, 'provider', provider.id, `Provider ${email} logged in`);
 
         // Send refresh token as HTTP-only cookie
         setAuthCookies(response, refreshToken);

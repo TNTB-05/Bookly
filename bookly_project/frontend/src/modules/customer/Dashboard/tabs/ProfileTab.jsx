@@ -10,6 +10,7 @@ import CheckCircleIcon from '../../../../icons/CheckCircleIcon';
 import MapPinIcon from '../../../../icons/MapPinIcon';
 import AlertCircleIcon from '../../../../icons/AlertCircleIcon';
 import { useNotification } from '../../../../components/NotificationContext';
+import { API_URL } from '../../../../config';
 
 // Profil tab - felhasználói adatok, jelszó és fiók kezelés
 export default function ProfileTab({ user, userProfile, setUserProfile }) {
@@ -51,7 +52,7 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
     const [avatarUploading, setAvatarUploading] = useState(false);
     const [avatarError, setAvatarError] = useState(null);
     const [avatarSuccess, setAvatarSuccess] = useState(null);
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const apiUrl = API_URL;
 
     // Snapshot of original profile data for dirty-state detection
     const originalProfileData = useRef(null);

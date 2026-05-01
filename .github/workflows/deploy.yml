@@ -1,0 +1,65 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Azure VM
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: azureuser
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/azureuser
+            rm -rf Bookly || true
+            git clone https://${{ secrets.DEPLOY_TOKEN }}@github.com/TNTB-05/Bookly.git
+            cd Bookly/bookly_project
+            
+            # Create .env file with secrets
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" > .env
+            echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+            
+            # Copy Secret.env to backend
+            cp /home/azureuser/Secret.env backend/Secret.env
+            
+            # Remove old containers to avoid metadata errors
+            docker-compose down -v || true
+            
+            # Start database first (takes time to initialize)
+            docker-compose up -d db
+            echo "Waiting for database to start..."
+            sleep 45
+            
+            # Install global packages
+            npm install -g pm2 || npm install pm2
+            
+            # Backend setup
+            cd backend
+            npm install
+            cd ..
+            
+            # Frontend build and deploy to nginx
+            cd frontend
+            npm install
+            npm run build
+            
+            # Deploy to nginx
+            sudo rm -rf /var/www/react-app/*
+            sudo cp -r dist/* /var/www/react-app/
+            
+            # Reload nginx
+            sudo systemctl reload nginx
+            
+            # Start/restart backend with pm2
+            cd ../backend
+            npx pm2 delete bookly-backend || true
+            npx pm2 start "npm start" --name bookly-backend
+            npx pm2 save
+            npx pm2 startup || true
+            
+            echo "✓ Deploy complete!"

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { authApi } from '../auth/auth';
 import RefreshIcon from '../../icons/RefreshIcon';
+import { API_URL } from '../../config';
 
 export default function UserManagement() {
     const [users, setUsers] = useState([]);
@@ -275,7 +276,7 @@ export default function UserManagement() {
                                             {user.profile_picture_url ? (
                                                 <>
                                                     <img
-                                                        src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${user.profile_picture_url.startsWith('/') ? '' : '/'}${user.profile_picture_url}`}
+                                                        src={`${API_URL}${user.profile_picture_url.startsWith('/') ? '' : '/'}${user.profile_picture_url}`}
                                                         alt={user.name || ''}
                                                         className="w-7 h-7 rounded-full object-cover"
                                                         onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}

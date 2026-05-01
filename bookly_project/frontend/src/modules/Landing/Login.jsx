@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth';
 import BackArrowIcon from '../../icons/BackArrowIcon';
+import { API_URL } from '../../config';
 
 export default function Login() {
     const emailRef = useRef(null);
@@ -39,7 +40,7 @@ export default function Login() {
         }
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const apiUrl = API_URL;
             const response = await fetch(`${apiUrl}/auth/login`, {
                 method: 'POST',
                 headers: {

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { API_URL } from '../config';
 
 /**
  * Format a raw Nominatim suggestion into a short Hungarian address string.
@@ -30,7 +31,7 @@ export function formatSuggestion(suggestion) {
  * Reusable hook for OpenStreetMap (Nominatim) address autocomplete.
  *
  * @param {Object} options
- * @param {string} [options.apiUrl] - Backend base URL (default: VITE_API_URL || 'http://localhost:3000')
+ * @param {string} [options.apiUrl] - Backend base URL (default: VITE_API_URL || API_URL)
  * @param {number} [options.debounceMs] - Debounce delay in ms (default: 400)
  * @param {number} [options.minLength] - Minimum query length to trigger fetch (default: 3)
  *
@@ -46,7 +47,7 @@ export function formatSuggestion(suggestion) {
  * }}
  */
 export function useAddressAutocomplete({
-    apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000',
+    apiUrl = API_URL,
     debounceMs = 400,
     minLength = 3,
 } = {}) {

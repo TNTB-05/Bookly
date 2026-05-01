@@ -13,12 +13,14 @@ import ClipboardCheckIcon from '../../../../icons/ClipboardCheckIcon';
 import StarSmallIcon from '../../../../icons/StarSmallIcon';
 import LeftArrowIcon from '../../../../icons/LeftArrowIcon';
 import RightArrowIcon from '../../../../icons/RightArrowIcon';
+import CloseIcon from '../../../../icons/CloseIcon';
 
 // Komponensek
 import SalonCard from '../SalonCard';
 import SalonMap from '../SalonMap';
 import SearchSuggestions from './SearchSuggestions';
 import { useNotification } from '../../../../components/NotificationContext';
+import { API_URL } from '../../../../config';
 
 // Áttekintés tab - keresés, térkép és szolgáltatások
 export default function OverviewTab({
@@ -68,7 +70,7 @@ export default function OverviewTab({
         async function fetchMapSalons() {
             setMapLoading(true);
             try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                const apiUrl = API_URL;
                 const params = new URLSearchParams();
                 if (serviceFilter !== 'all') {
                     params.append('service_type', serviceFilter);
@@ -97,7 +99,7 @@ export default function OverviewTab({
     useEffect(() => {
         async function fetchRecentReviews() {
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/search/recent-reviews?limit=8`);
+                const response = await fetch(`${API_URL}/api/search/recent-reviews?limit=8`);
                 const data = await response.json();
                 if (data.success) {
                     setRecentReviews(data.reviews);
@@ -191,7 +193,7 @@ export default function OverviewTab({
                 setUserLocation({ latitude, longitude });
 
                 try {
-                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                    const apiUrl = API_URL;
                     const response = await fetch(`${apiUrl}/api/search/reverse-geocode`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -281,12 +283,12 @@ export default function OverviewTab({
         <div>
             {/* Hero Section */}
             <div>
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16 lg:py-24">
                     <div className="text-center">
-                        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 text-dark-blue">
+                        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight mb-4 text-dark-blue">
                             Találd meg a tökéletes szolgáltatót
                         </h1>
-                        <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
+                        <p className="text-base sm:text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
                             Foglalj időpontot a legjobb szakemberekhez egyszerűen és gyorsan
                         </p>
 
@@ -346,7 +348,7 @@ export default function OverviewTab({
                             </div>
 
                             {/* Second Line: Location + Jelenlegi helyzetem + Keresés */}
-                            <div className="flex flex-col sm:flex-row gap-3">
+                            <div className="flex flex-col sm:flex-row flex-wrap gap-3">
                                 {/* Location Input with Address Autocomplete */}
                                 <div ref={locationContainerRef} className="flex-1 relative">
                                     <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 overflow-hidden">
@@ -407,7 +409,7 @@ export default function OverviewTab({
                                     className="px-4 py-3 bg-white/80 backdrop-blur-sm text-dark-blue rounded-xl font-medium hover:bg-white transition-colors whitespace-nowrap shadow-md border border-white/50"
                                     title="Jelenlegi helyzetem használata"
                                 >
-                                    📍 Jelenlegi helyzetem
+                                    <span>📍 <span className="hidden sm:inline">Jelenlegi </span>Helyzetem</span>
                                 </button>
 
                                 {/* Keresés Button */}
@@ -425,7 +427,7 @@ export default function OverviewTab({
                                     onClick={resetSearch}
                                     className="text-dark-blue font-medium hover:text-blue-800 transition-colors"
                                 >
-                                    ✕ Keresés törlése
+                                    <CloseIcon className="w-4 h-4 inline mr-1" /> Keresés törlése
                                 </button>
                             )}
 
@@ -440,7 +442,7 @@ export default function OverviewTab({
 
             {/* Search results + Map — side-by-side when search active */}
             {searchActive ? (
-                <div className="w-[92%] mx-auto pt-4 pb-0 flex flex-col" style={{ height: 'calc(100vh - 80px)' }}>
+                <div className="w-[92%] mx-auto pt-4 pb-0 flex flex-col lg:h-[calc(100vh-80px)]">
                     {/* Header — compact */}
                     <div className="flex items-center justify-between mb-3 px-1">
                         <div>
@@ -522,7 +524,7 @@ export default function OverviewTab({
                         {/* Left Arrow */}
                         <button
                             onClick={() => scrollRecommendedCarousel('left')}
-                            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
+                            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:scale-110"
                             aria-label="Scroll left"
                         >
                             <LeftArrowIcon />
@@ -531,7 +533,7 @@ export default function OverviewTab({
                         {/* Right Arrow */}
                         <button
                             onClick={() => scrollRecommendedCarousel('right')}
-                            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
+                            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:scale-110"
                             aria-label="Scroll right"
                         >
                             <RightArrowIcon />

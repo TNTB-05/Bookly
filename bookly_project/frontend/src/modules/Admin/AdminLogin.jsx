@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth';
 import BackArrowIcon from '../../icons/BackArrowIcon';
 import ShieldCheckIcon from '../../icons/ShieldCheckIcon';
+import { API_URL } from '../../config';
 
 export default function AdminLogin() {
     const emailRef = useRef(null);
@@ -36,7 +37,7 @@ export default function AdminLogin() {
         }
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const apiUrl = API_URL;
             const response = await fetch(`${apiUrl}/auth/admin/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

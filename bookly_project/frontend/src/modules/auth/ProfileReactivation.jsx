@@ -4,6 +4,7 @@ import { useAuth } from './auth';
 import { useNotification } from '../../components/NotificationContext';
 import BackArrowIcon from '../../icons/BackArrowIcon';
 import UserPlusIcon from '../../icons/UserPlusIcon';
+import { API_URL } from '../../config';
 
 export default function ProfileReactivation() {
     const navigate = useNavigate();
@@ -48,7 +49,7 @@ export default function ProfileReactivation() {
                 return;
             }
 
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const apiUrl = API_URL;
             const response = await fetch(`${apiUrl}/auth/reactivate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

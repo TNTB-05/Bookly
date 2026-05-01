@@ -4,6 +4,7 @@ import AddressInput from './AddressInput';
 import PlusIcon from '../../icons/PlusIcon';
 import UserPlusIcon from '../../icons/UserPlusIcon';
 import BackArrowIcon from '../../icons/BackArrowIcon';
+import { API_URL } from '../../config';
 
 // Steps: 'choice' -> 'joinSalon' or 'createSalon' -> 'userRegistration'
 const STEPS = {
@@ -148,7 +149,7 @@ export default function ProvRegister() {
         setLoading(true);
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const apiUrl = API_URL;
             const response = await fetch(`${apiUrl}/auth/provider/validate-salon-code`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -190,7 +191,7 @@ export default function ProvRegister() {
         setLoading(true);
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const apiUrl = API_URL;
             
             const requestBody = {
                 name: userData.name.trim(),

@@ -1,65 +1,92 @@
+import PhoneIcon from '../../icons/PhoneIcon';
+import EmailIcon from '../../icons/EmailIcon';
+import LocationIcon from '../../icons/LocationIcon';
+import CloseIcon from '../../icons/CloseIcon';
+
 export default function ContactModal({ onClose }) {
     return (
-        <div className="fixed inset-0 bg-light-blue bg-opacity-75 flex items-center justify-center z-50" onClick={onClose}>
-            <div className="flex flex-col gap-6 max-w-4xl w-full mx-4">
-            <section className="flex flex-col lg:flex-row lg:justify-between items-center gap-6 lg:gap-10 p-6 sm:p-8 lg:p-10 bg-inherit rounded-lg w-full lg:w-auto" onClick={(e) => e.stopPropagation()}>
-                <span className="flex flex-col justify-center items-start w-full lg:w-auto">
-                    <h1 className="font-bold text-5xl">Kérdésed van, információra van szükséged?</h1>
-                    <p>Mi szívesen segítünk neked.</p>
-                </span>
-                <span className="w-full lg:w-auto bg-white p-4 rounded-lg">
-                    <form action="">
-                        {/* Name Field */}
-                        <div>
-                            <label htmlFor="name">Neved:</label>
-                            <br />
-                            <input type="text" id="name" required placeholder="Pl: Kis Lajos" />
-                        </div>
+        <div
+            className="fixed inset-0 bg-dark-blue/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
+            onClick={onClose}
+        >
+            <div
+                className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden max-h-[90vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Close button */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 p-2 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors z-10"
+                    aria-label="Bezárás"
+                >
+                    <CloseIcon className="w-5 h-5" />
+                </button>
 
-                        {/* Email Field */}
-                        <div>
-                            <label htmlFor="email">Email: </label>
-                            <br />
-                            <input type="email" id="email" required placeholder="pelda@pelda.com" />
-                        </div>
+                {/* Header */}
+                <div className="bg-dark-blue text-white px-6 sm:px-10 py-10 text-center">
+                    <span className="inline-block mb-3 text-xs font-semibold tracking-widest uppercase text-white/60 bg-white/10 px-3 py-1 rounded-full">
+                        Kapcsolat
+                    </span>
+                    <h1 className="text-3xl sm:text-4xl font-extrabold leading-tight">
+                        Kérdésed van? Itt vagyunk.
+                    </h1>
+                    <p className="mt-3 text-white/70 text-sm sm:text-base max-w-md mx-auto">
+                        Munkanapokon 9:00 és 17:00 között válaszolunk minden megkeresésre.
+                    </p>
+                </div>
 
-                        {/* Phone Field */}
-                        <div>
-                            <label htmlFor="phone">Telefonszám: </label>
-                            <br />
-                            <input type="tel" id="phone" required placeholder="+36 1 234 5678" />
+                {/* Contact cards */}
+                <div className="px-6 sm:px-10 py-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex items-start gap-4 p-5 rounded-xl border border-gray-100 hover:border-dark-blue/30 hover:shadow-md transition-all">
+                        <div className="shrink-0 w-11 h-11 rounded-lg bg-dark-blue/10 flex items-center justify-center text-dark-blue">
+                            <PhoneIcon className="w-5 h-5" />
                         </div>
-
-                        {/* Message Field */}
-                        <div>
-                            <label htmlFor="message">Üzenet: </label>
-                            <br />
-                            <textarea id="message" required placeholder="Üzenet szövege" rows="4" />
+                        <div className="min-w-0">
+                            <h2 className="text-sm font-semibold text-gray-500">Telefon</h2>
+                            <a href="tel:+3612345678" className="block mt-1 font-semibold text-dark-gray hover:text-dark-blue transition-colors">
+                                +36 1 234 5678
+                            </a>
+                            <p className="text-xs text-gray-400 mt-0.5">H–P · 9:00–17:00</p>
                         </div>
-
-                        <button type="submit" className="mt-4 rounded-2xl bg-black text-white p-2"> Küldés</button>
-                    </form>
-                </span>
-            </section>
-            <section>
-                <span>
-                    <h1 className="text-center text-2xl sm:text-3xl md:text-4xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-bold mb-6 sm:mb-8 px-4">Elérhetőségeink</h1>
-                </span>
-                <span className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-3 xl:gap-4 2xl:gap-6 px-4 sm:px-6 lg:px-4 xl:px-8 2xl:px-10 py-8">
-                    <div className="bg-gray-50 rounded-lg shadow-md p-4 hover:shadow-xl hover:scale-105 transition-all duration-300">
-                        <h2 className="text-lg font-semibold mb-2">Telefon</h2>
-                        <p className="text-gray-700">+36 1 234 5678</p>
                     </div>
-                    <div className="bg-gray-50 rounded-lg shadow-md p-4 hover:shadow-xl hover:scale-105 transition-all duration-300">
-                        <h2 className="text-lg font-semibold mb-2">Email</h2>
-                        <p className="text-gray-700">info@bookly.hu</p>
+
+                    <div className="flex items-start gap-4 p-5 rounded-xl border border-gray-100 hover:border-dark-blue/30 hover:shadow-md transition-all">
+                        <div className="shrink-0 w-11 h-11 rounded-lg bg-dark-blue/10 flex items-center justify-center text-dark-blue">
+                            <EmailIcon className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                            <h2 className="text-sm font-semibold text-gray-500">Általános e-mail</h2>
+                            <a href="mailto:info@bookly.hu" className="block mt-1 font-semibold text-dark-gray hover:text-dark-blue transition-colors break-all">
+                                info@bookly.hu
+                            </a>
+                            <p className="text-xs text-gray-400 mt-0.5">Ügyféltámogatás</p>
+                        </div>
                     </div>
-                    <div className="bg-gray-50 rounded-lg shadow-md p-4 hover:shadow-xl hover:scale-105 transition-all duration-300">
-                        <h2 className="text-lg font-semibold mb-2">Üzleti Email</h2>
-                        <p className="text-gray-700">business@bookly.hu</p>
+
+                    <div className="flex items-start gap-4 p-5 rounded-xl border border-gray-100 hover:border-dark-blue/30 hover:shadow-md transition-all">
+                        <div className="shrink-0 w-11 h-11 rounded-lg bg-dark-blue/10 flex items-center justify-center text-dark-blue">
+                            <EmailIcon className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                            <h2 className="text-sm font-semibold text-gray-500">Üzleti e-mail</h2>
+                            <a href="mailto:business@bookly.hu" className="block mt-1 font-semibold text-dark-gray hover:text-dark-blue transition-colors break-all">
+                                business@bookly.hu
+                            </a>
+                            <p className="text-xs text-gray-400 mt-0.5">Partnerkapcsolat</p>
+                        </div>
                     </div>
-                </span>
-            </section>
+
+                    <div className="flex items-start gap-4 p-5 rounded-xl border border-gray-100 hover:border-dark-blue/30 hover:shadow-md transition-all">
+                        <div className="shrink-0 w-11 h-11 rounded-lg bg-dark-blue/10 flex items-center justify-center text-dark-blue">
+                            <LocationIcon className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                            <h2 className="text-sm font-semibold text-gray-500">Iroda</h2>
+                            <p className="mt-1 font-semibold text-dark-gray">Budapest, Magyarország</p>
+                            <p className="text-xs text-gray-400 mt-0.5">Időpont egyeztetéssel</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

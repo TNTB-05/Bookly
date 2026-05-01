@@ -10,5 +10,7 @@ bookly_project/backend/uploads/salons/*
 bookly_project/CLAUDE.md
 /bookly_project/.claude
 
-# Playwright screenshots are committed (see bookly_project/tests/README.md)
-# bookly_project/tests/screenshots/*
+# Playwright screenshot output
+bookly_project/tests/screenshots/*
+bookly_project/backend/CLAUDE.md
+/.superpowers

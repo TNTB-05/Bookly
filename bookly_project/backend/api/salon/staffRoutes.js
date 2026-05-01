@@ -17,6 +17,7 @@ const {
     getProviderBasicInfo,
     softDeleteProvider
 } = require('../../sql/providerQueries');
+const { logEvent } = require('../../services/logService');
 
 // GET /providers - Get all providers for the salon
 router.get('/providers', AuthMiddleware, async (request, response) => {
@@ -89,6 +90,8 @@ router.put('/provider/:providerId', AuthMiddleware, isManagerMiddleware, async (
 
         const updatedProvider = await getProviderBasicInfo(targetProviderId);
 
+        logEvent('INFO', 'PROVIDER_TEAM_UPDATED', 'provider', currentProviderId, 'provider', parseInt(targetProviderId), `Manager #${currentProviderId} updated team member #${targetProviderId}`).catch(() => {});
+
         response.status(200).json({ success: true, message: 'Szolgáltató sikeresen frissítve', provider: updatedProvider });
     } catch (error) {
         console.error('Update provider error:', error);
@@ -123,6 +126,8 @@ router.delete('/provider/:providerId', AuthMiddleware, isManagerMiddleware, asyn
         }
 
         await softDeleteProvider(targetProviderId);
+
+        logEvent('WARN', 'PROVIDER_TEAM_REMOVED', 'provider', currentProviderId, 'provider', parseInt(targetProviderId), `Manager #${currentProviderId} removed provider #${targetProviderId} from salon #${salonId}`).catch(() => {});
 
         response.status(200).json({ success: true, message: 'Szolgáltató sikeresen eltávolítva' });
     } catch (error) {

@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react";
 import { jwtDecode } from "jwt-decode"; // npm install jwt-decode
+import { API_URL } from '../../config';
 
 export const AuthContext = createContext();
 
@@ -36,7 +37,7 @@ export function getUserFromToken() {
 // Helper to refresh access token
 export async function refreshAccessToken() {
     try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const apiUrl = API_URL;
         const response = await fetch(`${apiUrl}/auth/refresh`, {
             method: 'POST',
             headers: {
@@ -66,7 +67,7 @@ export async function refreshAccessToken() {
 // Helper to logout
 export async function logout() {
     try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const apiUrl = API_URL;
         await fetch(`${apiUrl}/auth/logout`, {
             method: 'POST',
             headers: {
@@ -143,7 +144,7 @@ function safeNavigate(path, options) {
 
 export async function authFetch(url, options={}){
     let accessToken= localStorage.getItem('accessToken');
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const apiUrl = API_URL;
     
     // Check if token is expired before sending request
     if (accessToken) {

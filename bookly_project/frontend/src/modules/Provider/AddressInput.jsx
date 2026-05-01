@@ -3,6 +3,7 @@ import { Marker, useMap } from 'react-leaflet';
 import BaseMap from '../../components/BaseMap';
 import TickIcon from '../../icons/TickIcon';
 import { useAddressAutocomplete, formatSuggestion } from '../../hooks/useAddressAutocomplete';
+import { API_URL } from '../../config';
 
 // Component to recenter the map when position changes
 function MapRecenter({ lat, lng }) {
@@ -48,7 +49,7 @@ export default function AddressInput({
     required = false,
     className = ''
 }) {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const apiUrl = API_URL;
 
     const [inputValue, setInputValue] = useState(initialAddress);
     const [selectedLat, setSelectedLat] = useState(initialLat);

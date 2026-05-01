@@ -1,4 +1,11 @@
 import { createPortal } from 'react-dom';
+import CloseIcon from '../../../../icons/CloseIcon';
+import ClockIcon from '../../../../icons/ClockIcon';
+import UserIcon from '../../../../icons/UserIcon';
+import CurrencyIcon from '../../../../icons/CurrencyIcon';
+import ChatBubbleIcon from '../../../../icons/ChatBubbleIcon';
+import ChatBubbleDotsIcon from '../../../../icons/ChatBubbleDotsIcon';
+import TrashIcon from '../../../../icons/TrashIcon';
 
 const AppointmentDetailModal = ({ isOpen, onClose, appointment, deleteLoading, onDelete, onOpenChat }) => {
     if (!isOpen || !appointment) return null;
@@ -58,9 +65,7 @@ const AppointmentDetailModal = ({ isOpen, onClose, appointment, deleteLoading, o
                             onClick={onClose}
                             className="p-1 hover:bg-white/30 rounded-lg transition-colors"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <CloseIcon className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
@@ -68,9 +73,7 @@ const AppointmentDetailModal = ({ isOpen, onClose, appointment, deleteLoading, o
                 <div className="p-4 sm:p-6 space-y-4">
                     <div className="flex items-start gap-3">
                         <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-blue-600">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <ClockIcon className="w-4 h-4 text-blue-600" />
                         </div>
                         <div>
                             <p className="text-xs text-gray-500">Időpont</p>
@@ -89,9 +92,7 @@ const AppointmentDetailModal = ({ isOpen, onClose, appointment, deleteLoading, o
 
                     <div className="flex items-start gap-3">
                         <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-green-600">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                            </svg>
+                            <UserIcon className="w-4 h-4 text-green-600" />
                         </div>
                         <div>
                             <p className="text-xs text-gray-500">Kapcsolat</p>
@@ -104,9 +105,7 @@ const AppointmentDetailModal = ({ isOpen, onClose, appointment, deleteLoading, o
 
                     <div className="flex items-start gap-3">
                         <div className="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-yellow-600">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <CurrencyIcon className="w-4 h-4 text-yellow-600" />
                         </div>
                         <div>
                             <p className="text-xs text-gray-500">Ár</p>
@@ -119,9 +118,7 @@ const AppointmentDetailModal = ({ isOpen, onClose, appointment, deleteLoading, o
                     {appointment.comment && (
                         <div className="flex items-start gap-3">
                             <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-purple-600">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
-                                </svg>
+                                <ChatBubbleIcon className="w-4 h-4 text-purple-600" />
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500">Megjegyzés</p>
@@ -138,9 +135,7 @@ const AppointmentDetailModal = ({ isOpen, onClose, appointment, deleteLoading, o
                                 onClick={onOpenChat}
                                 className="flex-1 py-2.5 px-4 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
-                                </svg>
+                                <ChatBubbleDotsIcon className="w-4 h-4" />
                                 Üzenet küldése
                             </button>
                         )}
@@ -154,9 +149,7 @@ const AppointmentDetailModal = ({ isOpen, onClose, appointment, deleteLoading, o
                                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                                 ) : (
                                     <>
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                        </svg>
+                                        <TrashIcon className="w-4 h-4" />
                                         Foglalás törlése
                                     </>
                                 )}
