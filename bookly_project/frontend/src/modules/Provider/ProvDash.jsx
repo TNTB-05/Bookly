@@ -170,6 +170,9 @@ export default function ProvDash() {
             const response = await authApi.put('/api/salon/me/password', passwordFormData);
             const data = await response.json();
             if (data.success) {
+                if (data.accessToken) {
+                    localStorage.setItem('accessToken', data.accessToken);
+                }
                 setPasswordSuccess('Jelszó sikeresen megváltoztatva!');
                 setPasswordFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
                 setTimeout(() => { setShowPasswordModal(false); setPasswordSuccess(null); }, 2000);

@@ -12,6 +12,8 @@ const { cancelUserScheduledAppointments } = require('../../sql/appointmentQuerie
 const { upload, processAndSaveImage, deleteOldImage } = require('../../middleware/uploadMiddleware');
 const { sendPasswordChangeConfirmation } = require('../../services/emailService');
 const { logEvent } = require('../../services/logService');
+const { insertUserRefreshToken } = require('../../sql/authQueries');
+const { generateCustomerTokens, setAuthCookies } = require('../../utils/authUtils');
 
 // Get current user's profile
 router.get('/profile', AuthMiddleware, async (request, response) => {
@@ -219,11 +221,36 @@ router.put('/password', AuthMiddleware, async (request, response) => {
             });
         }
 
+        // Invalidate all existing sessions (all devices) for this user
+        try {
+            await deleteRefTokensForUser(userId);
+        } catch (err) {
+            console.error('Failed to delete user refresh tokens on password change:', err);
+        }
+
+        // Issue a fresh token pair so the current device stays logged in
+        let newAccessToken = null;
+        try {
+            if (user) {
+                const tokens = generateCustomerTokens({
+                    email: user.email,
+                    userId,
+                    name: user.name
+                });
+                await insertUserRefreshToken(userId, tokens.refreshToken);
+                setAuthCookies(response, tokens.refreshToken);
+                newAccessToken = tokens.accessToken;
+            }
+        } catch (err) {
+            console.error('Failed to issue new tokens after user password change:', err);
+        }
+
         logEvent('INFO', 'USER_PASSWORD_CHANGED', 'user', userId, 'user', userId, `User #${userId} changed their password`).catch(() => {});
 
         response.status(200).json({
             success: true,
-            message: 'Jelszó sikeresen megváltoztatva'
+            message: 'Jelszó sikeresen megváltoztatva',
+            accessToken: newAccessToken
         });
     } catch (error) {
         console.error('Change password error:', error);
