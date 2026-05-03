@@ -351,7 +351,8 @@ INSERT INTO services (provider_id, name, description, duration_minutes, price, s
   (11, 'Bridal Hair Styling',     'Wedding day styling with trial included',     120, 25000.00, 'available'),
   (12, 'Updo Styling',            'Elegant updo for events',                      60,  8500.00, 'available'),
   (13, 'Color Consultation',      'Personal color analysis and plan',             30,  4000.00, 'available'),
-  (14, 'Couples Massage',         'Side-by-side relaxing massage for two',        90, 18000.00, 'unavailable');
+  (14, 'Couples Massage',         'Side-by-side relaxing massage for two',        90, 18000.00, 'unavailable'),
+  (4,  'Classic Manicure',        'Nail shaping, cuticle care and polish',        60,  6500.00, 'available');
 
 -- Saved salons (favourite list per user)
 INSERT INTO saved_salons (user_id, salon_id) VALUES
@@ -370,18 +371,41 @@ INSERT INTO provider_time_blocks (provider_id, start_datetime, end_datetime, is_
   (9,  DATE_ADD(CURDATE(), INTERVAL 2 DAY) + INTERVAL 12 HOUR, DATE_ADD(CURDATE(), INTERVAL 2 DAY) + INTERVAL 13 HOUR, TRUE, 'weekly', '["monday","tuesday","wednesday","thursday","friday"]', DATE_ADD(CURDATE(), INTERVAL 90 DAY), 'Lunch break'),
   (11, '2026-05-25 14:00:00', '2026-05-25 17:00:00', FALSE, NULL,     NULL,                                                                NULL,                                'Bridal trial appointment off-site');
 
--- Service images
+-- Service images (real demo photos stored in backend/demo_kepek/)
 INSERT INTO service_images (service_id, image_url, sort_order) VALUES
-  (1,  '/uploads/services/haircut-1.jpg',    0),
-  (1,  '/uploads/services/haircut-2.jpg',    1),
-  (3,  '/uploads/services/massage-1.jpg',    0),
-  (5,  '/uploads/services/laptop-repair.jpg',0),
-  (11, '/uploads/services/mens-haircut.jpg', 0),
-  (12, '/uploads/services/highlights-1.jpg', 0),
-  (12, '/uploads/services/highlights-2.jpg', 1),
-  (15, '/uploads/services/bridal-1.jpg',     0),
-  (15, '/uploads/services/bridal-2.jpg',     1),
-  (16, '/uploads/services/updo.jpg',         0);
+  -- 1: Haircut
+  (1,  '/demo_kepek/hair_salon_1.jpg', 0),
+  (1,  '/demo_kepek/hair_salon_4.jpg', 1),
+  -- 3: Swedish Massage
+  (3,  '/demo_kepek/massage_1.jpg',    0),
+  (3,  '/demo_kepek/massage_3.jpg',    1),
+  -- 4: Facial Treatment
+  (4,  '/demo_kepek/spa_1.jpg',        0),
+  -- 7: Hair Wash & Blowdry
+  (7,  '/demo_kepek/hair_salon_2.jpg', 0),
+  -- 8: Kids Haircut
+  (8,  '/demo_kepek/hair_salon3.jpg',  0),
+  -- 9: Hot Stone Massage
+  (9,  '/demo_kepek/massage_2.jpg',    0),
+  -- 11: Mens Haircut
+  (11, '/demo_kepek/barbershop_1.jpg', 0),
+  (11, '/demo_kepek/barbershop_2.jpg', 1),
+  (11, '/demo_kepek/barbershop_3.jpg', 2),
+  (11, '/demo_kepek/barbershop_4.jpg', 3),
+  (11, '/demo_kepek/barbershop_5.jpg', 4),
+  -- 12: Hair Highlights (reuses a hair salon photo as preview)
+  (12, '/demo_kepek/hair_salon_1.jpg', 0),
+  -- 13: Aromatherapy Massage
+  (13, '/demo_kepek/massage_4.jpg',    0),
+  -- 14: Body Scrub
+  (14, '/demo_kepek/spa_2.jpg',        0),
+  -- 18: Couples Massage
+  (18, '/demo_kepek/spa_3.jpg',        0),
+  -- 19: Classic Manicure
+  (19, '/demo_kepek/manicure_1.jpg',   0),
+  (19, '/demo_kepek/manicure_2.jpg',   1),
+  (19, '/demo_kepek/manicure_3.jpg',   2),
+  (19, '/demo_kepek/manicure_4.jpg',   3);
 
 -- Extra appointments (IDs 7-22): mix of statuses, fixed and NOW()-based
 INSERT INTO appointments (user_id, provider_id, service_id, appointment_start, appointment_end, comment, price, status, deleted_reason, deleted_at, deleted_by) VALUES

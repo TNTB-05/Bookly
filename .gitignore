@@ -10,7 +10,13 @@ bookly_project/backend/uploads/salons/*
 bookly_project/CLAUDE.md
 /bookly_project/.claude
 
-# Playwright screenshot output
-bookly_project/tests/screenshots/*
+# Playwright generated artifacts.
+# Screenshots: ignore *.png but keep folder structure via .gitkeep files
+bookly_project/tests/screenshots/**/*.png
+!bookly_project/tests/screenshots/**/.gitkeep
+# Playwright reports and per-run results: fully generated, ignore everything inside
+bookly_project/tests/playwright-report/
+bookly_project/tests/test-results/
+bookly_project/tests/node_modules/
 bookly_project/backend/CLAUDE.md
 /.superpowers
