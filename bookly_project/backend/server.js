@@ -73,8 +73,6 @@ app.get('/', (request, response) => {
 });
 //!API endpoints
 app.use('/', router);
-const endpoints = require('./api/api.js');
-app.use('/api', endpoints);
 const loginApi = require('./api/auth/LoginApi.js');
 app.use('/auth', loginApi);
 const searchApi = require('./api/searchApi.js');
