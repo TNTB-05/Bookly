@@ -149,6 +149,39 @@ export default function ProviderManagement() {
         }
     };
 
+    const handleDeactivate = async (providerId) => {
+        if (!confirm('Biztosan deaktiválod ezt a szolgáltatót?')) return;
+        setActionLoading(true);
+        try {
+            const res = await authApi.post(`/api/admin/providers/${providerId}/deactivate`);
+            const data = await res.json();
+            if (data.success) {
+                fetchProviders();
+                if (selectedProvider?.id === providerId) fetchProviderDetails(providerId);
+            }
+        } catch (err) {
+            console.error('Error deactivating provider:', err);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleActivate = async (providerId) => {
+        setActionLoading(true);
+        try {
+            const res = await authApi.post(`/api/admin/providers/${providerId}/activate`);
+            const data = await res.json();
+            if (data.success) {
+                fetchProviders();
+                if (selectedProvider?.id === providerId) fetchProviderDetails(providerId);
+            }
+        } catch (err) {
+            console.error('Error activating provider:', err);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const filteredProviders = providers.filter(p => {
         const s = search.toLowerCase();
         const matchesSearch = !s || (
@@ -278,6 +311,24 @@ export default function ProviderManagement() {
                                     <td className="px-4 py-3">{statusBadge(provider.status)}</td>
                                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                                         <div className="flex gap-1 flex-wrap">
+                                            {provider.status === 'active' && (
+                                                <button
+                                                    onClick={() => handleDeactivate(provider.id)}
+                                                    disabled={actionLoading}
+                                                    className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+                                                >
+                                                    Deaktiválás
+                                                </button>
+                                            )}
+                                            {provider.status === 'inactive' && (
+                                                <button
+                                                    onClick={() => handleActivate(provider.id)}
+                                                    disabled={actionLoading}
+                                                    className="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors"
+                                                >
+                                                    Aktiválás
+                                                </button>
+                                            )}
                                             {provider.status !== 'banned' && provider.status !== 'deleted' ? (
                                                 <button
                                                     onClick={() => handleBan(provider.id)}
