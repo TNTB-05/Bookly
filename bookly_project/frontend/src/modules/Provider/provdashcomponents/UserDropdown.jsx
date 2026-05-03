@@ -1,5 +1,4 @@
 import UserIcon from '../../../icons/UserIcon';
-import SettingsIcon from '../../../icons/SettingsIcon';
 import LogoutIcon from '../../../icons/LogoutIcon';
 
 const UserDropdown = ({ isOpen, onLogout, onProfileEdit, providerProfile }) => {
@@ -15,10 +14,6 @@ const UserDropdown = ({ isOpen, onLogout, onProfileEdit, providerProfile }) => {
                 <button onClick={onProfileEdit} className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-white/50 rounded-lg transition-colors flex items-center gap-2">
                     <UserIcon className="w-4 h-4" />
                     Profil Szerkesztése
-                </button>
-                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-white/50 rounded-lg transition-colors flex items-center gap-2">
-                    <SettingsIcon className="w-4 h-4" />
-                    Beállítások
                 </button>
                 <div className="border-t border-gray-100 my-1"></div>
                 <button 

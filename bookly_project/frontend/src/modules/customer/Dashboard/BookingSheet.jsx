@@ -545,10 +545,18 @@ export default function BookingSheet({ salon, isOpen, onClose, preselectedProvid
                                     onClick={() => { setSelectedService(service); setStep(STEPS.DATETIME); }}
                                     className="w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 border-cyan-100 bg-white hover:border-dark-blue/40 hover:bg-cyan-50/50 transition-all text-left"
                                 >
-                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-                                        style={{ background: '#e0f7fa' }}>
-                                        ✂
-                                    </div>
+                                    {service.images && service.images.length > 0 ? (
+                                        <img
+                                            src={`${API_URL}${service.images[0].image_url}`}
+                                            alt={service.name}
+                                            className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
+                                        />
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                                            style={{ background: '#e0f7fa' }}>
+                                            ✂
+                                        </div>
+                                    )}
                                     <div className="flex-1">
                                         <div className="font-semibold text-gray-900 text-sm">{service.name}</div>
                                         <div className="text-xs text-gray-400">{service.duration_minutes} perc</div>
