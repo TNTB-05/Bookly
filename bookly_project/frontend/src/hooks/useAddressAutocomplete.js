@@ -31,7 +31,7 @@ export function formatSuggestion(suggestion) {
  * Reusable hook for OpenStreetMap (Nominatim) address autocomplete.
  *
  * @param {Object} options
- * @param {string} [options.apiUrl] - Backend base URL (default: VITE_API_URL || API_URL)
+ * @param {string} [options.apiUrl] - Backend base URL
  * @param {number} [options.debounceMs] - Debounce delay in ms (default: 400)
  * @param {number} [options.minLength] - Minimum query length to trigger fetch (default: 3)
  *

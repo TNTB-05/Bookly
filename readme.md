@@ -128,18 +128,16 @@ cd Bookly/bookly_project
 
 ### 2. Környezeti változók
 
-Két env-fájlra van szükség (mindkettő gitignore-olt):
+Egy env-fájlra van szükség (gitignore-olt):
 
 ```bash
-# bookly_project/.env  – a docker-compose ezt olvassa
-cp .env.example .env
 
 # bookly_project/backend/Secret.env  – a backend ezt olvassa (NEM .env!)
 cp backend/Secret.env.example backend/Secret.env
 ```
 
-Szerkeszd mindkét fájlt és töltsd ki a placeholdereket. A JWT és session
-kulcsokat érdemes hosszú, véletlenszerű stringre cserélni. A `DB_PASSWORD` értéke mindkét fájlban **ugyanaz** kell legyen.
+Szerkeszd meg a fájlt és töltsd ki a placeholdereket. A JWT és session
+kulcsokat érdemes hosszú, véletlenszerű stringre cserélni.
 
 ### 3. Backend indítása
 
