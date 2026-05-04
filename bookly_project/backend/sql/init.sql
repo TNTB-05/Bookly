@@ -7,7 +7,6 @@ CREATE DATABASE IF NOT EXISTS bookly_db
 
 USE bookly_db;
 
--- Admins table (separate from users for security)
 CREATE TABLE IF NOT EXISTS admins (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
   `name` VARCHAR(255) NOT NULL,
@@ -52,7 +51,6 @@ CREATE TABLE IF NOT EXISTS salons (
   `banner_image_url` VARCHAR(500) DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
-
 
 CREATE TABLE IF NOT EXISTS providers (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -150,7 +148,6 @@ CREATE TABLE IF NOT EXISTS provider_time_blocks(
   INDEX idx_provider_end (provider_id, end_datetime)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
--- System logs table for audit trail
 CREATE TABLE IF NOT EXISTS system_logs (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
   `level` ENUM('INFO', 'WARN', 'CRITICAL') DEFAULT 'INFO',
@@ -175,7 +172,6 @@ CREATE TABLE IF NOT EXISTS service_images (
   FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
--- RefTokens table (created last to reference users, providers, and admins)
 CREATE TABLE IF NOT EXISTS RefTokens(
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
   `user_id` INT NULL,
@@ -188,8 +184,6 @@ CREATE TABLE IF NOT EXISTS RefTokens(
   FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
-
--- Waitlist table
 CREATE TABLE IF NOT EXISTS waitlist (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
   `user_id` INT NOT NULL,
@@ -308,13 +302,6 @@ INSERT INTO appointments (user_id, provider_id, service_id, appointment_start, a
 INSERT INTO ratings (user_id, appointment_id, salon_id, provider_id, salon_rating, provider_rating, salon_comment, provider_comment, active) VALUES
   (4, 4, 1, 2, 5, 4, 'Love my new hair color! Peter did an amazing job.', 'Very professional and creative stylist.', TRUE),
   (2, 5, 3, 6, 4, 5, 'Good repair service, fast turnaround.', 'Eva was super helpful and fixed my phone perfectly!', TRUE);
-
--- =====================================================================
--- EXTRA DEMO DATA (extended sample set)
--- Goal: rich, colourful demo data for every feature on the site so that
--- the project is presentable without having to create things manually.
--- Passwords:  user123 / provider123 / manager123
--- =====================================================================
 
 -- Extra users (IDs 5-9): banned, deleted, inactive, profile picture, customer
 INSERT INTO users (name, email, phone, address, status, role, password_hash, profile_picture_url, deleted_at) VALUES
@@ -488,3 +475,24 @@ INSERT INTO system_logs (level, action, actor_type, actor_id, target_type, targe
   ('CRITICAL', 'appointment_deleted',   'admin',    1,   'appointment', 14,'Admin removed appointment due to abuse report',                  '2026-04-26 10:15:00'),
   ('INFO',     'rating_created',        'user',     3,   'rating',   7,    'User rated provider 1 / salon 1',                                DATE_SUB(NOW(), INTERVAL 60 DAY)),
   ('INFO',     'user_deleted',          'user',     9,   'user',     9,    'User self-deleted their account (GDPR anonymized)',              DATE_SUB(NOW(), INTERVAL 30 DAY));
+
+-- =====================================================================
+-- DEMO LOGOS, BANNERS AND PROFILE PICTURES
+-- Re-uses the photos from backend/demo_kepek/ that the static route at
+-- `/demo_kepek/...` serves. Only a handful of salons / providers receive
+-- pictures so that empty-state placeholders are also visible in the demo.
+-- =====================================================================
+
+-- Salon logos + banner images
+UPDATE salons SET logo_url = '/demo_kepek/hair_salon_4.jpg', banner_image_url = '/demo_kepek/hair_salon_1.jpg' WHERE id = 1;  -- Premium Hair Salon
+UPDATE salons SET logo_url = '/demo_kepek/spa_1.jpg',        banner_image_url = '/demo_kepek/spa_2.jpg'        WHERE id = 2;  -- Wellness Spa Center
+UPDATE salons SET logo_url = '/demo_kepek/hair_salon3.jpg',  banner_image_url = '/demo_kepek/hair_salon_2.jpg' WHERE id = 7;  -- Bella Hair Design
+UPDATE salons SET logo_url = '/demo_kepek/massage_3.jpg',    banner_image_url = '/demo_kepek/spa_3.jpg'        WHERE id = 8;  -- Serenity Spa
+UPDATE salons SET banner_image_url = '/demo_kepek/barbershop_1.jpg' WHERE id = 13; -- Elegance Hair Lounge (banner only)
+
+-- Provider profile pictures (a few across salons)
+UPDATE providers SET profile_picture_url = '/demo_kepek/barbershop_3.jpg' WHERE id = 1;  -- Maria Kovacs
+UPDATE providers SET profile_picture_url = '/demo_kepek/manicure_1.jpg'   WHERE id = 4;  -- Balazs Kiss
+UPDATE providers SET profile_picture_url = '/demo_kepek/barbershop_4.jpg' WHERE id = 7;  -- Tomas Szabo
+UPDATE providers SET profile_picture_url = '/demo_kepek/massage_4.jpg'    WHERE id = 9;  -- Daniel Molnar
+UPDATE providers SET profile_picture_url = '/demo_kepek/barbershop_5.jpg' WHERE id = 11; -- Adam Foldes
