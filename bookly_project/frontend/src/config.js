@@ -1,1 +1,1 @@
-export const API_URL = 'https://booklytest.online';
+export const API_URL = 'http://localhost:3001';
