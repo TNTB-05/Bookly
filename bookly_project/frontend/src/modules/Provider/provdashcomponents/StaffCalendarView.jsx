@@ -4,6 +4,10 @@ import { useNotification } from '../../../components/NotificationContext';
 import CreateAppointmentModal from './CalendarSection/CreateAppointmentModal';
 import AppointmentDetailModal from './CalendarSection/AppointmentDetailModal';
 import { API_URL } from '../../../config';
+import BackArrowIcon from '../../../icons/BackArrowIcon';
+import ChevronLeftIcon from '../../../icons/ChevronLeftIcon';
+import ChevronRightIcon from '../../../icons/ChevronRightIcon';
+import PlusIcon from '../../../icons/PlusIcon';
 
 const apiUrl = API_URL;
 
@@ -168,9 +172,7 @@ const StaffCalendarView = ({ staff, onBack }) => {
                     <button onClick={onBack}
                         className="md:hidden shrink-0 p-2 rounded-xl hover:bg-white/50 transition-colors text-gray-600"
                         aria-label="Vissza">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                        </svg>
+                        <BackArrowIcon className="w-5 h-5" />
                     </button>
 
                     {staff.profile_picture_url ? (
@@ -206,9 +208,7 @@ const StaffCalendarView = ({ staff, onBack }) => {
                 <div className="flex items-center gap-2">
                     <button onClick={goToPrevDay}
                         className="p-2 rounded-xl hover:bg-white/50 transition-colors text-gray-600 bg-white/30 border border-white/50">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                        </svg>
+                        <ChevronLeftIcon className="w-4 h-4" />
                     </button>
                     <button onClick={() => setSelectedDate(new Date())}
                         className="px-3 py-1.5 rounded-xl text-xs font-medium hover:bg-white/50 transition-colors text-gray-600 bg-white/30 border border-white/50">
@@ -216,9 +216,7 @@ const StaffCalendarView = ({ staff, onBack }) => {
                     </button>
                     <button onClick={goToNextDay}
                         className="p-2 rounded-xl hover:bg-white/50 transition-colors text-gray-600 bg-white/30 border border-white/50">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                        </svg>
+                        <ChevronRightIcon className="w-4 h-4" />
                     </button>
                     <span className="text-sm font-semibold text-gray-700 hidden sm:block capitalize">
                         {formatDateHU(selectedDate)}
@@ -230,9 +228,7 @@ const StaffCalendarView = ({ staff, onBack }) => {
 
                 <button onClick={openCreateModal}
                     className="flex items-center gap-2 px-4 py-2 bg-dark-blue text-white rounded-xl text-sm font-semibold hover:bg-blue-800 transition-colors shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
+                    <PlusIcon className="w-4 h-4" />
                     Új foglalás
                 </button>
             </div>

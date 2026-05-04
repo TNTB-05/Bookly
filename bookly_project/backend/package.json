@@ -14,7 +14,7 @@
         "db:restart": "cd .. && docker-compose restart db",
         "dev": "npm run db:up && nodemon"
     },
-    "author": "Kardos Krisztián",
+    "author": "Tokaji-Nagy Bence, Varga Bototnd",
     "license": "ISC",
     "devDependencies": {
         "jest": "^30.2.0",

@@ -1,0 +1,12 @@
+{
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report",
+    "codegen": "playwright codegen http://localhost:5173"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}

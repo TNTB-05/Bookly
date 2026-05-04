@@ -53,6 +53,12 @@ async function deleteRefreshToken(refreshToken) {
     await pool.execute(query, [refreshToken]);
 }
 
+// Delete all refresh tokens for a provider (used on password change to invalidate all sessions)
+async function deleteAllProviderRefreshTokens(providerId) {
+    const query = `DELETE FROM RefTokens WHERE provider_id = ?`;
+    await pool.execute(query, [providerId]);
+}
+
 // ==================== ADMIN TABLE ====================
 
 // Get admin account by email for login
@@ -196,6 +202,7 @@ module.exports = {
     insertAdminRefreshToken,
     deleteRefreshTokenById,
     deleteRefreshToken,
+    deleteAllProviderRefreshTokens,
     // Admin table
     getAdminByEmail,
     getAdminById,

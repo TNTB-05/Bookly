@@ -218,9 +218,22 @@ async function banUser(userId) {
     return result;
 }
 
-// Unban a user (set status back to active)
+// Unban a user. Restore the appropriate status based on profile completeness:
+//   - 'active'   if name, email and phone are all present
+//   - 'inactive' otherwise
+// Never reactivates a soft-deleted account (status='deleted').
 async function unbanUser(userId) {
-    const query = "UPDATE users SET status = 'active' WHERE id = ?";
+    const query = `
+        UPDATE users
+        SET status = CASE
+            WHEN name  IS NOT NULL AND name  <> ''
+             AND email IS NOT NULL AND email <> ''
+             AND phone IS NOT NULL AND phone <> ''
+            THEN 'active'
+            ELSE 'inactive'
+        END
+        WHERE id = ? AND status = 'banned'
+    `;
     const [result] = await pool.execute(query, [userId]);
     return result;
 }

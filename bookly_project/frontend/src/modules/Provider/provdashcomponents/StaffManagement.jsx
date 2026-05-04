@@ -3,6 +3,10 @@ import { authApi } from '../../auth/auth';
 import { useNotification } from '../../../components/NotificationContext';
 import StaffCard from './StaffCard';
 import StaffCalendarView from './StaffCalendarView';
+import CheckCircleIcon from '../../../icons/CheckCircleIcon';
+import PowerIcon from '../../../icons/PowerIcon';
+import UserMinusIcon from '../../../icons/UserMinusIcon';
+import TeamIcon from '../../../icons/TeamIcon';
 
 const StaffManagement = () => {
     const [staff, setStaff] = useState([]);
@@ -167,9 +171,7 @@ const StaffManagement = () => {
                                         {actionLoading === `manager-${selectedStaff.id}` ? (
                                             <div className="animate-spin rounded-full h-3 w-3 border-2 border-dark-blue border-t-transparent"></div>
                                         ) : (
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-                                            </svg>
+                                            <CheckCircleIcon className="w-3.5 h-3.5" />
                                         )}
                                         {selectedStaff.isManager ? 'Lefokozás' : 'Előléptetés'}
                                     </button>
@@ -184,9 +186,7 @@ const StaffManagement = () => {
                                         {actionLoading === `status-${selectedStaff.id}` ? (
                                             <div className="animate-spin rounded-full h-3 w-3 border-2 border-current border-t-transparent"></div>
                                         ) : (
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5.636 5.636a9 9 0 1012.728 0M12 3v9" />
-                                            </svg>
+                                            <PowerIcon className="w-3.5 h-3.5" />
                                         )}
                                         {selectedStaff.status === 'active' ? 'Deaktiválás' : 'Aktiválás'}
                                     </button>
@@ -198,9 +198,7 @@ const StaffManagement = () => {
                                         {actionLoading === `remove-${selectedStaff.id}` ? (
                                             <div className="animate-spin rounded-full h-3 w-3 border-2 border-red-500 border-t-transparent"></div>
                                         ) : (
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M22 10.5h-6m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
-                                            </svg>
+                                            <UserMinusIcon className="w-3.5 h-3.5" />
                                         )}
                                         Eltávolítás
                                     </button>
@@ -219,9 +217,7 @@ const StaffManagement = () => {
                         <div className="flex-1 hidden md:flex items-center justify-center bg-white/20 backdrop-blur-md rounded-2xl border border-white/40 border-dashed">
                             <div className="text-center">
                                 <div className="w-16 h-16 rounded-2xl bg-white/40 flex items-center justify-center mx-auto mb-3">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-gray-400">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-                                    </svg>
+                                    <TeamIcon className="w-8 h-8 text-gray-400" />
                                 </div>
                                 <p className="text-sm font-medium text-gray-500">Válassz munkatársat</p>
                                 <p className="text-xs text-gray-400 mt-1">a naptár és kezelőfelület megjelenítéséhez</p>

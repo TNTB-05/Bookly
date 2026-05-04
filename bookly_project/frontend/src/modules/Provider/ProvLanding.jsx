@@ -7,6 +7,10 @@ import collision from '../../pics/collision.png';
 import landinghero from '../../pics/slider1.png';
 import Card from '../Landing/Card';
 import Slideshow from './Slideshow';
+import SearchIcon from '../../icons/SearchIcon';
+import SettingsIcon from '../../icons/SettingsIcon';
+import TickIcon from '../../icons/TickIcon';
+import UsersIcon from '../../icons/UsersIcon';
 
 export default function ProvLanding() {
     const navigate = useNavigate();
@@ -112,9 +116,7 @@ export default function ProvLanding() {
                             <span className="absolute top-4 right-6 text-7xl font-black text-dark-blue/10 select-none leading-none">01</span>
                             <div className="relative z-10">
                                 <div className="bg-dark-blue rounded-lg w-12 h-12 flex items-center justify-center mb-5 shadow-md">
-                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-                                    </svg>
+                                    <SearchIcon className="w-6 h-6 text-white" />
                                 </div>
                                 <h3 className="text-xl font-bold text-dark-gray mb-2">Regisztráljon percek alatt</h3>
                                 <p className="text-gray-500 text-sm leading-relaxed">Hozza létre profilját, és vegye fel szalonja adatait egyszerűen.</p>
@@ -125,14 +127,7 @@ export default function ProvLanding() {
                             <span className="absolute top-4 right-6 text-7xl font-black text-dark-blue/10 select-none leading-none">02</span>
                             <div className="relative z-10">
                                 <div className="bg-dark-blue rounded-lg w-12 h-12 flex items-center justify-center mb-5 shadow-md">
-                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                                        />
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
+                                    <SettingsIcon className="w-6 h-6 text-white" />
                                 </div>
                                 <h3 className="text-xl font-bold text-dark-gray mb-2">Adja hozzá szolgáltatásait</h3>
                                 <p className="text-gray-500 text-sm leading-relaxed">Állítsa be naptárát, árait és elérhetőségét egyszerűen, percek alatt.</p>
@@ -143,9 +138,7 @@ export default function ProvLanding() {
                             <span className="absolute top-4 right-6 text-7xl font-black text-dark-blue/10 select-none leading-none">03</span>
                             <div className="relative z-10">
                                 <div className="bg-dark-blue rounded-lg w-12 h-12 flex items-center justify-center mb-5 shadow-md">
-                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
+                                    <TickIcon className="w-6 h-6 text-white" />
                                 </div>
                                 <h3 className="text-xl font-bold text-dark-gray mb-2">Fogadjon ügyfeleket</h3>
                                 <p className="text-gray-500 text-sm leading-relaxed">Az ügyfelek megtalálják és foglalnak Önnél — Ön csak dolgozik.</p>
@@ -221,9 +214,7 @@ export default function ProvLanding() {
                             </div>
                             {/* Social proof */}
                             <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-3">
-                                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-                                </svg>
+                                <UsersIcon className="w-4 h-4 shrink-0" />
                                 89 szalon ebben a csomagban
                             </div>
                             {/* Value framing callout */}
@@ -283,9 +274,7 @@ export default function ProvLanding() {
                             </div>
                             {/* Social proof */}
                             <div className="flex items-center gap-1.5 text-xs text-accent-blue mb-4">
-                                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-                                </svg>
+                                <UsersIcon className="w-4 h-4 shrink-0" />
                                 247 szalon ebben a csomagban
                             </div>
                             <ul className="space-y-3 text-sm text-white/80 mb-0">
@@ -331,9 +320,7 @@ export default function ProvLanding() {
                             </div>
                             {/* Social proof */}
                             <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-4">
-                                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-                                </svg>
+                                <UsersIcon className="w-4 h-4 shrink-0" />
                                 41 szalon ebben a csomagban
                             </div>
                             <ul className="space-y-3 text-sm text-gray-600 mb-0">
@@ -401,26 +388,13 @@ export default function ProvLanding() {
 
             {/* Footer */}
             <footer className="bg-dark-blue text-white/90 py-10 px-6">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div className="flex flex-col items-center md:items-start gap-1">
-                        <img src={logo} alt="Bookly" className="h-10 w-auto object-contain brightness-0 invert mb-1" />
-                        <p className="text-sm text-white/60 italic">Partnereivel együtt növekszik.</p>
-                        <p className="text-xs text-white/40 mt-1">&copy; {new Date().getFullYear()} Minden jog fenntartva.</p>
-                        <p className="text-xs text-white/40 italic mt-2 max-w-sm">
-                            Nem vagyunk a legolcsóbb szoftver a piacon — de az egyetlen, ahol az ügyfelek aktívan keresik az Ön szalonját.
-                        </p>
-                    </div>
-                    <div className="flex gap-8 font-medium">
-                        <a href="#" className="hover:text-accent-blue transition-colors">
-                            Rólunk
-                        </a>
-                        <a href="#" className="hover:text-accent-blue transition-colors">
-                            Kapcsolat
-                        </a>
-                        <a href="#" className="hover:text-accent-blue transition-colors">
-                            Adatvédelem
-                        </a>
-                    </div>
+                <div className="max-w-7xl mx-auto flex flex-col items-center gap-1 text-center">
+                    <img src={logo} alt="Bookly" className="h-10 w-auto object-contain brightness-0 invert mb-1" />
+                    <p className="text-sm text-white/60 italic">Partnereivel együtt növekszik.</p>
+                    <p className="text-xs text-white/40 mt-1">&copy; {new Date().getFullYear()} Minden jog fenntartva.</p>
+                    <p className="text-xs text-white/40 italic mt-2 max-w-sm">
+                        Nem vagyunk a legolcsóbb szoftver a piacon — de az egyetlen, ahol az ügyfelek aktívan keresik az Ön szalonját.
+                    </p>
                 </div>
             </footer>
         </div>

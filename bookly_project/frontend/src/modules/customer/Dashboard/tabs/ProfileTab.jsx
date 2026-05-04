@@ -307,6 +307,9 @@ export default function ProfileTab({ user, userProfile, setUserProfile }) {
             const data = await response.json();
 
             if (data.success) {
+                if (data.accessToken) {
+                    localStorage.setItem('accessToken', data.accessToken);
+                }
                 setPasswordSuccess('Jelszó sikeresen megváltoztatva!');
                 showToast('Jelszó sikeresen módosítva.', 'success');
                 setPasswordFormData({

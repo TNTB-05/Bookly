@@ -17,6 +17,8 @@ const {
     updateProviderPassword
 } = require('../../sql/providerQueries');
 const { logEvent } = require('../../services/logService');
+const { deleteAllProviderRefreshTokens, insertProviderRefreshToken } = require('../../sql/authQueries');
+const { generateProviderTokens, setAuthCookies } = require('../../utils/authUtils');
 
 // GET /me - Get current provider's own profile
 router.get('/me', AuthMiddleware, async (request, response) => {
@@ -115,8 +117,8 @@ router.put('/me/password', AuthMiddleware, async (request, response) => {
         if (!currentPassword || !newPassword || !confirmPassword) {
             return response.status(400).json({ success: false, message: 'Minden jelszó mező kitöltése kötelező' });
         }
-        if (newPassword.length < 6) {
-            return response.status(400).json({ success: false, message: 'Az új jelszónak legalább 6 karakter hosszúnak kell lennie' });
+        if (newPassword.length < 8) {
+            return response.status(400).json({ success: false, message: 'Az új jelszónak legalább 8 karakter hosszúnak kell lennie' });
         }
         if (newPassword !== confirmPassword) {
             return response.status(400).json({ success: false, message: 'Az új jelszavak nem egyeznek' });
@@ -135,9 +137,36 @@ router.put('/me/password', AuthMiddleware, async (request, response) => {
         const newHash = await bcrypt.hash(newPassword, 10);
         await updateProviderPassword(providerId, newHash);
 
+        // Invalidate all existing sessions (all devices) for this provider
+        try {
+            await deleteAllProviderRefreshTokens(providerId);
+        } catch (err) {
+            console.error('Failed to delete provider refresh tokens on password change:', err);
+        }
+
+        // Issue a fresh token pair so the current device stays logged in
+        let newAccessToken = null;
+        try {
+            const profile = await getProviderProfile(providerId);
+            const tokens = generateProviderTokens({
+                email: profile?.email || request.user.email,
+                userId: providerId,
+                name: profile?.name || request.user.name
+            });
+            await insertProviderRefreshToken(providerId, tokens.refreshToken);
+            setAuthCookies(response, tokens.refreshToken);
+            newAccessToken = tokens.accessToken;
+        } catch (err) {
+            console.error('Failed to issue new tokens after provider password change:', err);
+        }
+
         logEvent('INFO', 'PROVIDER_PASSWORD_CHANGED', 'provider', providerId, 'provider', providerId, `Provider #${providerId} changed their password`).catch(() => {});
 
-        response.status(200).json({ success: true, message: 'Jelszó sikeresen megváltoztatva' });
+        response.status(200).json({
+            success: true,
+            message: 'Jelszó sikeresen megváltoztatva',
+            accessToken: newAccessToken
+        });
     } catch (error) {
         console.error('Change provider password error:', error);
         response.status(500).json({ success: false, message: 'Szerverhiba a jelszó módosítása során' });

@@ -8,6 +8,8 @@ import TickIcon from '../../../../icons/TickIcon';
 import PlusIcon from '../../../../icons/PlusIcon';
 import DiaryIcon from '../../../../icons/DiaryIcon';
 import LightningIcon from '../../../../icons/LightningIcon';
+import ChevronLeftIcon from '../../../../icons/ChevronLeftIcon';
+import ChevronRightIcon from '../../../../icons/ChevronRightIcon';
 import CustomerAppointmentModal from '../CustomerAppointmentModal';
 import RatingModal from '../RatingModal';
 import AddToCalendarButton from '../AddToCalendarButton';
@@ -386,31 +388,13 @@ export default function AppointmentsTab({ user, setActiveTab, loadTopRatedSalons
                                 {/* Month Navigation */}
                                 <div className="flex items-center justify-between mb-4">
                                     <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            strokeWidth={2}
-                                            stroke="currentColor"
-                                            className="w-5 h-5 text-gray-600"
-                                        >
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                                        </svg>
+                                        <ChevronLeftIcon className="w-5 h-5 text-gray-600" />
                                     </button>
                                     <h3 className="text-lg font-semibold text-gray-900">
                                         {currentDate.getFullYear()}. {monthNames[currentDate.getMonth()]}
                                     </h3>
                                     <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            strokeWidth={2}
-                                            stroke="currentColor"
-                                            className="w-5 h-5 text-gray-600"
-                                        >
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                                        </svg>
+                                        <ChevronRightIcon className="w-5 h-5 text-gray-600" />
                                     </button>
                                 </div>
 

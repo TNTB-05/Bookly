@@ -1,4 +1,6 @@
 import { createPortal } from 'react-dom';
+import CloseIcon from '../../../icons/CloseIcon';
+import CheckCircleIcon from '../../../icons/CheckCircleIcon';
 
 const PasswordModal = ({
     isOpen,
@@ -20,9 +22,7 @@ const PasswordModal = ({
                     <div className="flex items-center justify-between">
                         <h3 className="text-xl font-bold text-dark-blue">Jelszó módosítása</h3>
                         <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <CloseIcon className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
@@ -34,9 +34,7 @@ const PasswordModal = ({
                     )}
                     {passwordSuccess && (
                         <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 shrink-0">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <CheckCircleIcon className="w-5 h-5 shrink-0" />
                             {passwordSuccess}
                         </div>
                     )}
@@ -61,7 +59,7 @@ const PasswordModal = ({
                             placeholder="••••••••" 
                             disabled={passwordSaving} 
                         />
-                        <p className="text-xs text-gray-500 mt-1">Legalább 6 karakter hosszú legyen</p>
+                        <p className="text-xs text-gray-500 mt-1">Legalább 8 karakter hosszú legyen</p>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Új jelszó megerősítése *</label>

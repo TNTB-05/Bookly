@@ -21,10 +21,11 @@ const MONTH_NAMES = ['Január','Február','Március','Április','Május','Júniu
 const DAY_HEADERS = ['H','K','Sz','Cs','P','Szo','V'];
 
 // ── Mini Calendar ──────────────────────────────────────────────────────────────
-function MiniCalendar({ selectedDate, onSelectDate, openDays }) {
+function MiniCalendar({ selectedDate, onSelectDate, openDays, minDate }) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const [viewDate, setViewDate] = useState(selectedDate || today);
+    const effectiveMin = minDate || today;
+    const [viewDate, setViewDate] = useState(selectedDate || effectiveMin);
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
     const firstDayOfMonth = new Date(year, month, 1);
@@ -39,7 +40,7 @@ function MiniCalendar({ selectedDate, onSelectDate, openDays }) {
 
     function isDisabled(date) {
         if (!date) return true;
-        if (date < today) return true;
+        if (date < effectiveMin) return true;
         if (openDays && openDays.length > 0 && !openDays.includes(date.getDay())) return true;
         return false;
     }
@@ -51,7 +52,7 @@ function MiniCalendar({ selectedDate, onSelectDate, openDays }) {
 
     const prevMonth = () => setViewDate(new Date(year, month - 1, 1));
     const nextMonth = () => setViewDate(new Date(year, month + 1, 1));
-    const canGoPrev = new Date(year, month - 1, 1) >= new Date(today.getFullYear(), today.getMonth(), 1);
+    const canGoPrev = new Date(year, month - 1, 1) >= new Date(effectiveMin.getFullYear(), effectiveMin.getMonth(), 1);
 
     return (
         <div>
@@ -544,10 +545,18 @@ export default function BookingSheet({ salon, isOpen, onClose, preselectedProvid
                                     onClick={() => { setSelectedService(service); setStep(STEPS.DATETIME); }}
                                     className="w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 border-cyan-100 bg-white hover:border-dark-blue/40 hover:bg-cyan-50/50 transition-all text-left"
                                 >
-                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-                                        style={{ background: '#e0f7fa' }}>
-                                        ✂
-                                    </div>
+                                    {service.images && service.images.length > 0 ? (
+                                        <img
+                                            src={`${API_URL}${service.images[0].image_url}`}
+                                            alt={service.name}
+                                            className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
+                                        />
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                                            style={{ background: '#e0f7fa' }}>
+                                            ✂
+                                        </div>
+                                    )}
                                     <div className="flex-1">
                                         <div className="font-semibold text-gray-900 text-sm">{service.name}</div>
                                         <div className="text-xs text-gray-400">{service.duration_minutes} perc</div>
@@ -789,7 +798,10 @@ export default function BookingSheet({ salon, isOpen, onClose, preselectedProvid
                                             <div className="bg-white border-2 border-cyan-100 rounded-xl p-3">
                                                 <MiniCalendar
                                                     selectedDate={waitlistDateFrom}
-                                                    onSelectDate={setWaitlistDateFrom}
+                                                    onSelectDate={(d) => {
+                                                        setWaitlistDateFrom(d);
+                                                        if (waitlistDateTo && waitlistDateTo < d) setWaitlistDateTo(null);
+                                                    }}
                                                     openDays={salon?.open_days}
                                                 />
                                             </div>
@@ -801,6 +813,7 @@ export default function BookingSheet({ salon, isOpen, onClose, preselectedProvid
                                                     selectedDate={waitlistDateTo}
                                                     onSelectDate={setWaitlistDateTo}
                                                     openDays={salon?.open_days}
+                                                    minDate={waitlistDateFrom || undefined}
                                                 />
                                             </div>
                                         </div>

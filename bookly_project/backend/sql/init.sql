@@ -189,69 +189,7 @@ CREATE TABLE IF NOT EXISTS RefTokens(
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 
--- Insert sample data
-
--- Insert test salons
-INSERT INTO salons (name, address, phone, email, type, description, latitude, longitude, sharecode, status, banner_color, logo_url) VALUES 
-  ('Premium Hair Salon', '100 Beauty Blvd, Budapest', '2012345678', 'contact@premiumhair.com', 'fodrász', 'Top-rated hair salon with expert stylists', 47.4979, 19.0402, 'HAIR01', 'open', '#8B5CF6', NULL),
-  ('Wellness Spa Center', '200 Relaxation St, Budapest', '2098765432', 'info@wellnessspa.com', 'szépségszalon', 'Full-service spa offering massage and beauty treatments', 47.5103, 19.0560, 'SPA001', 'open', '#10B981', NULL),
-  ('Tech Repair Pro', '300 Tech Ave, Budapest', '2011223344', 'support@techrepair.com', 'javítószerviz', 'Professional electronics repair service', 47.4850, 19.0780, 'TECH01', 'open', '#EF4444', NULL),
-  ('Glamour Studio', 'Andrássy út 45, Budapest', '2013456789', 'hello@glamourstudio.hu', 'fodrász', 'Modern hair studio with creative stylists', 47.5050, 19.0620, 'GLAM01', 'open', '#EC4899', NULL),
-  ('Zen Wellness', 'Váci utca 12, Budapest', '2014567890', 'booking@zenwellness.hu', 'szépségszalon', 'Relaxing spa with traditional and modern treatments', 47.4920, 19.0550, 'ZEN001', 'open', '#06B6D4', NULL),
-  ('QuickFix Electronics', 'Üllői út 89, Budapest', '2015678901', 'fix@quickfix.hu', 'javítószerviz', 'Fast and reliable electronics repair', 47.4750, 19.0890, 'QFIX01', 'open', '#F59E0B', NULL),
-  ('Bella Hair Design', 'Nagymező utca 22, Budapest', '2016789012', 'info@bellahair.hu', 'fodrász', 'Elegant hair salon specializing in bridal styling', 47.5030, 19.0580, 'BELLA1', 'open', '#F97316', NULL),
-  ('Serenity Spa', 'Margit körút 15, Budapest', '2017890123', 'relax@serenityspa.hu', 'szépségszalon', 'Luxury spa experience with premium products', 47.5150, 19.0350, 'SEREN1', 'open', '#A855F7', NULL),
-  ('TechMaster Service', 'Rákóczi út 50, Budapest', '2018901234', 'service@techmaster.hu', 'javítószerviz', 'Expert computer and phone repair services', 47.4950, 19.0700, 'TECH02', 'open', '#6366F1', NULL),
-  ('Chic Salon', 'Király utca 33, Budapest', '2019012345', 'style@chicsalon.hu', 'fodrász', 'Trendy salon with award-winning stylists', 47.5010, 19.0610, 'CHIC01', 'open', '#14B8A6', NULL),
-  ('Harmony Beauty', 'Bajcsy-Zsilinszky út 8, Budapest', '2020123456', 'hello@harmonybeauty.hu', 'szépségszalon', 'Complete beauty treatments for body and soul', 47.5000, 19.0530, 'HARM01', 'open', '#84CC16', NULL),
-  ('Digital Doctors', 'Teréz körút 28, Budapest', '2021234567', 'help@digitaldoctors.hu', 'javítószerviz', 'Specialists in smartphone and tablet repairs', 47.5080, 19.0650, 'DIGI01', 'open', '#0EA5E9', NULL),
-  ('Elegance Hair Lounge', 'Oktogon tér 2, Budapest', '2022345678', 'book@elegancelounge.hu', 'fodrász', 'Premium hair care in the heart of Budapest', 47.5055, 19.0635, 'ELEG01', 'open', '#D946EF', NULL),
-  ('Pure Bliss Spa', 'Vörösmarty tér 5, Budapest', '2023456789', 'spa@purebliss.hu', 'szépségszalon', 'Escape to tranquility with our signature treatments', 47.4960, 19.0510, 'PURE01', 'open', '#22C55E', NULL);
-
--- Insert admin user (separate table for security)
--- Password for admin@bookly.com is: admin123
-INSERT INTO admins (name, email, password_hash) VALUES 
-  ('Admin User', 'admin@bookly.com', '$2b$10$FnPTtKtmz1H0n8YYxuvdRO0GHUd9C94yvktvThkyYwQk72f0Xsa8S');
-
--- Insert test users
-INSERT INTO users (name, email, phone, address, status, role, password_hash) VALUES 
-  ('John Doe', 'john.doe@example.com', '1234567890', '123 Main St, Budapest', 'active', 'user', '$2a$10$hashedpassword1'),
-  ('Jane Smith', 'jane.smith@example.com', '0987654321', '456 Oak Ave, Budapest', 'active', 'user', '$2a$10$hashedpassword2'),
-  ('Demo User', 'demo@example.com', '1122334455', '789 Demo Rd, Budapest', 'active', 'customer', '$2a$10$hashedpassword3'),
-  ('Test User', 'test@example.com', '5544332211', '321 Test Ln, Budapest', 'inactive', 'user', '$2a$10$hashedpassword4');
-
--- Insert test providers
-INSERT INTO providers (salon_id, name, email, phone, description, status, role, isManager, password_hash) VALUES 
-  (1, 'Maria Kovacs', 'maria.kovacs@premiumhair.com', '3011111111', 'Senior Hair Stylist', 'active', 'provider', FALSE, '$2a$10$hashedpassword5'),
-  (1, 'Peter Nagy', 'peter.nagy@premiumhair.com', '3022222222', 'Hair Color Specialist', 'active', 'provider', FALSE, '$2a$10$hashedpassword6'),
-  (2, 'Anna Toth', 'anna.toth@wellnessspa.com', '3033333333', 'Massage Therapist', 'active', 'provider', FALSE, '$2a$10$hashedpassword7'),
-  (2, 'Balazs Kiss', 'balazs.kiss@wellnessspa.com', '3044444444', 'Facial Specialist', 'active', 'provider', FALSE, '$2a$10$hashedpassword8'),
-  (3, 'Gabor Horvath', 'gabor.horvath@techrepair.com', '3055555555', 'Computer Technician', 'active', 'provider', FALSE, '$2a$10$hashedpassword9'),
-  (3, 'Eva Varga', 'eva.varga@techrepair.com', '3066666666', 'Phone Repair Specialist', 'active', 'manager', TRUE, '$2a$10$hashedpassword10');
-
--- Insert test services
-INSERT INTO services (provider_id, name, description, duration_minutes, price, status) VALUES 
-  (1, 'Haircut', 'Professional haircut with styling', 45, 3500.00, 'available'),
-  (2, 'Hair Coloring', 'Full hair coloring service', 120, 12000.00, 'available'),
-  (3, 'Swedish Massage', 'Relaxing full-body massage', 60, 8000.00, 'available'),
-  (4, 'Facial Treatment', 'Deep cleansing facial with mask', 75, 9500.00, 'available'),
-  (5, 'Laptop Repair', 'Diagnostic and repair service', 90, 15000.00, 'available'),
-  (6, 'Phone Screen Replacement', 'Replace broken phone screen', 30, 7000.00, 'available');
-
--- Insert test appointments
-INSERT INTO appointments (user_id, provider_id, service_id, appointment_start, appointment_end, comment, price, status) VALUES 
-  (1, 1, 1, '2026-01-25 10:00:00', '2026-01-25 10:45:00', 'First time customer', 3500, 'scheduled'),
-  (2, 3, 3, '2026-01-25 14:00:00', '2026-01-25 15:00:00', 'Needs relaxation massage', 8000, 'scheduled'),
-  (1, 5, 5, '2026-01-26 11:00:00', '2026-01-26 12:30:00', 'Laptop not turning on', 15000, 'scheduled'),
-  (4, 2, 2, '2026-01-23 09:00:00', '2026-01-23 11:00:00', 'Want blonde highlights', 12000, 'completed'),
-  (2, 6, 6, '2026-01-22 16:00:00', '2026-01-22 16:30:00', 'Cracked iPhone screen', 7000, 'completed'),
-  (1, 4, 4, '2026-01-27 13:00:00', '2026-01-27 14:15:00', 'Anti-aging facial treatment', 9500, 'scheduled');
-
--- Insert test ratings (must match ratings table schema: appointment_id, provider_id required)
-INSERT INTO ratings (user_id, appointment_id, salon_id, provider_id, salon_rating, provider_rating, salon_comment, provider_comment, active) VALUES
-  (4, 4, 1, 2, 5, 4, 'Love my new hair color! Peter did an amazing job.', 'Very professional and creative stylist.', TRUE),
-  (2, 5, 3, 6, 4, 5, 'Good repair service, fast turnaround.', 'Eva was super helpful and fixed my phone perfectly!', TRUE);
-
+-- Waitlist table
 CREATE TABLE IF NOT EXISTS waitlist (
   `id` INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
   `user_id` INT NOT NULL,
@@ -298,3 +236,255 @@ CREATE TABLE IF NOT EXISTS messages (
     FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE SET NULL,
     INDEX idx_msg_conversation (conversation_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
+
+
+-- =====================================================================
+-- SAMPLE DATA (INSERTS)
+-- Test credentials (plaintext passwords for development only):
+--   admin@bookly.com               -> admin123
+--   any *@example.com user         -> user123
+--   any provider (role='provider') -> provider123
+--   any manager  (role='manager')  -> manager123
+-- The bcrypt hashes below are pre-generated with cost 10.
+-- =====================================================================
+
+-- Insert test salons
+INSERT INTO salons (name, address, phone, email, type, description, latitude, longitude, sharecode, status, banner_color, logo_url) VALUES 
+  ('Premium Hair Salon', '100 Beauty Blvd, Budapest', '2012345678', 'contact@premiumhair.com', 'fodrász', 'Top-rated hair salon with expert stylists', 47.4979, 19.0402, 'HAIR01', 'open', '#8B5CF6', NULL),
+  ('Wellness Spa Center', '200 Relaxation St, Budapest', '2098765432', 'info@wellnessspa.com', 'szépségszalon', 'Full-service spa offering massage and beauty treatments', 47.5103, 19.0560, 'SPA001', 'open', '#10B981', NULL),
+  ('Tech Repair Pro', '300 Tech Ave, Budapest', '2011223344', 'support@techrepair.com', 'javítószerviz', 'Professional electronics repair service', 47.4850, 19.0780, 'TECH01', 'open', '#EF4444', NULL),
+  ('Glamour Studio', 'Andrássy út 45, Budapest', '2013456789', 'hello@glamourstudio.hu', 'fodrász', 'Modern hair studio with creative stylists', 47.5050, 19.0620, 'GLAM01', 'open', '#EC4899', NULL),
+  ('Zen Wellness', 'Váci utca 12, Budapest', '2014567890', 'booking@zenwellness.hu', 'szépségszalon', 'Relaxing spa with traditional and modern treatments', 47.4920, 19.0550, 'ZEN001', 'open', '#06B6D4', NULL),
+  ('QuickFix Electronics', 'Üllői út 89, Budapest', '2015678901', 'fix@quickfix.hu', 'javítószerviz', 'Fast and reliable electronics repair', 47.4750, 19.0890, 'QFIX01', 'open', '#F59E0B', NULL),
+  ('Bella Hair Design', 'Nagymező utca 22, Budapest', '2016789012', 'info@bellahair.hu', 'fodrász', 'Elegant hair salon specializing in bridal styling', 47.5030, 19.0580, 'BELLA1', 'open', '#F97316', NULL),
+  ('Serenity Spa', 'Margit körút 15, Budapest', '2017890123', 'relax@serenityspa.hu', 'szépségszalon', 'Luxury spa experience with premium products', 47.5150, 19.0350, 'SEREN1', 'open', '#A855F7', NULL),
+  ('TechMaster Service', 'Rákóczi út 50, Budapest', '2018901234', 'service@techmaster.hu', 'javítószerviz', 'Expert computer and phone repair services', 47.4950, 19.0700, 'TECH02', 'open', '#6366F1', NULL),
+  ('Chic Salon', 'Király utca 33, Budapest', '2019012345', 'style@chicsalon.hu', 'fodrász', 'Trendy salon with award-winning stylists', 47.5010, 19.0610, 'CHIC01', 'open', '#14B8A6', NULL),
+  ('Harmony Beauty', 'Bajcsy-Zsilinszky út 8, Budapest', '2020123456', 'hello@harmonybeauty.hu', 'szépségszalon', 'Complete beauty treatments for body and soul', 47.5000, 19.0530, 'HARM01', 'open', '#84CC16', NULL),
+  ('Digital Doctors', 'Teréz körút 28, Budapest', '2021234567', 'help@digitaldoctors.hu', 'javítószerviz', 'Specialists in smartphone and tablet repairs', 47.5080, 19.0650, 'DIGI01', 'open', '#0EA5E9', NULL),
+  ('Elegance Hair Lounge', 'Oktogon tér 2, Budapest', '2022345678', 'book@elegancelounge.hu', 'fodrász', 'Premium hair care in the heart of Budapest', 47.5055, 19.0635, 'ELEG01', 'open', '#D946EF', NULL),
+  ('Pure Bliss Spa', 'Vörösmarty tér 5, Budapest', '2023456789', 'spa@purebliss.hu', 'szépségszalon', 'Escape to tranquility with our signature treatments', 47.4960, 19.0510, 'PURE01', 'open', '#22C55E', NULL);
+
+-- Insert admin user (separate table for security)
+-- Login: admin@bookly.com / admin123
+INSERT INTO admins (name, email, password_hash) VALUES 
+  ('Admin User', 'admin@bookly.com', '$2b$10$FnPTtKtmz1H0n8YYxuvdRO0GHUd9C94yvktvThkyYwQk72f0Xsa8S');
+
+-- Insert test users (password for all: user123)
+INSERT INTO users (name, email, phone, address, status, role, password_hash) VALUES 
+  ('John Doe', 'john.doe@example.com', '1234567890', '123 Main St, Budapest', 'active', 'user', '$2b$10$nv/6vOPEm4.CR4REczvGz.djCIAqCXIM1x2Rmtko4qLaUWj2/4jT6'),
+  ('Jane Smith', 'jane.smith@example.com', '0987654321', '456 Oak Ave, Budapest', 'active', 'user', '$2b$10$nv/6vOPEm4.CR4REczvGz.djCIAqCXIM1x2Rmtko4qLaUWj2/4jT6'),
+  ('Demo User', 'demo@example.com', '1122334455', '789 Demo Rd, Budapest', 'active', 'customer', '$2b$10$nv/6vOPEm4.CR4REczvGz.djCIAqCXIM1x2Rmtko4qLaUWj2/4jT6'),
+  ('Test User', 'test@example.com', '5544332211', '321 Test Ln, Budapest', 'active', 'user', '$2b$10$nv/6vOPEm4.CR4REczvGz.djCIAqCXIM1x2Rmtko4qLaUWj2/4jT6');
+
+-- Insert test providers (password: provider123 for providers, manager123 for managers)
+INSERT INTO providers (salon_id, name, email, phone, description, status, role, isManager, password_hash) VALUES 
+  (1, 'Maria Kovacs', 'maria.kovacs@premiumhair.com', '3011111111', 'Senior Hair Stylist', 'active', 'provider', FALSE, '$2b$10$MelIlEfHTDIuwxA1dhjZt.biez39nDxnM58fBU66uwHJ0Jfc1fhVS'),
+  (1, 'Peter Nagy', 'peter.nagy@premiumhair.com', '3022222222', 'Hair Color Specialist', 'active', 'provider', FALSE, '$2b$10$MelIlEfHTDIuwxA1dhjZt.biez39nDxnM58fBU66uwHJ0Jfc1fhVS'),
+  (2, 'Anna Toth', 'anna.toth@wellnessspa.com', '3033333333', 'Massage Therapist', 'active', 'provider', FALSE, '$2b$10$MelIlEfHTDIuwxA1dhjZt.biez39nDxnM58fBU66uwHJ0Jfc1fhVS'),
+  (2, 'Balazs Kiss', 'balazs.kiss@wellnessspa.com', '3044444444', 'Facial Specialist', 'active', 'provider', FALSE, '$2b$10$MelIlEfHTDIuwxA1dhjZt.biez39nDxnM58fBU66uwHJ0Jfc1fhVS'),
+  (3, 'Gabor Horvath', 'gabor.horvath@techrepair.com', '3055555555', 'Computer Technician', 'active', 'provider', FALSE, '$2b$10$MelIlEfHTDIuwxA1dhjZt.biez39nDxnM58fBU66uwHJ0Jfc1fhVS'),
+  (3, 'Eva Varga', 'eva.varga@techrepair.com', '3066666666', 'Phone Repair Specialist', 'active', 'manager', TRUE, '$2b$10$1jrMi9o7iSPhRHnMXPuT.e7OpJROvROKDQnwHjrvlk7ryzStKI1L2');
+
+-- Insert test services
+INSERT INTO services (provider_id, name, description, duration_minutes, price, status) VALUES 
+  (1, 'Haircut', 'Professional haircut with styling', 45, 3500.00, 'available'),
+  (2, 'Hair Coloring', 'Full hair coloring service', 120, 12000.00, 'available'),
+  (3, 'Swedish Massage', 'Relaxing full-body massage', 60, 8000.00, 'available'),
+  (4, 'Facial Treatment', 'Deep cleansing facial with mask', 75, 9500.00, 'available'),
+  (5, 'Laptop Repair', 'Diagnostic and repair service', 90, 15000.00, 'available'),
+  (6, 'Phone Screen Replacement', 'Replace broken phone screen', 30, 7000.00, 'available');
+
+-- Insert test appointments
+INSERT INTO appointments (user_id, provider_id, service_id, appointment_start, appointment_end, comment, price, status) VALUES 
+  (1, 1, 1, '2026-01-25 10:00:00', '2026-01-25 10:45:00', 'First time customer', 3500, 'scheduled'),
+  (2, 3, 3, '2026-01-25 14:00:00', '2026-01-25 15:00:00', 'Needs relaxation massage', 8000, 'scheduled'),
+  (1, 5, 5, '2026-01-26 11:00:00', '2026-01-26 12:30:00', 'Laptop not turning on', 15000, 'scheduled'),
+  (4, 2, 2, '2026-01-23 09:00:00', '2026-01-23 11:00:00', 'Want blonde highlights', 12000, 'completed'),
+  (2, 6, 6, '2026-01-22 16:00:00', '2026-01-22 16:30:00', 'Cracked iPhone screen', 7000, 'completed'),
+  (1, 4, 4, '2026-01-27 13:00:00', '2026-01-27 14:15:00', 'Anti-aging facial treatment', 9500, 'scheduled');
+
+-- Insert test ratings (must match ratings table schema: appointment_id, provider_id required)
+INSERT INTO ratings (user_id, appointment_id, salon_id, provider_id, salon_rating, provider_rating, salon_comment, provider_comment, active) VALUES
+  (4, 4, 1, 2, 5, 4, 'Love my new hair color! Peter did an amazing job.', 'Very professional and creative stylist.', TRUE),
+  (2, 5, 3, 6, 4, 5, 'Good repair service, fast turnaround.', 'Eva was super helpful and fixed my phone perfectly!', TRUE);
+
+-- =====================================================================
+-- EXTRA DEMO DATA (extended sample set)
+-- Goal: rich, colourful demo data for every feature on the site so that
+-- the project is presentable without having to create things manually.
+-- Passwords:  user123 / provider123 / manager123
+-- =====================================================================
+
+-- Extra users (IDs 5-9): banned, deleted, inactive, profile picture, customer
+INSERT INTO users (name, email, phone, address, status, role, password_hash, profile_picture_url, deleted_at) VALUES
+  ('Robert Brown',  'robert.brown@example.com',  '3601111222', 'Petőfi utca 8, Budapest',     'active',   'user',     '$2b$10$nv/6vOPEm4.CR4REczvGz.djCIAqCXIM1x2Rmtko4qLaUWj2/4jT6', NULL, NULL),
+  ('Sara Black',    'sara.black@example.com',    '3602222333', 'Kossuth tér 4, Budapest',     'banned',   'user',     '$2b$10$nv/6vOPEm4.CR4REczvGz.djCIAqCXIM1x2Rmtko4qLaUWj2/4jT6', NULL, NULL),
+  ('Lisa White',    'lisa.white@example.com',    '3603333444', 'Hősök tere 1, Budapest',      'active',   'customer', '$2b$10$nv/6vOPEm4.CR4REczvGz.djCIAqCXIM1x2Rmtko4qLaUWj2/4jT6', NULL, NULL),
+  -- Inactive user: profile is incomplete (no phone), so the system keeps status='inactive'
+  ('Mark Green',    'mark.green@example.com',    NULL,         'Bem rakpart 22, Budapest',    'inactive', 'user',     '$2b$10$nv/6vOPEm4.CR4REczvGz.djCIAqCXIM1x2Rmtko4qLaUWj2/4jT6', NULL, NULL),
+  -- Soft-deleted (GDPR-anonymized): personal data nulled out, name replaced with placeholder.
+  -- The display name uses id 9 because this row receives auto-increment id 9 (4 base + 5 extras).
+  ('Törölt felhasználó #9', NULL,                  NULL,         NULL,                          'deleted',  'user',     NULL,                                                            NULL, DATE_SUB(NOW(), INTERVAL 30 DAY));
+
+-- Extra providers (IDs 7-14): managers for several salons + co-workers
+INSERT INTO providers (salon_id, name, email, phone, description, status, role, isManager, password_hash) VALUES
+  (4,  'Tomas Szabo',       'tomas.szabo@glamourstudio.hu',     '3611111111', 'Salon manager and master stylist', 'active', 'manager',  TRUE,  '$2b$10$1jrMi9o7iSPhRHnMXPuT.e7OpJROvROKDQnwHjrvlk7ryzStKI1L2'),
+  (4,  'Krisztina Feher',   'krisztina.feher@glamourstudio.hu', '3622222222', 'Color & balayage expert',          'active', 'provider', FALSE, '$2b$10$MelIlEfHTDIuwxA1dhjZt.biez39nDxnM58fBU66uwHJ0Jfc1fhVS'),
+  (5,  'Daniel Molnar',     'daniel.molnar@zenwellness.hu',     '3633333333', 'Wellness manager, senior therapist','active','manager',  TRUE,  '$2b$10$1jrMi9o7iSPhRHnMXPuT.e7OpJROvROKDQnwHjrvlk7ryzStKI1L2'),
+  (5,  'Bence Kovacs',      'bence.kovacs@zenwellness.hu',      '3644444444', 'Holistic body treatments',         'active', 'provider', FALSE, '$2b$10$MelIlEfHTDIuwxA1dhjZt.biez39nDxnM58fBU66uwHJ0Jfc1fhVS'),
+  (7,  'Adam Foldes',       'adam.foldes@bellahair.hu',         '3655555555', 'Bridal & event hair specialist',   'active', 'manager',  TRUE,  '$2b$10$1jrMi9o7iSPhRHnMXPuT.e7OpJROvROKDQnwHjrvlk7ryzStKI1L2'),
+  (7,  'Reka Papp',         'reka.papp@bellahair.hu',           '3666666666', 'Updo & styling expert',            'active', 'provider', FALSE, '$2b$10$MelIlEfHTDIuwxA1dhjZt.biez39nDxnM58fBU66uwHJ0Jfc1fhVS'),
+  (1,  'Julia Szilagyi',    'julia.szilagyi@premiumhair.com',   '3677777777', 'Salon manager and color specialist','active','manager',  TRUE,  '$2b$10$1jrMi9o7iSPhRHnMXPuT.e7OpJROvROKDQnwHjrvlk7ryzStKI1L2'),
+  (2,  'Andras Borsos',     'andras.borsos@wellnessspa.com',    '3688888888', 'Wellness manager, deep tissue',    'active', 'manager',  TRUE,  '$2b$10$1jrMi9o7iSPhRHnMXPuT.e7OpJROvROKDQnwHjrvlk7ryzStKI1L2');
+
+-- Extra services (IDs 7-18): fill out catalogues for old & new providers
+INSERT INTO services (provider_id, name, description, duration_minutes, price, status) VALUES
+  (1,  'Hair Wash & Blowdry',     'Quick wash and professional blowdry',          30,  2500.00, 'available'),
+  (1,  'Kids Haircut',            'Friendly haircut for children under 12',       30,  2500.00, 'available'),
+  (3,  'Hot Stone Massage',       'Therapeutic massage with heated basalt stones',90, 12000.00, 'available'),
+  (5,  'Virus Removal',           'Full malware scan and system cleanup',         60,  8000.00, 'available'),
+  (7,  'Mens Haircut',            'Classic and modern cuts for men',              45,  4000.00, 'available'),
+  (8,  'Hair Highlights',         'Foil highlights with toning',                 150, 18000.00, 'available'),
+  (9,  'Aromatherapy Massage',    'Relaxing massage with essential oils',         60,  9000.00, 'available'),
+  (10, 'Body Scrub',              'Exfoliating full-body scrub treatment',        45,  7000.00, 'available'),
+  (11, 'Bridal Hair Styling',     'Wedding day styling with trial included',     120, 25000.00, 'available'),
+  (12, 'Updo Styling',            'Elegant updo for events',                      60,  8500.00, 'available'),
+  (13, 'Color Consultation',      'Personal color analysis and plan',             30,  4000.00, 'available'),
+  (14, 'Couples Massage',         'Side-by-side relaxing massage for two',        90, 18000.00, 'unavailable'),
+  (4,  'Classic Manicure',        'Nail shaping, cuticle care and polish',        60,  6500.00, 'available');
+
+-- Saved salons (favourite list per user)
+INSERT INTO saved_salons (user_id, salon_id) VALUES
+  (1, 1), (1, 4), (1, 7),
+  (2, 2), (2, 5), (2, 13),
+  (3, 1), (3, 8),
+  (5, 4), (5, 11),
+  (7, 4), (7, 13), (7, 14);
+
+-- Provider time blocks (vacation, lunch break, training day)
+INSERT INTO provider_time_blocks (provider_id, start_datetime, end_datetime, is_recurring, recurrence_pattern, recurrence_days, recurrence_end_date, notes) VALUES
+  (1,  '2026-05-10 00:00:00', '2026-05-12 23:59:59', FALSE, NULL,     NULL,                                                                NULL,                                'Annual vacation'),
+  (3,  DATE_ADD(CURDATE(), INTERVAL 1 DAY) + INTERVAL 12 HOUR, DATE_ADD(CURDATE(), INTERVAL 1 DAY) + INTERVAL 13 HOUR, TRUE, 'weekly', '["monday","tuesday","wednesday","thursday","friday"]', DATE_ADD(CURDATE(), INTERVAL 90 DAY), 'Daily lunch break'),
+  (5,  DATE_ADD(CURDATE(), INTERVAL 7 DAY) + INTERVAL 9 HOUR,  DATE_ADD(CURDATE(), INTERVAL 7 DAY) + INTERVAL 17 HOUR, FALSE, NULL,    NULL,                                                                NULL,                                'Internal training day'),
+  (7,  '2026-06-15 00:00:00', '2026-06-20 23:59:59', FALSE, NULL,     NULL,                                                                NULL,                                'Conference in Vienna'),
+  (9,  DATE_ADD(CURDATE(), INTERVAL 2 DAY) + INTERVAL 12 HOUR, DATE_ADD(CURDATE(), INTERVAL 2 DAY) + INTERVAL 13 HOUR, TRUE, 'weekly', '["monday","tuesday","wednesday","thursday","friday"]', DATE_ADD(CURDATE(), INTERVAL 90 DAY), 'Lunch break'),
+  (11, '2026-05-25 14:00:00', '2026-05-25 17:00:00', FALSE, NULL,     NULL,                                                                NULL,                                'Bridal trial appointment off-site');
+
+-- Service images (real demo photos stored in backend/demo_kepek/)
+INSERT INTO service_images (service_id, image_url, sort_order) VALUES
+  -- 1: Haircut
+  (1,  '/demo_kepek/hair_salon_1.jpg', 0),
+  (1,  '/demo_kepek/hair_salon_4.jpg', 1),
+  -- 3: Swedish Massage
+  (3,  '/demo_kepek/massage_1.jpg',    0),
+  (3,  '/demo_kepek/massage_3.jpg',    1),
+  -- 4: Facial Treatment
+  (4,  '/demo_kepek/spa_1.jpg',        0),
+  -- 7: Hair Wash & Blowdry
+  (7,  '/demo_kepek/hair_salon_2.jpg', 0),
+  -- 8: Kids Haircut
+  (8,  '/demo_kepek/hair_salon3.jpg',  0),
+  -- 9: Hot Stone Massage
+  (9,  '/demo_kepek/massage_2.jpg',    0),
+  -- 11: Mens Haircut
+  (11, '/demo_kepek/barbershop_1.jpg', 0),
+  (11, '/demo_kepek/barbershop_2.jpg', 1),
+  (11, '/demo_kepek/barbershop_3.jpg', 2),
+  (11, '/demo_kepek/barbershop_4.jpg', 3),
+  (11, '/demo_kepek/barbershop_5.jpg', 4),
+  -- 12: Hair Highlights (reuses a hair salon photo as preview)
+  (12, '/demo_kepek/hair_salon_1.jpg', 0),
+  -- 13: Aromatherapy Massage
+  (13, '/demo_kepek/massage_4.jpg',    0),
+  -- 14: Body Scrub
+  (14, '/demo_kepek/spa_2.jpg',        0),
+  -- 18: Couples Massage
+  (18, '/demo_kepek/spa_3.jpg',        0),
+  -- 19: Classic Manicure
+  (19, '/demo_kepek/manicure_1.jpg',   0),
+  (19, '/demo_kepek/manicure_2.jpg',   1),
+  (19, '/demo_kepek/manicure_3.jpg',   2),
+  (19, '/demo_kepek/manicure_4.jpg',   3);
+
+-- Extra appointments (IDs 7-22): mix of statuses, fixed and NOW()-based
+INSERT INTO appointments (user_id, provider_id, service_id, appointment_start, appointment_end, comment, price, status, deleted_reason, deleted_at, deleted_by) VALUES
+  -- Past completed (rateable)
+  (3, 1,  1,  '2026-02-15 09:00:00', '2026-02-15 09:45:00', 'Quick monthly trim',         3500,  'completed', NULL, NULL, NULL),
+  (7, 7,  11, '2026-02-20 11:00:00', '2026-02-20 11:45:00', 'Wedding guest haircut',      4000,  'completed', NULL, NULL, NULL),
+  (1, 8,  12, '2026-03-05 14:00:00', '2026-03-05 16:30:00', 'Full balayage',              18000, 'completed', NULL, NULL, NULL),
+  (2, 9,  13, '2026-03-12 10:00:00', '2026-03-12 11:00:00', 'Stress relief session',      9000,  'completed', NULL, NULL, NULL),
+  (3, 11, 15, '2026-04-01 09:00:00', '2026-04-01 11:00:00', 'Bridal trial run',           25000, 'completed', NULL, NULL, NULL),
+
+  -- Canceled by user
+  (4, 2,  2,  '2026-04-15 10:00:00', '2026-04-15 12:00:00', 'Got sick, had to cancel',    12000, 'canceled',  NULL, NULL, NULL),
+  -- No-show
+  (1, 3,  3,  '2026-04-20 14:00:00', '2026-04-20 15:00:00', NULL,                         8000,  'no_show',   NULL, NULL, NULL),
+  -- Soft-deleted by admin
+  (2, 5,  5,  '2026-04-25 11:00:00', '2026-04-25 12:30:00', 'Spam booking',               15000, 'deleted',   'Inappropriate behaviour reported', '2026-04-26 10:15:00', 1),
+
+  -- Future scheduled (NOW()-based)
+  (1, 1,  1,  DATE_ADD(CURDATE(), INTERVAL 1 DAY)  + INTERVAL 10 HOUR, DATE_ADD(CURDATE(), INTERVAL 1 DAY)  + INTERVAL 10 HOUR + INTERVAL 45 MINUTE, 'Tomorrow morning haircut', 3500,  'scheduled', NULL, NULL, NULL),
+  (2, 7,  11, DATE_ADD(CURDATE(), INTERVAL 2 DAY)  + INTERVAL 14 HOUR, DATE_ADD(CURDATE(), INTERVAL 2 DAY)  + INTERVAL 14 HOUR + INTERVAL 45 MINUTE, 'Need a fresh look',        4000,  'scheduled', NULL, NULL, NULL),
+  (3, 9,  13, DATE_ADD(CURDATE(), INTERVAL 3 DAY)  + INTERVAL 11 HOUR, DATE_ADD(CURDATE(), INTERVAL 3 DAY)  + INTERVAL 12 HOUR,                      'Looking forward to relaxing', 9000, 'scheduled', NULL, NULL, NULL),
+  (7, 11, 15, DATE_ADD(CURDATE(), INTERVAL 5 DAY)  + INTERVAL 9 HOUR,  DATE_ADD(CURDATE(), INTERVAL 5 DAY)  + INTERVAL 11 HOUR,                      'Bridal styling',           25000, 'scheduled', NULL, NULL, NULL),
+  (1, 13, 17, DATE_ADD(CURDATE(), INTERVAL 7 DAY)  + INTERVAL 15 HOUR, DATE_ADD(CURDATE(), INTERVAL 7 DAY)  + INTERVAL 15 HOUR + INTERVAL 30 MINUTE, 'Color consultation',       4000,  'scheduled', NULL, NULL, NULL),
+  (2, 14, 18, DATE_ADD(CURDATE(), INTERVAL 10 DAY) + INTERVAL 16 HOUR, DATE_ADD(CURDATE(), INTERVAL 10 DAY) + INTERVAL 17 HOUR + INTERVAL 30 MINUTE, 'Couples massage anniversary',18000,'scheduled', NULL, NULL, NULL),
+
+  -- Today (will appear as ongoing/upcoming on dashboard)
+  (3, 8,  12, CURDATE() + INTERVAL 13 HOUR, CURDATE() + INTERVAL 15 HOUR + INTERVAL 30 MINUTE, 'Need highlights touch-up', 18000, 'scheduled', NULL, NULL, NULL),
+
+  -- Guest booking (no user_id)
+  (NULL, 1, 1, DATE_ADD(CURDATE(), INTERVAL 1 DAY) + INTERVAL 16 HOUR, DATE_ADD(CURDATE(), INTERVAL 1 DAY) + INTERVAL 16 HOUR + INTERVAL 45 MINUTE, 'First time visiting Budapest', 3500, 'scheduled', NULL, NULL, NULL);
+
+UPDATE appointments SET guest_name='Walter White', guest_email='walter@example.com', guest_phone='3699999999' WHERE user_id IS NULL AND provider_id=1 AND service_id=1 AND status='scheduled';
+
+-- Extra ratings for the new completed appointments
+INSERT INTO ratings (user_id, appointment_id, salon_id, provider_id, salon_rating, provider_rating, salon_comment, provider_comment, active) VALUES
+  (3, 7,  1, 1,  5, 5, 'Always a pleasant visit, clean and modern.',         'Maria is the best, never disappoints.',          TRUE),
+  (7, 8,  4, 7,  5, 5, 'Beautiful salon, lovely atmosphere.',                'Tomas is incredibly skilled and friendly.',      TRUE),
+  (1, 9,  4, 8,  4, 5, 'Great salon, prices are fair.',                      'Krisztina nailed the balayage I wanted!',        TRUE),
+  (2, 10, 5, 9,  5, 4, 'Very relaxing place, calm music.',                   'Daniel was professional, would visit again.',    TRUE),
+  (3, 11, 7, 11, 5, 5, 'Magical bridal experience, pampered all morning.',   'Adam is a true artist, my hair looked perfect.', TRUE);
+
+-- Waitlist entries
+INSERT INTO waitlist (user_id, provider_id, service_id, preferred_date_from, preferred_date_to, preferred_time_from, preferred_time_to, status) VALUES
+  (1, 2,  2,  DATE_ADD(CURDATE(), INTERVAL 5 DAY),  DATE_ADD(CURDATE(), INTERVAL 10 DAY), '10:00:00', '14:00:00', 'active'),
+  (2, 11, 15, '2026-06-01',                          '2026-06-15',                          '09:00:00', '18:00:00', 'active'),
+  (7, 9,  13, DATE_ADD(CURDATE(), INTERVAL 3 DAY),  DATE_ADD(CURDATE(), INTERVAL 7 DAY),  NULL,        NULL,        'expired');
+
+-- Conversations
+INSERT INTO conversations (provider_id, user_id, last_message_at, last_message_preview, provider_unread_count, user_unread_count) VALUES
+  (1,  1, DATE_SUB(NOW(), INTERVAL 1 HOUR),  'Great, see you tomorrow!',           0, 1),
+  (7,  2, DATE_SUB(NOW(), INTERVAL 3 HOUR),  'Thanks for the reminder!',           1, 0),
+  (11, 3, DATE_SUB(NOW(), INTERVAL 2 DAY),   'Of course! Looking forward to it.',  0, 0);
+
+-- Messages (3 conversations)
+INSERT INTO messages (conversation_id, sender_role, sender_id, content, appointment_id, is_read, created_at) VALUES
+  -- Conversation 1: prov 1 / user 1
+  (1, 'user',     1, 'Hi! I have a question about your haircut prices.',                                  NULL,  TRUE, DATE_SUB(NOW(), INTERVAL 3 HOUR)),
+  (1, 'provider', 1, 'Hello! Our standard haircut is 3500 HUF and takes about 45 minutes.',               NULL,  TRUE, DATE_SUB(NOW(), INTERVAL 2 HOUR)),
+  (1, 'user',     1, 'Perfect, I''ve booked an appointment for tomorrow at 10:00.',                       NULL,  TRUE, DATE_SUB(NOW(), INTERVAL 90 MINUTE)),
+  (1, 'provider', 1, 'Great, see you tomorrow!',                                                          NULL,  FALSE, DATE_SUB(NOW(), INTERVAL 1 HOUR)),
+
+  -- Conversation 2: prov 7 / user 2 (with appointment reference)
+  (2, 'provider', 7, 'Hi! Just a friendly reminder that your appointment is in two days.',                10,    TRUE, DATE_SUB(NOW(), INTERVAL 5 HOUR)),
+  (2, 'user',     2, 'Thanks for the reminder!',                                                          NULL,  FALSE, DATE_SUB(NOW(), INTERVAL 3 HOUR)),
+
+  -- Conversation 3: prov 11 / user 3 (about bridal)
+  (3, 'user',     3, 'Hi Adam, can I bring photos of styles I like to the trial?',                        NULL,  TRUE, DATE_SUB(NOW(), INTERVAL 3 DAY)),
+  (3, 'provider', 11,'Of course! Looking forward to it.',                                                 11,    TRUE, DATE_SUB(NOW(), INTERVAL 2 DAY));
+
+-- System logs (audit trail samples)
+INSERT INTO system_logs (level, action, actor_type, actor_id, target_type, target_id, details, created_at) VALUES
+  ('INFO',     'admin_login',           'admin',    1, NULL,         NULL, 'Admin signed in successfully',                                  DATE_SUB(NOW(), INTERVAL 6 HOUR)),
+  ('INFO',     'user_registered',       'system',   NULL, 'user',    5,    'New user registration: robert.brown@example.com',               DATE_SUB(NOW(), INTERVAL 14 DAY)),
+  ('INFO',     'provider_registered',   'system',   NULL, 'provider',7,    'New provider registration: tomas.szabo@glamourstudio.hu',       DATE_SUB(NOW(), INTERVAL 20 DAY)),
+  ('WARN',     'login_failed',          'user',     6,   'user',     6,    'Failed login attempt for sara.black@example.com',                DATE_SUB(NOW(), INTERVAL 2 DAY)),
+  ('WARN',     'login_failed',          'user',     6,   'user',     6,    'Failed login attempt for sara.black@example.com (3rd in a row)', DATE_SUB(NOW(), INTERVAL 2 DAY)),
+  ('CRITICAL', 'user_banned',           'admin',    1,   'user',     6,    'User sara.black@example.com banned by admin',                    DATE_SUB(NOW(), INTERVAL 1 DAY)),
+  ('INFO',     'appointment_created',   'user',     1,   'appointment', 15,'User booked appointment with provider 1',                        DATE_SUB(NOW(), INTERVAL 6 HOUR)),
+  ('INFO',     'appointment_canceled',  'user',     4,   'appointment', 12,'User canceled appointment',                                      '2026-04-14 18:30:00'),
+  ('CRITICAL', 'appointment_deleted',   'admin',    1,   'appointment', 14,'Admin removed appointment due to abuse report',                  '2026-04-26 10:15:00'),
+  ('INFO',     'rating_created',        'user',     3,   'rating',   7,    'User rated provider 1 / salon 1',                                DATE_SUB(NOW(), INTERVAL 60 DAY)),
+  ('INFO',     'user_deleted',          'user',     9,   'user',     9,    'User self-deleted their account (GDPR anonymized)',              DATE_SUB(NOW(), INTERVAL 30 DAY));

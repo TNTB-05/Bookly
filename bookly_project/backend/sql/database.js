@@ -86,11 +86,4 @@ module.exports = {
 
     // Search queries
     getRecommendedSalons: searchQueries.getRecommendedSalons,
-
-    // Deprecated test function
-    selectall: async () => {
-        const query = 'SELECT * FROM exampletable;';
-        const [rows] = await pool.execute(query);
-        return rows;
-    }
 };

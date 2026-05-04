@@ -1,6 +1,9 @@
 import { useNavigate } from "react-router-dom"
 
 import Card from "./Card";
+import SearchIcon from "../../icons/SearchIcon";
+import CalendarSimpleIcon from "../../icons/CalendarSimpleIcon";
+import TickIcon from "../../icons/TickIcon";
 import appointment from "../../pics/appointment.png";
 import services from "../../pics/services.png";
 import allinone from "../../pics/allinone.png";
@@ -96,9 +99,7 @@ export default function LandingBody(){
                         <div className="relative flex flex-col items-start p-8 bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-white/70 hover:shadow-md transition-all duration-300 animate-fade-in">
                             <span className="absolute top-4 right-6 text-6xl font-black text-dark-blue/10 leading-none select-none">01</span>
                             <div className="w-12 h-12 bg-dark-blue rounded-lg flex items-center justify-center mb-5 shrink-0">
-                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-                                </svg>
+                                <SearchIcon className="w-6 h-6 text-white" />
                             </div>
                             <h3 className="text-xl font-bold text-dark-gray mb-2">Keress szalont</h3>
                             <p className="text-gray-500 text-sm leading-relaxed">
@@ -110,9 +111,7 @@ export default function LandingBody(){
                         <div className="relative flex flex-col items-start p-8 bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-white/70 hover:shadow-md transition-all duration-300 animate-fade-in [animation-delay:200ms]">
                             <span className="absolute top-4 right-6 text-6xl font-black text-dark-blue/10 leading-none select-none">02</span>
                             <div className="w-12 h-12 bg-dark-blue rounded-lg flex items-center justify-center mb-5 shrink-0">
-                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" />
-                                </svg>
+                                <CalendarSimpleIcon className="w-6 h-6 text-white" />
                             </div>
                             <h3 className="text-xl font-bold text-dark-gray mb-2">Válassz időpontot</h3>
                             <p className="text-gray-500 text-sm leading-relaxed">
@@ -124,9 +123,7 @@ export default function LandingBody(){
                         <div className="relative flex flex-col items-start p-8 bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-white/70 hover:shadow-md transition-all duration-300 animate-fade-in [animation-delay:400ms]">
                             <span className="absolute top-4 right-6 text-6xl font-black text-dark-blue/10 leading-none select-none">03</span>
                             <div className="w-12 h-12 bg-dark-blue rounded-lg flex items-center justify-center mb-5 shrink-0">
-                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
+                                <TickIcon className="w-6 h-6 text-white" />
                             </div>
                             <h3 className="text-xl font-bold text-dark-gray mb-2">Megjelensz, mi a többit intézzük</h3>
                             <p className="text-gray-500 text-sm leading-relaxed">
@@ -198,17 +195,10 @@ export default function LandingBody(){
 
             {/* Footer */}
             <footer className="bg-dark-blue text-white/90 py-10 px-6 mt-auto">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div className="flex flex-col items-center md:items-start">
-                        <span className="text-2xl font-bold mb-1">Bookly</span>
-                        <span className="text-sm text-white/50 italic mb-2">Foglalj okosan.</span>
-                        <p className="text-sm opacity-60">&copy; {new Date().getFullYear()} Minden jog fenntartva.</p>
-                    </div>
-                    <div className="flex gap-8 font-medium">
-                        <a href="#" className="hover:text-accent-blue transition-colors duration-300">Rólunk</a>
-                        <a href="#" className="hover:text-accent-blue transition-colors duration-300">Kapcsolat</a>
-                        <a href="#" className="hover:text-accent-blue transition-colors duration-300">Adatvédelem</a>
-                    </div>
+                <div className="max-w-7xl mx-auto flex flex-col items-center gap-2 text-center">
+                    <span className="text-2xl font-bold">Bookly</span>
+                    <span className="text-sm text-white/50 italic">Foglalj okosan.</span>
+                    <p className="text-sm opacity-60">&copy; {new Date().getFullYear()} Minden jog fenntartva.</p>
                 </div>
             </footer>
         </div>

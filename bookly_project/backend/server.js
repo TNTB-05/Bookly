@@ -73,8 +73,6 @@ app.get('/', (request, response) => {
 });
 //!API endpoints
 app.use('/', router);
-const endpoints = require('./api/api.js');
-app.use('/api', endpoints);
 const loginApi = require('./api/auth/LoginApi.js');
 app.use('/auth', loginApi);
 const searchApi = require('./api/searchApi.js');
@@ -100,6 +98,7 @@ app.use('/api/waitlist', waitlistApi);
 
 //!Szerver futtatása
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/demo_kepek', express.static(path.join(__dirname, 'demo_kepek')));
 app.use(express.static(path.join(__dirname, '../frontend'))); //?frontend mappa tartalmának betöltése az oldal működéséhez
 server.listen(port, ip, () => {
     console.log(`Szerver elérhetősége: http://${ip}:${port}`);

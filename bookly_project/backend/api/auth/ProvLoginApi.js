@@ -19,7 +19,7 @@ function generateShareCode() {
     return crypto.randomBytes(3).toString('hex').toUpperCase();
 }
 
-// POST /api/provider/auth/validate-salon-code — validate a salon sharecode
+// POST /api/auth/provider/validate-salon-code — validate a salon sharecode
 router.post('/validate-salon-code', async (request, response) => {
     const { code } = request.body;
 
@@ -54,7 +54,7 @@ router.post('/validate-salon-code', async (request, response) => {
     }
 });
 
-// POST /api/provider/auth/register — register provider (create or join salon, transactional)
+// POST /api/auth/provider/register — register provider (create or join salon, transactional)
 router.post('/register', async (request, response) => {
     const { name, email, password, phone, registrationType, salonId, salon } = request.body;
 
@@ -235,7 +235,7 @@ router.post('/register', async (request, response) => {
     }
 });
 
-// POST /api/provider/auth/login — authenticate provider and return JWT tokens
+// POST /api/auth/provider/login — authenticate provider and return JWT tokens
 router.post('/login', async (request, response) => {
     const { email, password } = request.body;
 
