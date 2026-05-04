@@ -8,6 +8,8 @@ services:
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_hungarian_ci
       --skip-character-set-client-handshake
+    env_file:
+      - ./backend/Secret.env
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
@@ -22,6 +24,8 @@ services:
     image: phpmyadmin:latest
     container_name: bookly-phpmyadmin
     restart: unless-stopped
+    env_file:
+      - ./backend/Secret.env
     environment:
       PMA_HOST: db
       PMA_PORT: 3306
